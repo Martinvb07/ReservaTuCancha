@@ -1,0 +1,109 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Build outputs
+.next/
+out/
+build/
+dist/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+.env.local
+.env.*.local
+
+# --- Custom ignores ---
+# Ignore all .env files in Frontend and Backend
+Frontend/.env*
+Backend/.env*
+
+# Ignore heavy/unnecessary files
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.mp3
+*.wav
+*.flac
+*.iso
+*.dmg
+*.exe
+*.dll
+*.bin
+*.sqlite
+*.db
+*.dump
+*.psd
+*.ai
+*.xcf
+*.svgz
+*.webp
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.tiff
+*.bmp
+*.ico
+*.apk
+*.ipa
+*.iml
+*.out
+*.class
+*.pyc
+*.pyo
+*.egg-info/
+node_modules/
+dist/
+build/
+coverage/
+tmp/
+temp/
+cache/
+logs/
+uploads/
+public/uploads/
+Frontend/.next/
+Frontend/out/
+Frontend/build/
+Frontend/.turbo/
+Frontend/.cache/
+Backend/.next/
+Backend/out/
+Backend/build/
+Backend/.turbo/
+Backend/.cache/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Cache
+.turbo/
+.cache/
+
+# Artifacts
+*.zip
+Frontend.zip
