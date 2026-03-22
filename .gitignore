@@ -1,109 +1,69 @@
-# Dependencies
+# --- DEPENDENCIAS ---
 node_modules/
-/.pnp
+.pnp*
 .pnp.js
 
-# Build outputs
+# --- NEXT.JS (Frontend) ---
 .next/
 out/
-build/
-dist/
+/Frontend/.next/
+/Frontend/out/
+/Frontend/build/
 
-# IDE files
+# --- NESTJS / NODE (Backend) ---
+dist/
+/Backend/dist/
+/Backend/build/
+*.tsbuildinfo
+coverage/
+
+# --- ARCHIVOS DE IDE & OS ---
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
-
-# OS files
 .DS_Store
 Thumbs.db
-.env.local
-.env.*.local
-
-# --- Custom ignores ---
-# Ignore all .env files in Frontend and Backend
-Frontend/.env*
-Backend/.env*
-
-# Ignore heavy/unnecessary files
-*.log
-*.tmp
-*.bak
-*.swp
-*.swo
-*.zip
-*.tar
-*.tar.gz
-*.rar
-*.7z
-*.mp4
-*.mov
-*.avi
-*.mkv
-*.mp3
-*.wav
-*.flac
-*.iso
-*.dmg
-*.exe
-*.dll
-*.bin
-*.sqlite
-*.db
-*.dump
-*.psd
-*.ai
-*.xcf
-*.svgz
-*.webp
-*.jpg
-*.jpeg
-*.png
-*.gif
-*.tiff
-*.bmp
-*.ico
-*.apk
-*.ipa
 *.iml
-*.out
-*.class
-*.pyc
-*.pyo
-*.egg-info/
-node_modules/
-dist/
-build/
-coverage/
-tmp/
-temp/
-cache/
-logs/
-uploads/
-public/uploads/
-Frontend/.next/
-Frontend/out/
-Frontend/build/
-Frontend/.turbo/
-Frontend/.cache/
-Backend/.next/
-Backend/out/
-Backend/build/
-Backend/.turbo/
-Backend/.cache/
 
-# Logs
+# --- SEGURIDAD (¡MUY IMPORTANTE!) ---
+# Ignora TODOS los archivos .env en cualquier carpeta
+**/.env
+**/.env.*
+# Pero permite subir un ejemplo si existe
+!**/.env.example
+
+# --- CACHE & HERRAMIENTAS ---
+.turbo/
+.cache/
+.npm
+.eslintcache
+
+# --- LOGS ---
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# Cache
-.turbo/
-.cache/
-
-# Artifacts
+# --- ARCHIVOS PESADOS / TEMPORALES ---
 *.zip
-Frontend.zip
+*.tar.gz
+*.rar
+*.7z
+tmp/
+temp/
+logs/
+uploads/
+public/uploads/
+
+# --- MULTIMEDIA (Opcional, para limpieza extrema) ---
+*.mp4
+*.mov
+*.avi
+*.mp3
+*.wav
+*.exe
+*.dmg
+*.iso
