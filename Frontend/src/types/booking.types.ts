@@ -15,6 +15,7 @@ export interface Booking {
   totalPrice: number;
   paymentId?: string;
   cancelToken: string;
+  bookingCode: string;
   reviewToken: string;
   reviewTokenUsed: boolean;
   createdAt: string;

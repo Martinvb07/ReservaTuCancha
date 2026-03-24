@@ -1,7 +1,9 @@
 "use client";
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+
 import DashboardShell from '@/components/layout/DashboardShell';
+import ChangelogFloatingButton from '@/components/layout/ChangelogFloatingButton';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
@@ -18,12 +20,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return null;
   }
 
+  const role = (session.user as any).role;
   return (
     <DashboardShell
-      sidebarRole={(session.user as any).role}
+      sidebarRole={role}
       sidebarUserName={session.user?.name ?? ''}
     >
       {children}
+      {role === 'owner' && <ChangelogFloatingButton />}
     </DashboardShell>
   );
 }

@@ -11,6 +11,7 @@ export interface CourtFilters {
   maxPrice?: number;
   page?: number;
   limit?: number;
+  ownerId?: string;
 }
 
 @Injectable()
@@ -20,11 +21,20 @@ export class CourtsService {
   ) {}
 
   async findAll(filters: CourtFilters = {}) {
-    const { sport, city, minPrice, maxPrice, page = 1, limit = 12 } = filters;
+    const { sport, city, minPrice, maxPrice, page = 1, limit = 12, ownerId } = filters;
     const query: any = { isActive: true };
 
     if (sport) query.sport = sport;
     if (city) query['location.city'] = { $regex: city, $options: 'i' };
+    if (ownerId) {
+      // Convertir el string a ObjectId si es necesario
+      const { Types } = require('mongoose');
+      try {
+        query.ownerId = new Types.ObjectId(ownerId);
+      } catch (e) {
+        // Si no es un ObjectId válido, no filtrar por ownerId
+      }
+    }
     if (minPrice !== undefined || maxPrice !== undefined) {
       query.pricePerHour = {};
       if (minPrice !== undefined) query.pricePerHour.$gte = minPrice;

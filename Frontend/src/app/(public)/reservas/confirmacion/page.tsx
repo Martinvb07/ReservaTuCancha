@@ -53,8 +53,9 @@ function ConfirmacionContent() {
 
   const court = typeof booking.courtId === 'object' ? booking.courtId : null;
 
-  // Código único de reserva (primeros 8 chars del ID)
-  const codigoReserva = booking._id?.slice(-8).toUpperCase() ?? 'N/A';
+  // Código único de reserva (bookingCode real)
+  // Siempre mostrar el bookingCode real si existe
+  const codigoReserva = booking.bookingCode || 'N/A';
 
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4 py-12">

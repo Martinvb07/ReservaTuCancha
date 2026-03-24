@@ -113,7 +113,7 @@ export default function BookingForm({ courtId, courtName, pricePerHour, availabi
 
   // ── SUCCESS ───────────────────────────────────────────────────
   if (step === 'success') {
-    const code = bookingResult?._id?.slice(-8).toUpperCase() ?? '—';
+    const code = bookingResult?.bookingCode || '—';
     return (
       <div className="bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100">
         <div className="bg-gray-900 px-6 py-8 text-center space-y-3">

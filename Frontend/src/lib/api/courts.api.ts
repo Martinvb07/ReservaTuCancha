@@ -10,6 +10,7 @@ export const courtsApi = {
     if (filters.maxPrice) params.set('maxPrice', filters.maxPrice);
     if (filters.page)     params.set('page', String(filters.page));
     if (filters.limit)    params.set('limit', String(filters.limit ?? 12));
+    if (filters.ownerId) params.set('ownerId', filters.ownerId);
 
     const { data } = await api.get<CourtsResponse>(`/courts?${params}`);
     return data;

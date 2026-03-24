@@ -1,3 +1,4 @@
+// 1. Imports SIEMPRE al principio
 import {
   Injectable, NotFoundException, BadRequestException, ConflictException,
 } from '@nestjs/common';
@@ -8,12 +9,30 @@ import { Booking, BookingDocument, BookingStatus } from './schemas/booking.schem
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 
+// 2. Funciones de utilidad fuera de la clase
+function generateBookingCode(length = 8) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < length; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
 @Injectable()
 export class BookingsService {
   constructor(
     @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
     private readonly notificationsService: NotificationsService,
   ) {}
+
+  // 3. Métodos de la clase organizados
+  async findByGuestEmail(email: string): Promise<Booking[]> {
+    return this.bookingModel
+      .find({ guestEmail: email })
+      .populate('courtId', 'name sport location')
+      .lean();
+  }
 
   async create(createBookingDto: CreateBookingDto): Promise<Booking> {
     const conflict = await this.bookingModel.findOne({
@@ -24,15 +43,26 @@ export class BookingsService {
     });
     if (conflict) throw new ConflictException('El horario seleccionado ya no está disponible');
 
+    let bookingCode;
+    let exists = true;
+    while (exists) {
+      bookingCode = generateBookingCode(8);
+      exists = !!(await this.bookingModel.exists({ bookingCode }));
+    }
+
     const booking = new this.bookingModel({
       ...createBookingDto,
       cancelToken: uuidv4(),
       reviewToken: uuidv4(),
+      bookingCode,
       status: BookingStatus.PENDING,
     });
 
     const saved = await booking.save();
-    await this.notificationsService.sendBookingConfirmation(saved);
+    
+    // Aquí es donde enviamos el email fino que configuramos antes
+    await this.notificationsService.sendBookingConfirmation(saved as any);
+    
     return saved;
   }
 
@@ -78,7 +108,7 @@ export class BookingsService {
 
     booking.status = BookingStatus.CANCELLED;
     await booking.save();
-    await this.notificationsService.sendCancellationConfirmation(booking);
+    await this.notificationsService.sendCancellationConfirmation(booking as any);
     return { message: 'Reserva cancelada exitosamente' };
   }
 
@@ -93,7 +123,6 @@ export class BookingsService {
 
     if (!booking) throw new NotFoundException('Reserva no encontrada');
 
-    // Si se completa, enviar email de reseña
     if (status === 'completed') {
       await this.notificationsService.sendReviewRequest(booking as any);
     }

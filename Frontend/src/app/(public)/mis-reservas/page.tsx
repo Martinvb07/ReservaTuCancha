@@ -24,7 +24,8 @@ export default function MisReservasPage() {
   const { data: bookings = [], isLoading, refetch } = useQuery({
     queryKey: ['mis-reservas', query],
     queryFn: async () => {
-      const { data } = await api.get('/bookings', { params: { guestEmail: query } });
+      if (!query) return [];
+      const { data } = await api.get('/bookings/public', { params: { guestEmail: query } });
       return data;
     },
     enabled: false,
@@ -118,7 +119,8 @@ export default function MisReservasPage() {
             {bookings.map((booking: any) => {
               const court = typeof booking.courtId === 'object' ? booking.courtId : null;
               const st    = STATUS_STYLES[booking.status] ?? STATUS_STYLES.pending;
-              const code  = booking._id?.slice(-8).toUpperCase();
+              // Mostrar el código de reserva real
+              const code  = booking.bookingCode || 'N/A';
 
               return (
                 <div key={booking._id} className="bg-white rounded-2xl border border-gray-100 hover:border-green-200 hover:shadow-sm transition-all p-5 space-y-4">

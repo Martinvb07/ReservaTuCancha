@@ -23,6 +23,7 @@ export class CourtsController {
     @Query('maxPrice') maxPrice?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('ownerId') ownerId?: string,
   ) {
     const filters: CourtFilters = {
       sport,
@@ -31,6 +32,7 @@ export class CourtsController {
       maxPrice: maxPrice ? +maxPrice : undefined,
       page: page ? +page : 1,
       limit: limit ? +limit : 12,
+      ownerId,
     };
     return this.courtsService.findAll(filters);
   }

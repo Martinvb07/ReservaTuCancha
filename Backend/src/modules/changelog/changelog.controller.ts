@@ -13,9 +13,6 @@ export class ChangelogController {
   constructor(private readonly changelogService: ChangelogService) {}
 
   @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @ApiBearerAuth()
   findAll() {
     return this.changelogService.findAll();
   }

@@ -56,6 +56,9 @@ export class Booking {
   @Prop({ required: true, unique: true })
   cancelToken: string; // UUID — enviado por email para cancelar sin login
 
+  // Código corto y único para mostrar al usuario
+  @Prop({ required: true, unique: true, uppercase: true, trim: true, length: 8 })
+  bookingCode: string;
   @Prop({ required: true, unique: true })
   reviewToken: string; // UUID — enviado post-reserva para dejar reseña
 
@@ -71,3 +74,4 @@ BookingSchema.index({ guestEmail: 1 });
 BookingSchema.index({ cancelToken: 1 });
 BookingSchema.index({ reviewToken: 1 });
 BookingSchema.index({ status: 1 });
+BookingSchema.index({ bookingCode: 1 });

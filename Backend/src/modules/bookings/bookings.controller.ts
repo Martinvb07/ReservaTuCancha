@@ -1,3 +1,4 @@
+// 1. Imports SIEMPRE al principio del archivo
 import {
   Controller, Post, Get, Patch, Body, Query,
   Param, UseGuards, Request,
@@ -14,6 +15,13 @@ import { UserRole } from '../users/schemas/user.schema';
 @Controller('bookings')
 export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
+
+  // 2. Método movido dentro de la clase para corregir el error de "Unexpected keyword"
+  @Get('public')
+  @ApiOperation({ summary: 'Reservas por email (público)' })
+  getByEmailPublic(@Query('guestEmail') guestEmail: string) {
+    return this.bookingsService.findByGuestEmail(guestEmail);
+  }
 
   @Post()
   @ApiOperation({ summary: 'Crear reserva (sin login)' })

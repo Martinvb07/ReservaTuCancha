@@ -37,7 +37,7 @@ const CANALES = [
     title: 'WhatsApp',
     desc: 'Escríbenos por WhatsApp para una atención personalizada.',
     cta: 'Abrir WhatsApp',
-    href: 'https://wa.me/573001234567',
+    href: 'https://wa.me/573124352786',
     badge: '',
     badgeColor: '',
     color: 'bg-emerald-50',
@@ -290,7 +290,7 @@ export default function SoportePage() {
               className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2"
             >
               <Mail className="h-5 w-5" />
-              Enviar mensaje
+              Enviar consulta
             </button>
           </form>
         )}
