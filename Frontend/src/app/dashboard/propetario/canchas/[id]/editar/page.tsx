@@ -1,14 +1,14 @@
 // Ruta: src/app/dashboard/propetario/canchas/[id]/editar/page.tsx
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ArrowLeft, Building2, MapPin, DollarSign, Loader2, Save, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Building2, MapPin, DollarSign, Clock, Loader2, Save, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api/axios';
 
@@ -23,9 +23,31 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+interface AvailabilitySlot { 
+  dayOfWeek: number; 
+  openTime: string; 
+  closeTime: string; 
+  slotDurationMinutes: number; 
+}
+
 const inp = 'w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 transition';
 const lbl = 'block text-xs font-black text-gray-500 uppercase tracking-widest mb-2';
 const card = 'bg-white rounded-2xl border border-gray-100 p-6';
+const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+// Generar opciones de hora en formato AM/PM
+function generateTimeOptions() {
+  const options = [];
+  for (let i = 0; i < 24; i++) {
+    const hour = String(i).padStart(2, '0');
+    const ampm = i < 12 ? 'AM' : 'PM';
+    const display = i === 0 ? '12:00 AM' : i === 12 ? '12:00 PM' : `${String(i % 12).padStart(2, '0')}:00 ${ampm}`;
+    options.push({ value: `${hour}:00`, display });
+  }
+  return options;
+}
+
+const TIME_OPTIONS = generateTimeOptions();
 
 const SectionTitle = ({ icon: Icon, label }: { icon: any; label: string }) => (
   <div className="flex items-center gap-2 pb-4 mb-5 border-b border-gray-100">
@@ -40,6 +62,8 @@ export default function EditarCanchaPage() {
   const router = useRouter();
   const params = useParams();
   const id     = params.id as string;
+
+  const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
 
   const { data: court, isLoading } = useQuery({
     queryKey: ['court', id],
@@ -62,8 +86,20 @@ export default function EditarCanchaPage() {
         department:   court.location?.department ?? '',
         pricePerHour: court.pricePerHour,
       });
+      // Cargar disponibilidad
+      if (court.availability && Array.isArray(court.availability)) {
+        setAvailability(court.availability);
+      }
     }
   }, [court, reset]);
+
+  const toggleDay = (day: number) =>
+    setAvailability(prev => prev.find(s => s.dayOfWeek === day)
+      ? prev.filter(s => s.dayOfWeek !== day)
+      : [...prev, { dayOfWeek: day, openTime: '07:00', closeTime: '22:00', slotDurationMinutes: 60 }].sort((a,b) => a.dayOfWeek - b.dayOfWeek));
+
+  const updateSlot = (day: number, field: keyof AvailabilitySlot, value: string | number) =>
+    setAvailability(prev => prev.map(s => s.dayOfWeek === day ? { ...s, [field]: value } : s));
 
   const mutation = useMutation({
     mutationFn: (values: FormValues) => api.patch(`/courts/${id}`, {
@@ -75,6 +111,7 @@ export default function EditarCanchaPage() {
         department: values.department,
       },
       pricePerHour: values.pricePerHour,
+      availability,
     }),
     onSuccess: () => {
       toast.success('¡Cancha actualizada correctamente!');
@@ -196,6 +233,75 @@ export default function EditarCanchaPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Disponibilidad */}
+        <div className={card}>
+          <SectionTitle icon={Clock} label="Disponibilidad" />
+          <div className="flex gap-2 flex-wrap mb-4">
+            {DAYS.map((day, i) => {
+              const active = availability.some(s => s.dayOfWeek === i);
+              return (
+                <button key={day} type="button" onClick={() => toggleDay(i)}
+                  className={`w-11 h-11 rounded-xl text-xs font-bold border-2 transition-all ${active ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 text-gray-400 hover:border-green-300'}`}
+                >{day}</button>
+              );
+            })}
+          </div>
+          {availability.length > 0 && (
+            <div className="space-y-3 pt-3 border-t border-gray-100">
+              {availability.map(slot => {
+                const openDisplay = TIME_OPTIONS.find(o => o.value === slot.openTime)?.display || slot.openTime;
+                const closeDisplay = TIME_OPTIONS.find(o => o.value === slot.closeTime)?.display || slot.closeTime;
+                
+                return (
+                  <div key={slot.dayOfWeek} className="flex items-end gap-3">
+                    <div className="w-12">
+                      <label className="text-xs text-gray-400 block mb-1 font-bold">{DAYS[slot.dayOfWeek]}</label>
+                    </div>
+                    
+                    <div className="flex-1">
+                      <label className="text-xs text-gray-400 block mb-1">Inicio</label>
+                      <select 
+                        value={slot.openTime}
+                        onChange={e => updateSlot(slot.dayOfWeek, 'openTime', e.target.value)}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 bg-white">
+                        {TIME_OPTIONS.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.display}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <span className="text-gray-400 font-bold">—</span>
+
+                    <div className="flex-1">
+                      <label className="text-xs text-gray-400 block mb-1">Fin</label>
+                      <select 
+                        value={slot.closeTime}
+                        onChange={e => updateSlot(slot.dayOfWeek, 'closeTime', e.target.value)}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 bg-white">
+                        {TIME_OPTIONS.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.display}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="w-20">
+                      <label className="text-xs text-gray-400 block mb-1">Duración</label>
+                      <select 
+                        value={String(slot.slotDurationMinutes)}
+                        onChange={e => updateSlot(slot.dayOfWeek, 'slotDurationMinutes', Number(e.target.value))}
+                        className="w-full border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 bg-white">
+                        <option value="60">1h</option>
+                        <option value="90">1.5h</option>
+                        <option value="120">2h</option>
+                      </select>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Botones */}

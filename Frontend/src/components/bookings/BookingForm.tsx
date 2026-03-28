@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { format, addMinutes, parse, getDay, isToday, isBefore, startOfDay, addHours } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarDays, Clock, User, Mail, Phone, CreditCard, ChevronLeft, ChevronRight, Timer, CheckCircle, ArrowLeft } from 'lucide-react';
@@ -61,7 +62,7 @@ const inp = 'w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm
 const lbl = 'block text-xs font-black text-gray-600 uppercase tracking-widest mb-1.5';
 
 export default function BookingForm({ courtId, courtName, pricePerHour, availability }: BookingFormProps) {
-  const [step, setStep]               = useState<'form' | 'summary' | 'success'>('form');
+  const [step, setStep]                = useState<'form' | 'summary' | 'success'>('form');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [dateOffset, setDateOffset]   = useState(0);
@@ -84,16 +85,39 @@ export default function BookingForm({ courtId, courtName, pricePerHour, availabi
 
   const totalPrice = Math.round(pricePerHour * slotDurationH * (selectedSlots.length || 1));
 
-  const { data: bookedSlots = [] } = useQuery<{ startTime: string }[]>({
-    queryKey: ['booked-slots', courtId, selectedDate?.toISOString()],
-    queryFn: async () => {
-      if (!selectedDate) return [];
-      const { data } = await api.get('/bookings/slots', { params: { courtId, date: format(selectedDate, 'yyyy-MM-dd') } });
-      return data;
-    },
-    enabled: !!selectedDate,
-  });
-  const bookedTimes = bookedSlots.map((b: any) => b.startTime);
+const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string }[]>({
+  queryKey: ['booked-slots', courtId, selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null],
+  queryFn: async () => {
+    if (!selectedDate) return [];
+    // IMPORTANTE: Asegúrate de que el backend reciba solo la fecha YYYY-MM-DD
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    const { data } = await api.get('/bookings/slots', { 
+      params: { courtId, date: dateStr } 
+    });
+    return data;
+  },
+  enabled: !!selectedDate,
+});
+
+  function getBookedSlotsArray(bookedSlots: any[], timeSlots: string[]) {
+  const booked: string[] = [];
+    
+    bookedSlots.forEach((slot) => {
+      const start = slot.startTime; // Ejemplo: "16:00"
+      const end = slot.endTime;     // Ejemplo: "19:00"
+
+      timeSlots.forEach(t => {
+        // t viene de generateTimeSlots y es "16:00", "17:00", etc.
+        if (t >= start && t < end) {
+          booked.push(t);
+        }
+      });
+    });
+    return booked;
+  }
+
+
+  const bookedTimes = getBookedSlotsArray(bookedSlots, timeSlots);
 
   const mutation = useMutation({
     mutationFn: (values: FormValues) => bookingsApi.create({
@@ -130,7 +154,7 @@ export default function BookingForm({ courtId, courtName, pricePerHour, availabi
         <div className="p-6 space-y-3">
           <div className="bg-gray-50 rounded-2xl p-4 space-y-2 text-sm text-gray-600">
             <div className="flex justify-between"><span className="text-gray-400">Cancha</span><span className="font-bold text-gray-900">{courtName}</span></div>
-            <div className="flex justify-between"><span className="text-gray-400">Fecha</span><span className="font-bold text-gray-900">{selectedDate ? format(selectedDate, "dd 'de' MMM yyyy", { locale: es }) : '—'}</span></div>
+            <div className="flex justify-between"><span className="text-gray-400">Fecha</span><span className="font-bold text-gray-900">{selectedDate ? formatInTimeZone(selectedDate, 'America/Bogota', "dd 'de' MMM yyyy", { locale: es }) : '—'}</span></div>
             <div className="flex justify-between"><span className="text-gray-400">Horario</span><span className="font-bold text-gray-900">{selectedSlots[0]} – {endTime}</span></div>
             <div className="flex justify-between"><span className="text-gray-400">Total</span><span className="font-black text-green-700">${totalPrice.toLocaleString('es-CO')} COP</span></div>
           </div>
@@ -162,8 +186,8 @@ export default function BookingForm({ courtId, courtName, pricePerHour, availabi
         {/* Steps */}
         <div className="flex items-center gap-2 mt-4">
           {['Fecha y hora', 'Tus datos', 'Confirmar'].map((s, i) => {
-            const stepIdx = step === 'form' ? 0 : step === 'summary' ? 2 : 3;
-            const active  = i === stepIdx || (stepIdx === 2 && i <= 1);
+            const stepIdx = step === 'form' ? 0 : step === 'summary' ? 1 : 2;
+            const active  = i <= stepIdx;
             return (
               <div key={s} className="flex items-center gap-2 flex-1">
                 <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${active ? 'bg-lime-400 text-gray-900' : 'bg-white/10 text-gray-500'}`}>
@@ -239,7 +263,7 @@ export default function BookingForm({ courtId, courtName, pricePerHour, availabi
                     {timeSlots.map((slot, idx) => {
                       const isBooked   = bookedTimes.includes(slot);
                       const isSelected = selectedSlots.includes(slot);
-                      const canSelect  = !isBooked && (selectedSlots.length === 0 || selectedSlots[selectedSlots.length - 1] === timeSlots[idx - 1]);
+                      const canSelect   = !isBooked && (selectedSlots.length === 0 || selectedSlots[selectedSlots.length - 1] === timeSlots[idx - 1]);
                       const slot12h    = format(parse(slot, 'HH:mm', new Date()), 'hh:mm a');
                       const slotEnd    = format(addMinutes(parse(slot, 'HH:mm', new Date()), slotDuration), 'hh:mm a');
                       return (
@@ -250,14 +274,14 @@ export default function BookingForm({ courtId, courtName, pricePerHour, availabi
                             if (selectedSlots.length === 0 || canSelect) setSelectedSlots([...selectedSlots, slot]);
                           }}
                           className={`flex flex-col items-center py-2.5 rounded-xl border-2 text-xs transition-all ${
-                            isBooked ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed line-through'
+                            isBooked ? 'border-red-500 bg-red-100 text-red-700 cursor-not-allowed font-bold'
                             : isSelected ? 'border-green-500 bg-green-50 text-green-700 font-bold'
                             : canSelect ? 'border-gray-200 hover:border-green-300 text-gray-700'
                             : 'border-gray-100 text-gray-300 cursor-not-allowed opacity-50'
                           }`}>
                           <span className="font-bold">{slot12h}</span>
                           <span className="text-[10px] opacity-60">→ {slotEnd}</span>
-                          {isBooked && <span className="text-[9px] text-red-400 mt-0.5">Ocupado</span>}
+                          {isBooked && <span className="text-[9px] text-red-700 mt-0.5 font-bold">Ocupado</span>}
                         </button>
                       );
                     })}
@@ -271,7 +295,7 @@ export default function BookingForm({ courtId, courtName, pricePerHour, availabi
               <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl px-4 py-3">
                 <Timer className="h-5 w-5 text-green-600 shrink-0" />
                 <div className="flex-1 text-sm">
-                  <p className="font-black text-green-800">{format(selectedDate, "EEEE dd 'de' MMMM", { locale: es })}</p>
+                  <p className="font-black text-green-800">{formatInTimeZone(selectedDate, 'America/Bogota', "EEEE dd 'de' MMMM", { locale: es })}</p>
                   <p className="text-green-600 text-xs">{selectedSlots[0]} – {endTime} · {slotDuration * selectedSlots.length} min · ${totalPrice.toLocaleString('es-CO')} COP</p>
                 </div>
                 <span className="text-xs font-black text-green-700 bg-green-200 px-2.5 py-1 rounded-full">✓</span>
@@ -321,7 +345,7 @@ export default function BookingForm({ courtId, courtName, pricePerHour, availabi
             <div className="bg-gray-50 rounded-2xl p-5 space-y-3 text-sm">
               {[
                 { label: 'Cancha',   val: courtName },
-                { label: 'Fecha',    val: selectedDate ? format(selectedDate, "EEEE dd 'de' MMMM yyyy", { locale: es }) : '—' },
+                { label: 'Fecha',    val: selectedDate ? formatInTimeZone(selectedDate, 'America/Bogota', "EEEE dd 'de' MMMM yyyy", { locale: es }) : '—' },
                 { label: 'Horario',  val: `${selectedSlots[0]} – ${endTime} (${slotDuration * selectedSlots.length} min)` },
                 { label: 'Nombre',   val: watch('guestName') },
                 { label: 'Email',    val: watch('guestEmail') },

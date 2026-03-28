@@ -35,13 +35,48 @@ export class BookingsService {
   }
 
   async create(createBookingDto: CreateBookingDto): Promise<Booking> {
-    const conflict = await this.bookingModel.findOne({
-      courtId: createBookingDto.courtId,
-      date: new Date(createBookingDto.date),
-      startTime: createBookingDto.startTime,
+    // Convertir courtId a ObjectId si es string
+    const courtId = typeof createBookingDto.courtId === 'string'
+      ? new (this.bookingModel.db.base.Types.ObjectId)(createBookingDto.courtId)
+      : createBookingDto.courtId;
+
+    // Convertir la fecha string (yyyy-MM-dd) a medianoche local (Colombia)
+    let localDate: Date;
+    if (typeof createBookingDto.date === 'string' && createBookingDto.date.length === 10) {
+      const [year, month, day] = createBookingDto.date.split('-').map(Number);
+      localDate = new Date(year, month - 1, day);
+    } else {
+      localDate = new Date(createBookingDto.date);
+    }
+
+    // ✅ NUEVA VALIDACIÓN: Verificar solapamiento de horarios
+    const [reqStartHour, reqStartMin] = createBookingDto.startTime.split(':').map(Number);
+    const [reqEndHour, reqEndMin] = createBookingDto.endTime.split(':').map(Number);
+    const reqStartMins = reqStartHour * 60 + reqStartMin;
+    const reqEndMins = reqEndHour * 60 + reqEndMin;
+
+    // Buscar todas las reservas confirmadas o pendientes en esa fecha y cancha
+    const existingBookings = await this.bookingModel.find({
+      courtId,
+      date: {
+        $gte: new Date(localDate).setHours(0, 0, 0, 0),
+        $lt: new Date(localDate).setHours(23, 59, 59, 999),
+      },
       status: { $in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
     });
-    if (conflict) throw new ConflictException('El horario seleccionado ya no está disponible');
+
+    // Verificar si hay solapamiento de horarios
+    for (const booking of existingBookings) {
+      const [existHour, existMin] = booking.startTime.split(':').map(Number);
+      const [existEndHour, existEndMin] = booking.endTime.split(':').map(Number);
+      const existStartMins = existHour * 60 + existMin;
+      const existEndMins = existEndHour * 60 + existEndMin;
+
+      // Si hay solapamiento, rechazar
+      if (!(reqEndMins <= existStartMins || reqStartMins >= existEndMins)) {
+        throw new ConflictException('El horario seleccionado ya no está disponible');
+      }
+    }
 
     let bookingCode;
     let exists = true;
@@ -52,6 +87,8 @@ export class BookingsService {
 
     const booking = new this.bookingModel({
       ...createBookingDto,
+      courtId, // aseguramos que es ObjectId
+      date: localDate, // aseguramos que es medianoche local
       cancelToken: uuidv4(),
       reviewToken: uuidv4(),
       bookingCode,
@@ -59,10 +96,10 @@ export class BookingsService {
     });
 
     const saved = await booking.save();
-    
+
     // Aquí es donde enviamos el email fino que configuramos antes
     await this.notificationsService.sendBookingConfirmation(saved as any);
-    
+
     return saved;
   }
 
@@ -130,20 +167,36 @@ export class BookingsService {
     return booking;
   }
 
-  async findByCourtAndDate(courtId: string, date: string): Promise<Booking[]> {
-    return this.bookingModel
+  async findByCourtAndDate(courtId: string, date: string): Promise<any[]> {
+    const { Types } = require('mongoose');
+    const courtObjectId = new Types.ObjectId(courtId);
+
+    const [year, month, day] = date.split('-').map(Number);
+    
+    // Desde el inicio del día hasta el inicio del día siguiente (UTC)
+    const startOfDay = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+    const startOfNextDay = new Date(Date.UTC(year, month - 1, day + 1, 0, 0, 0, 0));
+
+    const result = await this.bookingModel
       .find({
-        courtId,
-        date: new Date(date),
+        courtId: courtObjectId,
+        date: {
+          $gte: startOfDay,
+          $lt: startOfNextDay,
+        },
         status: { $in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
       })
       .select('startTime endTime status')
       .lean();
+
+    return result;
   }
 
   async findByOwner(ownerCourtIds: string[]): Promise<Booking[]> {
+    const { Types } = require('mongoose');
+    const objectIds = ownerCourtIds.map(id => new Types.ObjectId(id));
     return this.bookingModel
-      .find({ courtId: { $in: ownerCourtIds } })
+      .find({ courtId: { $in: objectIds } })
       .populate('courtId', 'name sport')
       .sort({ date: -1 })
       .lean();

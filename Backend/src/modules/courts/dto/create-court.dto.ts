@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsNumber, IsOptional, IsArray, Min, ValidateNested } from 'class-validator';
+import { IsString, IsEnum, IsNumber, IsOptional, IsArray, Min, ValidateNested, Matches } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { SportType } from '../schemas/court.schema';
@@ -12,8 +12,19 @@ class LocationDto {
 
 class AvailabilitySlotDto {
   @IsNumber() @Min(0) dayOfWeek: number;
-  @IsString() openTime: string;
-  @IsString() closeTime: string;
+  
+  @IsString()
+  @Matches(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, {
+    message: 'openTime debe estar en formato HH:mm (24h)'
+  })
+  openTime: string;
+  
+  @IsString()
+  @Matches(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$|^00:00$/, {
+    message: 'closeTime debe estar en formato HH:mm (24h). Use 00:00 para medianoche'
+  })
+  closeTime: string;
+  
   @IsOptional() @IsNumber() slotDurationMinutes?: number;
 }
 
@@ -51,7 +62,18 @@ export class CreateCourtDto {
   @IsArray()
   photos?: string[];
 
-  @ApiProperty({ type: [AvailabilitySlotDto], required: false })
+  @ApiProperty({ 
+    type: [AvailabilitySlotDto], 
+    required: false,
+    example: [
+      {
+        dayOfWeek: 1,
+        openTime: "07:00",
+        closeTime: "00:00",
+        slotDurationMinutes: 60
+      }
+    ]
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })

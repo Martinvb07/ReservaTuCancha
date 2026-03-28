@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Search, MapPin, Star, ChevronRight, CheckCircle, Calendar, CreditCard, Smile } from 'lucide-react';
 
 const SPORTS = [
-  { key: 'futbol',      label: 'Fútbol',      img: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=800&q=80', desc: 'La adrenalina y el trabajo en equipo se fusionan.' },
-  { key: 'padel',       label: 'Pádel',       img: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&q=80', desc: 'Canchas diseñadas para jugadores que buscan emoción.' },
-  { key: 'voley_playa', label: 'Voley Playa', img: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=800&q=80', desc: 'Arena profesional para partidos épicos.' },
+  { key: 'futbol',      label: 'Fútbol',      img: 'https://canchasintetica.com/wp-content/uploads/2023/01/cancha-sintetica-de-futbol-scaled.jpg', desc: 'La adrenalina y el trabajo en equipo se fusionan.' },
+  { key: 'padel',       label: 'Pádel',       img: 'https://imagenes2.eltiempo.com/files/image_1200_675/uploads/2025/02/08/67a826ea4f6fb.jpeg', desc: 'Canchas diseñadas para jugadores que buscan emoción.' },
+  { key: 'voley_playa', label: 'Voley Playa', img: 'https://lajauladelangel.com.co/vivaenvigado/wp-content/uploads/2025/01/IMG_0146-scaled.jpg', desc: 'Arena profesional para partidos épicos.' },
 ];
 
 const STEPS = [
@@ -54,7 +54,7 @@ export default function HomePage() {
       <section className="relative h-[620px] flex items-center justify-center overflow-hidden">
         {/* Foto de fondo */}
         <img
-          src="https://images.unsplash.com/photo-1551958219-acbc595b8cc8?w=1600&q=80"
+          src="https://www.unila.edu.mx/wp-content/uploads/2025/09/los-5-deportes-mas-populares-del-mundo.jpg"
           alt="cancha de fútbol"
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -140,14 +140,14 @@ export default function HomePage() {
         {/* Grid imágenes */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', height: '380px' }}>
           <div style={{ borderRadius: '16px', overflow: 'hidden' }}>
-            <img src="https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&q=80" alt="pádel" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            <img src="https://imagenes2.eltiempo.com/files/image_1200_675/uploads/2025/02/08/67a826ea4f6fb.jpeg" alt="pádel" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '380px' }}>
             <div style={{ borderRadius: '16px', overflow: 'hidden', flex: 1 }}>
-              <img src="https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=600&q=80" alt="voley" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              <img src="https://lajauladelangel.com.co/vivaenvigado/wp-content/uploads/2025/01/IMG_0146-scaled.jpg" alt="voley" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
             </div>
             <div style={{ borderRadius: '16px', overflow: 'hidden', flex: 1 }}>
-              <img src="https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600&q=80" alt="fútbol" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              <img src="https://canchasintetica.com/wp-content/uploads/2023/01/cancha-sintetica-de-futbol-scaled.jpg  " alt="fútbol" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
             </div>
           </div>
         </div>

@@ -6,6 +6,7 @@ import { SolicitudesService } from './solicitudes.service';
 import { Solicitud, SolicitudSchema } from './solicitudes.schema';
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { ClubsModule } from '../clubs/clubs.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
       { name: User.name, schema: UserSchema },
     ]),
     NotificationsModule,
+    ClubsModule,
   ],
   controllers: [SolicitudesController],
   providers: [SolicitudesService],

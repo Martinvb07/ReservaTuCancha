@@ -59,4 +59,27 @@ export class ClubsService {
 
     return enriched;
   }
+
+  async updateWompiCredentials(clubId: string, wompiData: { wompiMerchantId: string; wompiPublicKey: string; wompiApiKey: string }, userId: string) {
+    const club = await this.clubModel.findById(clubId);
+    if (!club) throw new Error('Club no encontrado');
+    
+    // Verificar que el usuario sea dueño del club
+    if (club.ownerUserId.toString() !== userId) {
+      throw new Error('No tienes permiso para actualizar este club');
+    }
+
+    // Actualizar credenciales Wompi
+    club.wompiMerchantId = wompiData.wompiMerchantId;
+    club.wompiPublicKey = wompiData.wompiPublicKey;
+    club.wompiApiKey = wompiData.wompiApiKey;
+    club.wompiConfigured = true;
+
+    await club.save();
+
+    return {
+      message: 'Credenciales de Wompi guardadas exitosamente',
+      wompiConfigured: true,
+    };
+  }
 }

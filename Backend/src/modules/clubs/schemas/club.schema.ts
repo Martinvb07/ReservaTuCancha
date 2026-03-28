@@ -25,6 +25,18 @@ export class Club {
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   ownerUserId: Types.ObjectId;
+
+  @Prop()
+  wompiMerchantId?: string;
+
+  @Prop()
+  wompiPublicKey?: string;
+
+  @Prop()
+  wompiApiKey?: string;
+
+  @Prop({ default: false })
+  wompiConfigured?: boolean;
 }
 
 export const ClubSchema = SchemaFactory.createForClass(Club);

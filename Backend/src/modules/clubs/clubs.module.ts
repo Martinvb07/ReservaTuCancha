@@ -15,5 +15,6 @@ import { Court, CourtSchema } from '../courts/schemas/court.schema';
   ],
   controllers: [ClubsController],
   providers: [ClubsService],
+  exports: [MongooseModule, ClubsService],
 })
 export class ClubsModule {}

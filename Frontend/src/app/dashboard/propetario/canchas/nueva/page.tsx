@@ -1,3 +1,4 @@
+// Ruta: src/app/dashboard/propetario/canchas/nueva/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -34,8 +35,8 @@ const SPORTS = [
 ];
 
 const FUTBOL_MODALIDADES = [
-  { value: 'futbol_5',  label: 'Fútbol 5',  players: '10 jug.', desc: 'Cancha pequeña'      },
-  { value: 'futbol_7',  label: 'Fútbol 7',  players: '14 jug.', desc: 'Cancha mediana'       },
+  { value: 'futbol_5',  label: 'Fútbol 7',  players: '14 jug.', desc: 'Cancha pequeña'      },
+  { value: 'futbol_7',  label: 'Fútbol 9',  players: '18 jug.', desc: 'Cancha mediana'       },
   { value: 'futbol_11', label: 'Fútbol 11', players: '22 jug.', desc: 'Cancha reglamentaria' },
 ];
 
@@ -47,6 +48,20 @@ const AMENITIES_OPTIONS = [
 ];
 
 interface AvailabilitySlot { dayOfWeek: number; openTime: string; closeTime: string; slotDurationMinutes: number; }
+
+// Generar opciones de hora en formato AM/PM
+function generateTimeOptions() {
+  const options = [];
+  for (let i = 0; i < 24; i++) {
+    const hour = String(i).padStart(2, '0');
+    const ampm = i < 12 ? 'AM' : 'PM';
+    const display = i === 0 ? '12:00 AM' : i === 12 ? '12:00 PM' : `${String(i % 12).padStart(2, '0')}:00 ${ampm}`;
+    options.push({ value: `${hour}:00`, display });
+  }
+  return options;
+}
+
+const TIME_OPTIONS = generateTimeOptions();
 
 const inp  = 'w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 transition';
 const lbl  = 'block text-xs font-black text-gray-500 uppercase tracking-widest mb-2';
@@ -84,8 +99,8 @@ export default function AdminNuevaCanchaPage() {
       location: { address: v.address, city: v.city, department: v.department },
       pricePerHour: v.pricePerHour, currency: v.currency, availability,
     }),
-    // ← redirige a admin/canchas, no a /dashboard/canchas
-    onSuccess: () => { toast.success('¡Cancha publicada!'); router.push('/dashboard/admin/canchas'); },
+    
+    onSuccess: () => { toast.success('¡Cancha publicada!'); router.push('/dashboard/propetario/canchas'); },
     onError:   (e: Error) => toast.error(e.message || 'Error al crear la cancha'),
   });
 
@@ -246,26 +261,57 @@ export default function AdminNuevaCanchaPage() {
                 })}
               </div>
               {availability.length > 0 && (
-                <div className="space-y-2 pt-3 border-t border-gray-100">
-                  {availability.map(slot => (
-                    <div key={slot.dayOfWeek} className="flex items-center gap-2">
-                      <span className="w-9 text-xs font-bold text-gray-500 shrink-0">{DAYS[slot.dayOfWeek]}</span>
-                      <input type="time" value={slot.openTime}
-                        onChange={e => updateSlot(slot.dayOfWeek, 'openTime', e.target.value)}
-                        className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-green-400 flex-1" />
-                      <span className="text-gray-400 text-xs">—</span>
-                      <input type="time" value={slot.closeTime}
-                        onChange={e => updateSlot(slot.dayOfWeek, 'closeTime', e.target.value)}
-                        className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-green-400 flex-1" />
-                      <select value={String(slot.slotDurationMinutes)}
-                        onChange={e => updateSlot(slot.dayOfWeek, 'slotDurationMinutes', Number(e.target.value))}
-                        className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-green-400 w-20">
-                        <option value="60">1h</option>
-                        <option value="90">1.5h</option>
-                        <option value="120">2h</option>
-                      </select>
-                    </div>
-                  ))}
+                <div className="space-y-3 pt-3 border-t border-gray-100">
+                  {availability.map(slot => {
+                    const openDisplay = TIME_OPTIONS.find(o => o.value === slot.openTime)?.display || slot.openTime;
+                    const closeDisplay = TIME_OPTIONS.find(o => o.value === slot.closeTime)?.display || slot.closeTime;
+                    
+                    return (
+                      <div key={slot.dayOfWeek} className="flex items-end gap-3">
+                        <div className="w-12">
+                          <label className="text-xs text-gray-400 block mb-1 font-bold">{DAYS[slot.dayOfWeek]}</label>
+                        </div>
+                        
+                        <div className="flex-1">
+                          <label className="text-xs text-gray-400 block mb-1">Inicio</label>
+                          <select 
+                            value={slot.openTime}
+                            onChange={e => updateSlot(slot.dayOfWeek, 'openTime', e.target.value)}
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 bg-white">
+                            {TIME_OPTIONS.map(opt => (
+                              <option key={opt.value} value={opt.value}>{opt.display}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <span className="text-gray-400 font-bold">—</span>
+
+                        <div className="flex-1">
+                          <label className="text-xs text-gray-400 block mb-1">Fin</label>
+                          <select 
+                            value={slot.closeTime}
+                            onChange={e => updateSlot(slot.dayOfWeek, 'closeTime', e.target.value)}
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 bg-white">
+                            {TIME_OPTIONS.map(opt => (
+                              <option key={opt.value} value={opt.value}>{opt.display}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="w-20">
+                          <label className="text-xs text-gray-400 block mb-1">Duración</label>
+                          <select 
+                            value={String(slot.slotDurationMinutes)}
+                            onChange={e => updateSlot(slot.dayOfWeek, 'slotDurationMinutes', Number(e.target.value))}
+                            className="w-full border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 bg-white">
+                            <option value="60">1h</option>
+                            <option value="90">1.5h</option>
+                            <option value="120">2h</option>
+                          </select>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -292,7 +338,7 @@ export default function AdminNuevaCanchaPage() {
 
         {/* Botones */}
         <div className="flex gap-3 mt-5">
-          <button type="button" onClick={() => router.push('/dashboard/admin/canchas')}
+          <button type="button" onClick={() => router.push('/dashboard/propetario/canchas')}
             className="flex-1 border-2 border-gray-200 hover:border-gray-400 text-gray-700 font-bold py-4 rounded-2xl transition-all"
             disabled={mutation.isPending}>
             Cancelar

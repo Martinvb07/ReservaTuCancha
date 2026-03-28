@@ -35,7 +35,7 @@ export default function PrivacidadPage() {
           </div>
           <div className="space-y-3">
             <h2 className="text-lg font-black text-gray-900 uppercase">4. Tus derechos</h2>
-            <p>Puedes solicitar la eliminación, corrección o acceso a tus datos escribiéndonos a <a href="mailto:soporte@reservatucancha.co" className="text-green-600 hover:underline">soporte@reservatucancha.co</a>. Respondemos en máximo 5 días hábiles.</p>
+            <p>Puedes solicitar la eliminación, corrección o acceso a tus datos escribiéndonos a <a href="mailto:soporte@reservatucancha.pro" className="text-green-600 hover:underline">soporte@reservatucancha.pro</a>. Respondemos en máximo 5 días hábiles.</p>
           </div>
         </div>
       </section>

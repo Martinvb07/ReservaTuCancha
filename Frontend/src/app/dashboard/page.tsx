@@ -4,28 +4,75 @@ import {
   CalendarDays, DollarSign, Building2, Users,
   TrendingUp, FileText, Bell, ChevronRight,
   CheckCircle, Clock, XCircle, Plus, BarChart3,
-  ArrowUpRight, Zap,
+  ArrowUpRight, Zap, AlertTriangle, RefreshCw,
 } from 'lucide-react';
 import Link from 'next/link';
 
-async function getStats(token: string, role: string) {
+interface StatsResponse {
+  totalBookings: number;
+  confirmedBookings: number;
+  totalRevenue: number;
+  totalCourts: number;
+  pendingBookings?: number;
+  topCourt?: any;
+  totalOwners?: number;
+  newOwners?: number;
+  pendingSolicitudes?: number;
+  activeSubs?: number;
+  trialSubs?: number;
+}
+
+async function getStats(token: string | undefined, role: string): Promise<StatsResponse | null> {
   try {
+    if (!token) {
+      console.error('❌ No token found');
+      return null;
+    }
+
     const endpoint = role === 'admin' ? '/analytics/admin' : '/analytics/owner';
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
-      headers: { Authorization: `Bearer ${token}` },
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    
+    if (!apiUrl) {
+      console.error('❌ NEXT_PUBLIC_API_URL not configured');
+      return null;
+    }
+
+    const url = `${apiUrl}${endpoint}`;
+    
+    console.log('🔄 Fetching from:', url);
+    console.log('📌 Role:', role);
+    
+    const res = await fetch(url, {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
       next: { revalidate: 60 },
     });
-    if (!res.ok) return null;
-    return res.json();
-  } catch { return null; }
+
+    console.log('📊 Response status:', res.status);
+    
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`❌ Error ${res.status}:`, errorText);
+      return null;
+    }
+
+    const data = await res.json();
+    console.log('✅ Stats loaded:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ Fetch error:', error);
+    return null;
+  }
 }
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
-  const token   = (session as any)?.accessToken;
-  const role    = (session?.user as any)?.role;
-  const name    = session?.user?.name?.split(' ')[0] ?? '';
-  const stats   = await getStats(token, role);
+  const token = (session as any)?.accessToken;
+  const role = (session?.user as any)?.role;
+  const name = session?.user?.name?.split(' ')[0] ?? '';
+  const stats = await getStats(token, role);
 
   // ── OWNER ───────────────────────────────────────────────────
   if (role !== 'admin') {
@@ -42,6 +89,19 @@ export default async function DashboardPage() {
           <h1 className="text-3xl font-black text-gray-900 uppercase">Hola, {name} 👋</h1>
           <p className="text-gray-500 text-sm mt-1">Resumen de tus canchas y reservas</p>
         </div>
+
+        {!stats && (
+          <div className="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-6">
+            <div className="flex items-start gap-4">
+              <AlertTriangle className="h-6 w-6 text-amber-600 mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <h3 className="font-bold text-amber-900 mb-1">⚠️ No se pudieron cargar los datos</h3>
+                <p className="text-amber-700 text-sm">Verifica que el servidor backend esté corriendo en {process.env.NEXT_PUBLIC_API_URL}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           {kpis.map(k => (
             <div key={k.title} className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-shadow">
@@ -55,10 +115,10 @@ export default async function DashboardPage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { href: '/dashboard/canchas/nueva', label: 'Nueva cancha',  icon: Plus,        color: 'bg-lime-400',   text: 'text-gray-900' },
-            { href: '/dashboard/reservas',      label: 'Ver reservas',  icon: CalendarDays,color: 'bg-blue-600',   text: 'text-white'    },
-            { href: '/dashboard/analytics',     label: 'Analytics',     icon: BarChart3,   color: 'bg-purple-600', text: 'text-white'    },
-            { href: '/dashboard/canchas',       label: 'Mis canchas',   icon: Building2,   color: 'bg-gray-800',   text: 'text-white'    },
+            { href: '/dashboard/propetario/canchas/nueva', label: 'Nueva cancha',  icon: Plus,        color: 'bg-lime-400',   text: 'text-gray-900' },
+            { href: '/dashboard/propetario/reservas',      label: 'Ver reservas',  icon: CalendarDays,color: 'bg-blue-600',   text: 'text-white'    },
+            { href: '/dashboard/propetario/analytics',     label: 'Analytics',     icon: BarChart3,   color: 'bg-purple-600', text: 'text-white'    },
+            { href: '/dashboard/propetario/canchas',       label: 'Mis canchas',   icon: Building2,   color: 'bg-gray-800',   text: 'text-white'    },
           ].map(a => (
             <Link key={a.href} href={a.href} className={`${a.color} ${a.text} rounded-2xl p-5 flex flex-col gap-3 hover:opacity-90 hover:scale-[1.02] transition-all`}>
               <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center"><a.icon className="h-5 w-5" /></div>
@@ -76,7 +136,7 @@ export default async function DashboardPage() {
       title: 'Propietarios activos',
       value: stats?.totalOwners ?? 0,
       change: `+${stats?.newOwners ?? 0} este mes`,
-      trend: 'up',
+      trend: 'up' as const,
       icon: Users,
       color: 'text-blue-600', bg: 'bg-blue-50',
       href: '/dashboard/admin/usuarios',
@@ -85,7 +145,7 @@ export default async function DashboardPage() {
       title: 'Canchas publicadas',
       value: stats?.totalCourts ?? 0,
       change: 'En toda Colombia',
-      trend: 'up',
+      trend: 'up' as const,
       icon: Building2,
       color: 'text-purple-600', bg: 'bg-purple-50',
       href: '/dashboard/admin/canchas',
@@ -94,7 +154,7 @@ export default async function DashboardPage() {
       title: 'Reservas totales',
       value: stats?.totalBookings ?? 0,
       change: '+12% vs mes anterior',
-      trend: 'up',
+      trend: 'up' as const,
       icon: CalendarDays,
       color: 'text-green-600', bg: 'bg-green-50',
       href: '/dashboard/admin/reportes',
@@ -103,7 +163,7 @@ export default async function DashboardPage() {
       title: 'Ingresos plataforma',
       value: `$${((stats?.totalRevenue ?? 0)/1000000).toFixed(1)}M`,
       change: 'COP este mes',
-      trend: 'up',
+      trend: 'up' as const,
       icon: DollarSign,
       color: 'text-emerald-600', bg: 'bg-emerald-50',
       href: '/dashboard/admin/reportes',
@@ -112,7 +172,7 @@ export default async function DashboardPage() {
       title: 'Solicitudes pendientes',
       value: stats?.pendingSolicitudes ?? 0,
       change: 'Requieren aprobación',
-      trend: stats?.pendingSolicitudes > 0 ? 'warn' : 'neutral',
+      trend: (stats?.pendingSolicitudes ?? 0) > 0 ? 'warn' as const : 'neutral' as const,
       icon: FileText,
       color: 'text-orange-600', bg: 'bg-orange-50',
       href: '/dashboard/admin/solicitudes',
@@ -121,7 +181,7 @@ export default async function DashboardPage() {
       title: 'Suscripciones activas',
       value: stats?.activeSubs ?? 0,
       change: `${stats?.trialSubs ?? 0} en período de prueba`,
-      trend: 'up',
+      trend: 'up' as const,
       icon: Zap,
       color: 'text-yellow-600', bg: 'bg-yellow-50',
       href: '/dashboard/admin/suscripciones',
@@ -160,12 +220,12 @@ export default async function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {(stats?.pendingSolicitudes ?? 0) > 0 && (
+          {stats && (stats.pendingSolicitudes ?? 0) > 0 && (
             <Link href="/dashboard/admin/solicitudes"
               className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-colors shadow-sm"
             >
               <FileText className="h-4 w-4" />
-              {stats.pendingSolicitudes} solicitud{stats.pendingSolicitudes > 1 ? 'es' : ''} pendiente{stats.pendingSolicitudes > 1 ? 's' : ''}
+              {stats.pendingSolicitudes} solicitud{(stats.pendingSolicitudes ?? 0) > 1 ? 'es' : ''} pendiente{(stats.pendingSolicitudes ?? 0) > 1 ? 's' : ''}
             </Link>
           )}
         </div>

@@ -1,8 +1,10 @@
 // src/modules/notifications/notifications.service.ts
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
 import { Booking } from '../bookings/schemas/booking.schema';
+import { CourtsService } from '../courts/courts.service';
+import { ClubsService } from '../clubs/clubs.service';
 
 @Injectable()
 export class NotificationsService {
@@ -11,7 +13,11 @@ export class NotificationsService {
   private readonly fromEmail: string;
   private readonly resend: Resend;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly courtsService: CourtsService,
+    private readonly clubsService: ClubsService,
+  ) {
     this.frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
     this.fromEmail   = this.configService.get<string>('RESEND_FROM_EMAIL');
     this.resend = new Resend(this.configService.get<string>('RESEND_API_KEY'));
@@ -41,11 +47,36 @@ export class NotificationsService {
   }
 
   async sendBookingConfirmation(booking: Booking & { _id: any }) {
+    // Buscar datos de cancha y club
+    const court = await this.courtsService.findById(booking.courtId.toString());
+    let club = null;
+    if (court && court.ownerId) {
+      club = await this.clubsService['clubModel'].findOne({ ownerUserId: court.ownerId }).lean();
+    }
     const cancelUrl  = `${this.frontendUrl}/reservas/cancelar?token=${booking.cancelToken}`;
+    // Forzar zona horaria de Colombia para evitar desfase de día
     const bookingDate = new Date(booking.date).toLocaleDateString('es-CO', {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+      timeZone: 'America/Bogota',
     });
-
+    // Formato hora am/pm
+    function toAmPm(time: string) {
+      const [h, m] = time.split(":").map(Number);
+      const ampm = h >= 12 ? 'pm' : 'am';
+      const hour = h % 12 || 12;
+      return `${hour}:${m.toString().padStart(2, '0')} ${ampm}`;
+    }
+    // Formato deporte legible
+    function formatSport(sport: string) {
+      if (!sport) return '-';
+      return sport
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+    }
+    const startAmPm = toAmPm(booking.startTime);
+    const endAmPm = toAmPm(booking.endTime);
+    const sportLabel = formatSport(court?.sport);
     await this.send({
       to: booking.guestEmail,
       from: this.fromEmail,
@@ -58,25 +89,30 @@ export class NotificationsService {
                 <div style="background-color: #a3e635; width: 64px; height: 64px; border-radius: 50%; margin-bottom: 24px; display: table;">
                   <span style="display: table-cell; vertical-align: middle; font-size: 30px; color: #111827;">✓</span>
                 </div>
-                
                 <h1 style="color: #ffffff; font-size: 26px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">¡RESERVA CREADA!</h1>
                 <p style="color: #9ca3af; font-size: 14px; margin-top: 10px; line-height: 20px;">
                   Gracias por reservar con nosotros, <strong>${booking.guestName}</strong>. Tu reserva fue creada exitosamente. Aquí tienes los detalles de tu reserva:
                 </p>
-
                 <div style="background-color: #1f2937; border-radius: 20px; padding: 20px; margin-top: 28px; border: 1px solid #374151;">
                   <span style="color: #9ca3af; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">Código de Reserva</span>
                   <span style="color: #a3e635; font-size: 30px; font-weight: 800; letter-spacing: 2px;">#${booking.bookingCode}</span>
                 </div>
               </td>
             </tr>
-
             <tr>
               <td style="background-color: #ffffff; padding: 40px 30px; border-radius: 32px 32px 0 0;">
                 <table width="100%" border="0" cellpadding="0" cellspacing="0">
                   <tr style="height: 45px;">
-                    <td style="color: #6b7280; font-size: 14px;">Cancha</td>
-                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">Padel</td>
+                    <td style="color: #6b7280; font-size: 14px;">Club</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${club?.name || '-'}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Dirección</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${club?.address || '-'}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Deporte</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${sportLabel}</td>
                   </tr>
                   <tr style="height: 45px;">
                     <td style="color: #6b7280; font-size: 14px;">Fecha</td>
@@ -84,14 +120,13 @@ export class NotificationsService {
                   </tr>
                   <tr style="height: 45px;">
                     <td style="color: #6b7280; font-size: 14px;">Horario</td>
-                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${booking.startTime} – ${booking.endTime}</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${startAmPm} – ${endAmPm}</td>
                   </tr>
                   <tr style="height: 65px;">
                     <td style="color: #6b7280; font-size: 14px; border-top: 1px solid #f3f4f6;">Total</td>
                     <td align="right" style="color: #059669; font-size: 18px; font-weight: 800; border-top: 1px solid #f3f4f6;">$${booking.totalPrice?.toLocaleString('es-CO')} COP</td>
                   </tr>
                 </table>
-
                 <div style="margin-top: 32px; text-align: center;">
                   <a href="${cancelUrl}" style="background-color: #ef4444; color: #ffffff; padding: 16px 32px; border-radius: 16px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
                     Cancelar reserva
@@ -149,26 +184,70 @@ export class NotificationsService {
     });
   }
 
-  async sendApprovalEmail(email: string, name: string, tempPassword: string) {
+  async sendApprovalEmail(email: string, name: string, tempPassword: string, userData?: { id: string; nit: string; businessName: string }) {
+    const approvalDate = new Date().toLocaleDateString('es-CO', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    });
+
     await this.send({
       to: email,
       from: this.fromEmail,
-      subject: '🎉 ¡Tu cuenta fue aprobada! — ReservaTuCancha',
+      subject: `✅ ¡Tu solicitud fue aprobada! — #${userData?.id || 'N/A'}`,
       html: `
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f9fafb;padding:24px;border-radius:12px;">
-          <div style="background:#111827;padding:24px;border-radius:12px;text-align:center;margin-bottom:24px;">
-            <h1 style="color:#a3e635;margin:0;">ReservaTuCancha</h1>
-          </div>
-          <h2 style="color:#16a34a;">¡Bienvenido, ${name}!</h2>
-          <p>Tu solicitud fue aprobada. Usa estas credenciales para ingresar:</p>
-          <div style="background:white;border-radius:8px;padding:20px;margin:16px 0;border:1px solid #e5e7eb;">
-            <p style="margin:0 0 8px;"><strong>Email:</strong> ${email}</p>
-            <p style="margin:0;"><strong>Contraseña temporal:</strong> <code style="background:#f0fdf4;padding:4px 8px;border-radius:4px;font-size:18px;">${tempPassword}</code></p>
-          </div>
-          <div style="text-align:center;margin:24px 0;">
-            <a href="${this.frontendUrl}/auth/login" style="background:#16a34a;color:white;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:bold;">
-              Ingresar al panel →
-            </a>
+        <div style="background-color: #f3f4f6; padding: 40px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+          <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 450px; background-color: #111827; border-radius: 32px; overflow: hidden; border-collapse: separate;">
+            <tr>
+              <td align="center" style="padding: 40px 30px;">
+                <div style="background-color: #a3e635; width: 64px; height: 64px; border-radius: 50%; margin-bottom: 24px; display: table;">
+                  <span style="display: table-cell; vertical-align: middle; font-size: 30px; color: #111827;">✓</span>
+                </div>
+                
+                <h1 style="color: #ffffff; font-size: 26px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">¡BIENVENIDO!</h1>
+                <p style="color: #9ca3af; font-size: 14px; margin-top: 10px; line-height: 20px;">
+                  Tu solicitud fue aprobada, <strong>${name}</strong>. Tu cuenta está lista para usar. Aquí tienes tus credenciales de acceso:
+                </p>
+
+                <div style="background-color: #1f2937; border-radius: 20px; padding: 20px; margin-top: 28px; border: 1px solid #374151;">
+                  <span style="color: #9ca3af; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">ID de Propietario</span>
+                  <span style="color: #a3e635; font-size: 30px; font-weight: 800; letter-spacing: 2px;">#${userData?.id || 'N/A'}</span>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="background-color: #ffffff; padding: 40px 30px; border-radius: 32px 32px 0 0;">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Empresa</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${userData?.businessName || 'N/A'}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">NIT</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${userData?.nit || 'N/A'}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Email</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${email}</td>
+                  </tr>
+                  <tr style="height: 65px;">
+                    <td style="color: #6b7280; font-size: 14px; border-top: 1px solid #f3f4f6;">Contraseña</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700; border-top: 1px solid #f3f4f6;"><code style="background:#f0fdf4;padding:6px 12px;border-radius:6px;font-size:16px;font-weight:600;">${tempPassword}</code></td>
+                  </tr>
+                </table>
+
+                <div style="margin-top: 32px; text-align: center;">
+                  <a href="${this.frontendUrl}/auth/login" style="background-color: #16a34a; color: #ffffff; padding: 16px 32px; border-radius: 16px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                    Ingresar al panel →
+                  </a>
+                  <p style="color: #9ca3af; font-size: 12px; margin-top: 20px;">
+                    Recomendamos cambiar tu contraseña al primer ingreso.
+                  </p>
+                </div>
+              </td>
+            </tr>
+          </table>
+          <div style="text-align: center; margin-top: 24px; color: #9ca3af; font-size: 12px;">
+             Enviado por <strong>ReservaTuCancha</strong>
           </div>
         </div>
       `,

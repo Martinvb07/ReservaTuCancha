@@ -26,8 +26,11 @@ export class SolicitudesController {
   @Patch(':id/aprobar')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  async aprobar(@Param('id') id: string) {
-    return this.solicitudesService.aprobar(id);
+  async aprobar(
+    @Param('id') id: string,
+    @Body() approvalData?: { name?: string; email?: string; password?: string; userId?: string; nit?: string; businessName?: string }
+  ) {
+    return this.solicitudesService.aprobar(id, approvalData);
   }
 
   @Patch(':id/rechazar')

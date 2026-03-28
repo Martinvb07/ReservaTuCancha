@@ -35,7 +35,7 @@ export default function TerminosPage() {
           </div>
           <div className="space-y-3">
             <h2 className="text-lg font-black text-gray-900 uppercase">4. Contacto</h2>
-            <p>Para consultas sobre estos términos: <a href="mailto:soporte@reservatucancha.co" className="text-green-600 hover:underline">soporte@reservatucancha.co</a></p>
+            <p>Para consultas sobre estos términos: <a href="mailto:soporte@reservatucancha.pro" className="text-green-600 hover:underline">soporte@reservatucancha.pro</a></p>
           </div>
         </div>
       </section>

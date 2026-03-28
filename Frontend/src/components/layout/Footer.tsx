@@ -12,7 +12,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="md:col-span-1 space-y-4">
             <Link href="/" className="flex items-center gap-3">
-              <img src="/logos/Logo.png" alt="logo" className="h-9 w-9 object-contain" />
+              <img src="/logos/logo.png" alt="logo" className="h-9 w-9 object-contain" />
               <span className="font-black text-lg tracking-tight">
                 Reserva<span className="text-lime-400">TuCancha</span>
               </span>
@@ -44,10 +44,10 @@ export default function Footer() {
             <h4 className="font-black text-sm uppercase tracking-widest text-gray-300">Deportes</h4>
             <ul className="space-y-2.5">
               {[
-                { href: '/empresas?sport=futbol',      label: '⚽ Fútbol'      },
-                { href: '/empresas?sport=padel',       label: '🎾 Pádel'       },
-                { href: '/empresas?sport=voley_playa', label: '🏐 Voley Playa' },
-                { href: '/empresas',                   label: '🏟️ Ver todas'   },
+                { href: '/empresas?sport=futbol',      label: 'Fútbol'      },
+                { href: '/empresas?sport=padel',       label: 'Pádel'       },
+                { href: '/empresas?sport=voley_playa', label: 'Voley Playa' },
+                { href: '/empresas',                   label: 'Ver todas'   },
               ].map(l => (
                 <li key={l.href}>
                   <Link href={l.href}
@@ -99,11 +99,11 @@ export default function Footer() {
               <h4 className="font-black text-sm uppercase tracking-widest text-gray-300">Contacto</h4>
               <a href="mailto:soporte@reservatucancha.co"
                 className="flex items-center gap-2 text-sm text-gray-400 hover:text-lime-400 transition-colors">
-                <Mail className="h-3.5 w-3.5 shrink-0" /> soporte@reservatucancha.co
+                <Mail className="h-3.5 w-3.5 shrink-0" /> soporte@reservatucancha.pro
               </a>
-              <a href="https://wa.me/573001234567" target="_blank" rel="noopener noreferrer"
+              <a href="https://wa.me/573124352786" target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm text-gray-400 hover:text-lime-400 transition-colors">
-                <Phone className="h-3.5 w-3.5 shrink-0" /> +57 300 123 4567
+                <Phone className="h-3.5 w-3.5 shrink-0" /> +57 312 435 2786
               </a>
             </div>
           </div>
