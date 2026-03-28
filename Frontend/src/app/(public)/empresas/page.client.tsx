@@ -136,7 +136,8 @@ export default function EmpresasPageClient() {
   const [city, setCity]                 = useState('');
   const [selectedClub, setSelectedClub] = useState<Club | null>(null);
   const [sidebarOpen, setSidebarOpen]   = useState(false);
-  const [courtSport, setCourtSport]     = useState('');
+  // Inicializa courtSport con el filtro activo si existe
+  const [courtSport, setCourtSport]     = useState(searchParams.get('sport') || '');
   const [courtFilters, setCourtFilters] = useState<CourtFiltersType>({
     sport: '', city: '', minPrice: '', maxPrice: '', page: 1,
   });
@@ -160,7 +161,8 @@ export default function EmpresasPageClient() {
 
   const handleSelectClub = (club: Club) => {
     setSelectedClub(club);
-    setCourtSport('');
+    // Si hay filtro de deporte activo, lo aplicamos al entrar al club
+    setCourtSport(sport);
     setCourtFilters({ sport: '', city: '', minPrice: '', maxPrice: '', page: 1 });
   };
 
