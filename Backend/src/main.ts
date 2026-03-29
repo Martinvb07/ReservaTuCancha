@@ -6,16 +6,28 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Global prefix
+  // 1. TRUST PROXY: Vital para que NestJS sepa que Nginx está manejando el SSL
+  const instance = app.getHttpAdapter().getInstance();
+  if (typeof instance.set === 'function') {
+    instance.set('trust proxy', 1);
+  }
+
+  // 2. GLOBAL PREFIX: Se mantiene igual
   app.setGlobalPrefix('api');
 
-  // CORS
+  // 3. CORS: Configuración explícita para producción
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: [
+      'https://reservatucancha.site',
+      'https://www.reservatucancha.site',
+      'http://localhost:3000' // Por si pruebas algo local
+    ],
     credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type, Accept, Authorization',
   });
 
-  // Global validation pipe
+  // 4. GLOBAL VALIDATION PIPE
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -24,7 +36,7 @@ async function bootstrap() {
     }),
   );
 
-  // Swagger docs
+  // 5. SWAGGER DOCS
   const config = new DocumentBuilder()
     .setTitle('ReservaTuCancha API')
     .setDescription('API para reserva de canchas deportivas — Fútbol, Pádel, Voley Playa')
@@ -36,7 +48,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 4000;
   await app.listen(port);
-  console.log(`🚀 ReservaTuCancha API corriendo en: http://localhost:${port}/api`);
-  console.log(`📚 Swagger docs en: http://localhost:${port}/api/docs`);
+  
+  console.log(`🚀 API corriendo en puerto: ${port}`);
 }
 bootstrap();

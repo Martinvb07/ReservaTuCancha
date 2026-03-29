@@ -147,7 +147,7 @@ export default function EmpresasPageClient() {
 
   const { data: courtsData, isLoading: loadingCourts } = useCourts(
     selectedClub
-      ? { ...courtFilters, sport: courtSport, ownerId: selectedClub.ownerUserId }
+      ? { ...courtFilters, sport: courtSport, ownerId: (selectedClub as any).ownerUserId }
       : { sport: '', city: '', minPrice: '', maxPrice: '', page: 1 }
   );
 
