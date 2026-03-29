@@ -19,8 +19,6 @@ const OWNER_LINKS = [
   { href: '/dashboard/propetario/soporte',       label: 'Soporte',      icon: MessageSquare   },
 ];
 
-
-
 const ADMIN_LINKS = [
   { href: '/dashboard',                    label: 'Inicio',      icon: LayoutDashboard },
   { href: '/dashboard/admin/usuarios',     label: 'Usuarios',    icon: Users           },
@@ -30,7 +28,6 @@ const ADMIN_LINKS = [
   { href: '/dashboard/admin/reportes',     label: 'Reportes',    icon: BarChart3       },
 ];
 
-
 interface Props { role: string; userName: string; }
 
 export default function DashboardSidebar({ role, userName }: Props) {
@@ -38,13 +35,13 @@ export default function DashboardSidebar({ role, userName }: Props) {
   const links    = role === 'admin' ? ADMIN_LINKS : OWNER_LINKS;
 
   return (
-    <aside className="w-64 shrink-0 bg-gray-900 flex flex-col h-full overflow-hidden">
+    <aside className="w-64 bg-gray-900 flex flex-col h-screen overflow-hidden">
 
       {/* Logo */}
       <div className="px-5 py-5 border-b border-white/10">
         <Link href="/" className="flex items-center gap-3">
           <img src="/logos/Logo.png" alt="logo" className="h-8 w-8 object-contain" />
-          <span className="font-black text-base text-white tracking-tight">
+          <span className="font-black text-sm text-white tracking-tight">
             Reserva<span className="text-lime-400">TuCancha</span>
           </span>
         </Link>
@@ -57,8 +54,8 @@ export default function DashboardSidebar({ role, userName }: Props) {
             {userName.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-bold text-white truncate">{userName}</p>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-lime-400">
+            <p className="text-xs font-bold text-white truncate">{userName}</p>
+            <span className="text-[9px] font-bold uppercase tracking-widest text-lime-400">
               {role === 'admin' ? 'Administrador' : 'Propietario'}
             </span>
           </div>
@@ -73,34 +70,34 @@ export default function DashboardSidebar({ role, userName }: Props) {
             <Link
               key={href}
               href={href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 active
                   ? 'bg-lime-400 text-gray-900'
                   : 'text-gray-400 hover:bg-white/10 hover:text-white'
               }`}
             >
               <Icon className="h-4 w-4 shrink-0" />
-              {label}
+              <span className="truncate">{label}</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* Footer — solo Ver sitio y Cerrar sesión */}
+      {/* Footer */}
       <div className="px-3 py-4 border-t border-white/10 space-y-1">
         <Link
           href="/"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-400 hover:bg-white/10 hover:text-white transition-all"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-400 hover:bg-white/10 hover:text-white transition-all"
         >
           <Home className="h-4 w-4 shrink-0" />
-          Ver sitio
+          <span className="truncate">Ver sitio</span>
         </Link>
         <button
           onClick={() => signOut({ callbackUrl: '/' })}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-400 hover:bg-red-500/20 hover:text-red-400 transition-all"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-400 hover:bg-red-500/20 hover:text-red-400 transition-all"
         >
           <LogOut className="h-4 w-4 shrink-0" />
-          Cerrar sesión
+          <span className="truncate">Cerrar sesión</span>
         </button>
       </div>
     </aside>

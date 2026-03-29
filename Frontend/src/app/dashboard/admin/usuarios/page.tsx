@@ -127,7 +127,7 @@ export default function AdminUsuariosPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -164,7 +164,7 @@ export default function AdminUsuariosPage() {
       {/* Lista */}
       {isLoading ? (
         <div className="space-y-3">
-          {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 sm:h-24 rounded-2xl" />)}
         </div>
       ) : filtered.length === 0 ? (
         <Card className="border-dashed rounded-2xl">
@@ -183,10 +183,10 @@ export default function AdminUsuariosPage() {
               className={`border rounded-2xl transition-all ${!user.isActive ? 'opacity-60 bg-muted/30' : 'hover:shadow-sm'}`}
             >
               <CardContent className="p-4">
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
 
                   {/* Avatar */}
-                  <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-base shrink-0 ${
                     user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'
                   }`}>
                     {user.name.charAt(0).toUpperCase()}
@@ -220,7 +220,7 @@ export default function AdminUsuariosPage() {
                       </span>
                     </div>
 
-                    <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
+                    <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1.5 sm:gap-3 mt-2 sm:mt-1 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Mail className="h-3 w-3" />{user.email}
                       </span>
@@ -236,7 +236,7 @@ export default function AdminUsuariosPage() {
                           : 'Fecha inválida'}
                       </span>
                       {user.lastLoginAt && (
-                        <span className="text-muted-foreground/60">
+                        <span className="text-muted-foreground/60 text-[10px]">
                           Último acceso: {format(new Date(user.lastLoginAt), "dd MMM", { locale: es })}
                         </span>
                       )}
@@ -244,12 +244,12 @@ export default function AdminUsuariosPage() {
                   </div>
 
                   {/* ── Botones circulares ── */}
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 justify-center w-full sm:w-auto sm:justify-end mt-3 sm:mt-0">
                     {/* Editar */}
                     <button
                       onClick={() => handleEditOpen(user)}
                       title="Editar usuario"
-                      className="w-9 h-9 rounded-full border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-150"
+                      className="w-9 h-9 rounded-full border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-150 shrink-0"
                     >
                       <Edit className="h-3.5 w-3.5" />
                     </button>
@@ -259,7 +259,7 @@ export default function AdminUsuariosPage() {
                       onClick={() => toggleMutation.mutate(user._id)}
                       disabled={toggleMutation.isPending}
                       title={user.isActive ? 'Desactivar' : 'Activar'}
-                      className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all duration-150 ${
+                      className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all duration-150 shrink-0 ${
                         user.isActive
                           ? 'border-amber-200 bg-amber-50 text-amber-500 hover:bg-amber-100'
                           : 'border-green-200 bg-green-50 text-green-500 hover:bg-green-100'
@@ -272,7 +272,7 @@ export default function AdminUsuariosPage() {
                     <button
                       onClick={() => setDeleteUser(user)}
                       title="Eliminar usuario"
-                      className="w-9 h-9 rounded-full border border-red-200 bg-red-50 flex items-center justify-center text-red-400 hover:bg-red-100 hover:text-red-600 transition-all duration-150"
+                      className="w-9 h-9 rounded-full border border-red-200 bg-red-50 flex items-center justify-center text-red-400 hover:bg-red-100 hover:text-red-600 transition-all duration-150 shrink-0"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
