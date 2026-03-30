@@ -27,7 +27,7 @@ export default function Footer() {
             {/* Redes */}
             <div className="flex gap-3 pt-1">
               {[
-                { icon: Instagram, href: 'https://instagram.com', label: 'Instagram' },
+                { icon: Instagram, href: 'https://www.instagram.com/reservatucancha.site/', label: 'Instagram' },
                 { icon: Facebook,  href: 'https://facebook.com',  label: 'Facebook'  },
               ].map(({ icon: Icon, href, label }) => (
                 <a key={label} href={href} target="_blank" rel="noopener noreferrer"
@@ -97,9 +97,9 @@ export default function Footer() {
             </ul>
             <div className="pt-2 space-y-2">
               <h4 className="font-black text-sm uppercase tracking-widest text-gray-300">Contacto</h4>
-              <a href="mailto:soporte@reservatucancha.co"
+              <a href="mailto:martinvelasquezdev@gmail.com"
                 className="flex items-center gap-2 text-sm text-gray-400 hover:text-lime-400 transition-colors">
-                <Mail className="h-3.5 w-3.5 shrink-0" /> soporte@reservatucancha.pro
+                <Mail className="h-3.5 w-3.5 shrink-0" /> martinvelasquezdev@gmail.com
               </a>
               <a href="https://wa.me/573124352786" target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm text-gray-400 hover:text-lime-400 transition-colors">
@@ -114,7 +114,7 @@ export default function Footer() {
       <div className="border-t border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-xs text-gray-600">
-            © {new Date().getFullYear()} ReservaTuCancha · Hecho con ❤️ en Colombia
+            © {new Date().getFullYear()} ReservaTuCancha · Hecho en Colombia
           </p>
           <div className="flex items-center gap-4">
             <Link href="/terminos" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">Términos</Link>

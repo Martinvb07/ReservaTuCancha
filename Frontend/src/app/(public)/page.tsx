@@ -91,9 +91,9 @@ export default function HomePage() {
                 >
                   <option value="">Elige ciudad</option>
                   <option value="bogota">Bogotá</option>
-                  <option value="medellin">Medellín</option>
-                  <option value="cali">Cali</option>
-                  <option value="barranquilla">Barranquilla</option>
+                  <option value="villavicencio">Villavicencio</option>
+                  <option value="acacias">Acacias</option>
+                  <option value="restrepo">Restrepo</option>
                 </select>
               </div>
               <button
@@ -124,7 +124,7 @@ export default function HomePage() {
               <div className="flex items-center gap-2 md:gap-3 border border-gray-200 rounded-xl px-2 md:px-4 py-2 md:py-3 flex-1 bg-white hover:border-lime-400 transition-colors">
                 <step.icon className="h-4 w-4 md:h-5 md:w-5 text-gray-600 shrink-0" />
                 <span className="text-xs md:text-sm font-medium text-gray-700">
-                  <span className="font-bold">{step.n}.</span> <span className="hidden sm:inline">{step.label}</span>
+                  <span className="font-bold">{step.n}.</span> {step.label}
                 </span>
               </div>
               {i < STEPS.length - 1 && (
@@ -136,7 +136,7 @@ export default function HomePage() {
 
         {/* Grid imágenes */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-          <div className="rounded-xl overflow-hidden h-[120px] md:h-[180px]">
+          <div className="rounded-xl overflow-hidden h-[120px] md:h-[380px]">
             <img src="https://imagenes2.eltiempo.com/files/image_1200_675/uploads/2025/02/08/67a826ea4f6fb.jpeg" alt="pádel" className="w-full h-full object-cover" />
           </div>
           <div className="flex flex-col gap-3 md:gap-4">

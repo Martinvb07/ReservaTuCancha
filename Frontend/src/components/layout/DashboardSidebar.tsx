@@ -35,7 +35,7 @@ export default function DashboardSidebar({ role, userName }: Props) {
   const links    = role === 'admin' ? ADMIN_LINKS : OWNER_LINKS;
 
   return (
-    <aside className="w-64 bg-gray-900 flex flex-col h-screen overflow-hidden">
+    <aside className="w-48 sm:w-64 bg-gray-900 flex flex-col h-screen overflow-hidden">
 
       {/* Logo */}
       <div className="px-5 py-5 border-b border-white/10">
@@ -70,7 +70,7 @@ export default function DashboardSidebar({ role, userName }: Props) {
             <Link
               key={href}
               href={href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1.5 sm:gap-3 px-1.5 sm:px-3 py-1.5 sm:py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 active
                   ? 'bg-lime-400 text-gray-900'
                   : 'text-gray-400 hover:bg-white/10 hover:text-white'
@@ -84,22 +84,22 @@ export default function DashboardSidebar({ role, userName }: Props) {
       </nav>
 
       {/* Footer */}
-      <div className="px-3 py-4 border-t border-white/10 space-y-1">
-        <Link
-          href="/"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-400 hover:bg-white/10 hover:text-white transition-all"
-        >
-          <Home className="h-4 w-4 shrink-0" />
-          <span className="truncate">Ver sitio</span>
-        </Link>
-        <button
-          onClick={() => signOut({ callbackUrl: '/' })}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-400 hover:bg-red-500/20 hover:text-red-400 transition-all"
-        >
-          <LogOut className="h-4 w-4 shrink-0" />
-          <span className="truncate">Cerrar sesión</span>
-        </button>
-      </div>
+    <div className="px-3 py-3 sm:py-4 border-t border-white/10 space-y-1 shrink-0">
+      <Link
+        href="/"
+        className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-gray-400 hover:bg-white/10 hover:text-white transition-all"
+      >
+        <Home className="h-4 w-4 shrink-0" />
+        <span className="truncate">Ver sitio</span>
+      </Link>
+      <button
+        onClick={() => signOut({ callbackUrl: '/' })}
+        className="w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-gray-400 hover:bg-red-500/20 hover:text-red-400 transition-all"
+      >
+        <LogOut className="h-4 w-4 shrink-0" />
+        <span className="truncate">Cerrar sesión</span>
+      </button>
+    </div>
     </aside>
   );
 }

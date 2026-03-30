@@ -1,4 +1,6 @@
+// src/components/layout/ChangelogFloatingButton.tsx
 "use client";
+
 import { useEffect, useRef, useState } from "react";
 import { BellRing } from "lucide-react";
 import api from "@/lib/api/axios";
@@ -20,6 +22,7 @@ export default function ChangelogFloatingButton() {
   const [unseen, setUnseen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  // Cargar datos del Changelog
   useEffect(() => {
     api.get<Changelog[]>("/changelog").then(({ data }) => {
       if (data?.length) {
@@ -30,7 +33,7 @@ export default function ChangelogFloatingButton() {
     });
   }, []);
 
-  // Cerrar al hacer click fuera
+  // Cerrar al hacer click fuera del modal
   useEffect(() => {
     if (!open) return;
     function handle(e: MouseEvent) {
@@ -40,7 +43,7 @@ export default function ChangelogFloatingButton() {
     return () => document.removeEventListener("mousedown", handle);
   }, [open]);
 
-  // Marcar como visto al abrir
+  // Marcar como visto al abrir el modal
   useEffect(() => {
     if (open && last) {
       localStorage.setItem(STORAGE_KEY, last._id);
@@ -49,29 +52,73 @@ export default function ChangelogFloatingButton() {
   }, [open, last]);
 
   return (
-    <div>
+    <div className="relative">
+      {/* Botón Flotante */}
       <button
         aria-label="Ver novedades"
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-24 right-6 z-50 bg-white shadow-xl hover:shadow-2xl border border-green-200 text-green-600 rounded-full p-3 transition-all group"
+        className="
+          fixed bottom-24 right-6 z-50 
+          bg-white shadow-xl hover:shadow-2xl 
+          border border-green-200 text-green-600 
+          rounded-full transition-all group
+          /* TAMAÑO FIJO E IGUAL AL DE WHATSAPP (56px) */
+          h-14 w-14 
+          flex items-center justify-center
+        "
         style={{ boxShadow: "0 4px 24px 0 #00e67622" }}
       >
-        <BellRing className="h-6 w-6 group-hover:animate-bounce" />
+        {/* Icono centrado con tamaño h-7 (28px) */}
+        <BellRing className="h-7 w-7 group-hover:animate-bounce shrink-0" />
+        
+        {/* Indicador de "No leído" */}
         {unseen && (
-          <span className="absolute top-2 right-2 block h-3 w-3 rounded-full bg-red-500 border-2 border-white animate-pulse" />
+          <span className="
+            absolute top-3.5 right-3.5 
+            block h-3.5 w-3.5 
+            rounded-full bg-red-500 
+            border-2 border-white animate-pulse
+          " />
         )}
       </button>
+
+      {/* Modal de Novedades */}
       {open && last && (
         <div
           ref={ref}
-          className="fixed bottom-32 right-6 z-50 bg-white border border-green-200 rounded-2xl shadow-2xl p-4 w-80 animate-fade-in"
+          className="
+            fixed bottom-40 right-6 z-50 
+            bg-white border border-green-200 
+            rounded-2xl shadow-2xl p-5 w-80 
+            animate-in fade-in slide-in-from-bottom-4 duration-300
+          "
         >
-          <div className="flex items-center gap-2 mb-2">
-            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${TAGS[last.tag]?.bg ?? ''} ${TAGS[last.tag]?.color ?? ''}`}>{TAGS[last.tag]?.label ?? ''}</span>
-            {last.version && <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{last.version}</span>}
+          {/* Tags de Versión y Categoría */}
+          <div className="flex items-center gap-2 mb-3">
+            <span className={`
+              text-[10px] uppercase tracking-wider font-black px-2.5 py-1 rounded-full 
+              ${TAGS[last.tag]?.bg ?? 'bg-gray-100'} 
+              ${TAGS[last.tag]?.color ?? 'text-gray-700'}
+            `}>
+              {TAGS[last.tag]?.label ?? 'Novedad'}
+            </span>
+            {last.version && (
+              <span className="text-[10px] font-bold text-gray-400 bg-gray-50 border border-gray-100 px-2 py-1 rounded-full">
+                v{last.version}
+              </span>
+            )}
           </div>
-          <div className="font-black text-gray-900 text-base mb-1">{last.titulo}</div>
-          <div className="text-sm text-gray-600 whitespace-pre-line mb-2">{last.descripcion}</div>
+
+          {/* Contenido */}
+          <div className="font-black text-gray-900 text-lg mb-1 leading-tight">
+            {last.titulo}
+          </div>
+          <div className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">
+            {last.descripcion}
+          </div>
+
+          {/* Flecha decorativa hacia el botón (opcional) */}
+          <div className="absolute -bottom-2 right-6 w-4 h-4 bg-white border-r border-b border-green-200 rotate-45" />
         </div>
       )}
     </div>

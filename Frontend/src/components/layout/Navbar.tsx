@@ -315,11 +315,29 @@ export default function Navbar() {
             <Link href="/solicitar-acceso" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 border border-gray-200 text-center">
               Solicitar acceso
             </Link>
-            {!session && (
-              <Link href="/auth/login" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-xl text-sm font-bold bg-green-600 text-white text-center mt-1">
-                Ingresar
+            {session ? (
+            <div className="space-y-2">
+              <Link
+                href="/dashboard"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors"
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                Dashboard
               </Link>
-            )}
+              <button
+                onClick={() => { setMobileOpen(false); signOut({ callbackUrl: '/' }); }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                Cerrar sesión
+              </button>
+            </div>
+          ) : (
+            <Link href="/auth/login" onClick={() => setMobileOpen(false)} className="block px-4 py-2.5 rounded-xl text-sm font-bold bg-green-600 text-white text-center mt-1">
+              Ingresar
+            </Link>
+          )}
           </div>
         )}
       </header>
