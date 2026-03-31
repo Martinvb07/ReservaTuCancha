@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CreditCard, DollarSign, TrendingUp, Clock, CheckCircle, XCircle, ChevronRight, Download, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import api from '@/lib/api/axios';
@@ -23,7 +23,27 @@ export default function OwnerPagosPage() {
     wompiApiKey: '',
   });
 
-  // Obtener reservas confirmadas (pagos)
+  // 1. Obtener info del club (incluyendo Wompi)
+  const { data: clubInfo, isLoading: loadingClub } = useQuery({
+    queryKey: ['club-info'],
+    queryFn: async () => {
+      const { data } = await api.get('/clubs/my-club');
+      return data;
+    },
+  });
+
+  // 2. Efecto para rellenar el formulario cuando clubInfo esté disponible
+  useEffect(() => {
+    if (clubInfo) {
+      setWompiForm({
+        wompiMerchantId: clubInfo.wompiMerchantId || '',
+        wompiPublicKey: clubInfo.wompiPublicKey || '',
+        wompiApiKey: '', // Por seguridad no precargamos la API Key privada
+      });
+    }
+  }, [clubInfo]);
+
+  // 3. Obtener reservas
   const { data: bookings = [], isLoading: loadingBookings } = useQuery({
     queryKey: ['owner-bookings'],
     queryFn: async () => {
@@ -32,25 +52,23 @@ export default function OwnerPagosPage() {
     },
   });
 
-  // Obtener info del club (incluyendo Wompi)
-  const { data: clubInfo, isLoading: loadingClub } = useQuery({
-    queryKey: ['club-info'],
-    queryFn: async () => {
-      const { data } = await api.get('/clubs/my-club'); // Necesitas este endpoint
-      return data;
-    },
-  });
-
-  // Mutación para guardar credenciales Wompi
+  // 4. Mutación corregida con validación de ID
   const saveWompi = useMutation({
-    mutationFn: async (data: typeof wompiForm) =>
-      api.patch(`/clubs/${clubInfo?._id}/wompi`, data),
+    mutationFn: async (formData: typeof wompiForm) => {
+      const clubId = clubInfo?._id;
+      if (!clubId) {
+        throw new Error('ID del club no detectado. Intenta recargar la página.');
+      }
+      return api.patch(`/clubs/${clubId}/wompi`, formData);
+    },
     onSuccess: () => {
       toast.success('✅ Credenciales de Wompi guardadas');
       queryClient.invalidateQueries({ queryKey: ['club-info'] });
-      setWompiForm({ wompiMerchantId: '', wompiPublicKey: '', wompiApiKey: '' });
     },
-    onError: () => toast.error('❌ Error al guardar credenciales'),
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Error al guardar credenciales';
+      toast.error(`❌ ${message}`);
+    },
   });
 
   const confirmedBookings = bookings.filter((b: any) => b.status === 'confirmed');
@@ -66,7 +84,6 @@ export default function OwnerPagosPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
-
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -102,9 +119,7 @@ export default function OwnerPagosPage() {
         <button
           onClick={() => setTab('wompi')}
           className={`px-6 py-3 rounded-full text-sm font-bold border-2 transition-all ${
-            tab === 'wompi'
-              ? 'bg-gray-900 border-gray-900 text-white'
-              : 'border-gray-200 text-gray-500 hover:border-gray-400'
+            tab === 'wompi' ? 'bg-gray-900 border-gray-900 text-white' : 'border-gray-200 text-gray-500 hover:border-gray-400'
           }`}
         >
           <Lock className="inline h-4 w-4 mr-2" /> Configurar Wompi
@@ -112,9 +127,7 @@ export default function OwnerPagosPage() {
         <button
           onClick={() => setTab('historial')}
           className={`px-6 py-3 rounded-full text-sm font-bold border-2 transition-all ${
-            tab === 'historial'
-              ? 'bg-gray-900 border-gray-900 text-white'
-              : 'border-gray-200 text-gray-500 hover:border-gray-400'
+            tab === 'historial' ? 'bg-gray-900 border-gray-900 text-white' : 'border-gray-200 text-gray-500 hover:border-gray-400'
           }`}
         >
           Historial de Reservas
@@ -124,18 +137,16 @@ export default function OwnerPagosPage() {
       {/* TAB: Configurar Wompi */}
       {tab === 'wompi' && (
         <div className="space-y-6">
-          {/* Advertencia si no está configurado */}
           {!clubInfo?.wompiConfigured && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-5 flex items-start gap-4">
               <AlertCircle className="h-6 w-6 text-yellow-600 mt-0.5 shrink-0" />
               <div>
                 <p className="font-bold text-yellow-900">⚠️ Wompi no configurado</p>
-                <p className="text-sm text-yellow-700 mt-1">Agrega tus credenciales de Wompi para recibir los pagos de tus reservas directamente en tu cuenta.</p>
+                <p className="text-sm text-yellow-700 mt-1">Agrega tus credenciales de Wompi para recibir los pagos directamente.</p>
               </div>
             </div>
           )}
 
-          {/* Formulario Wompi */}
           <div className="bg-white rounded-2xl border border-gray-100 p-8 space-y-6">
             <div>
               <label className="block text-sm font-bold text-gray-900 mb-2">Merchant ID de Wompi</label>
@@ -146,7 +157,6 @@ export default function OwnerPagosPage() {
                 onChange={(e) => setWompiForm({...wompiForm, wompiMerchantId: e.target.value})}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
               />
-              <p className="text-xs text-gray-400 mt-1">Encuentra esto en tu dashboard de Wompi → Configuración → Llaves API</p>
             </div>
 
             <div>
@@ -178,23 +188,15 @@ export default function OwnerPagosPage() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              <p className="text-xs text-gray-400 mt-1">🔒 Tu clave se almacena encriptada en nuestros servidores</p>
             </div>
 
             <button
               onClick={() => saveWompi.mutate(wompiForm)}
-              disabled={saveWompi.isPending || !wompiForm.wompiMerchantId || !wompiForm.wompiPublicKey || !wompiForm.wompiApiKey}
-              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-bold py-3.5 rounded-xl transition-colors"
+              disabled={saveWompi.isPending || loadingClub || !clubInfo?._id || !wompiForm.wompiMerchantId || !wompiForm.wompiApiKey}
+              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-bold py-3.5 rounded-xl transition-colors shadow-lg shadow-green-100 disabled:shadow-none"
             >
               {saveWompi.isPending ? 'Guardando...' : clubInfo?.wompiConfigured ? '✅ Actualizar credenciales' : '🔐 Guardar credenciales'}
             </button>
-
-            {clubInfo?.wompiConfigured && (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                <p className="text-sm text-green-700 font-semibold">✅ Wompi está configurado correctamente</p>
-                <p className="text-xs text-green-600 mt-1">Los clientes podrán pagar tus reservas directamente a tu cuenta Wompi</p>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -202,7 +204,6 @@ export default function OwnerPagosPage() {
       {/* TAB: Historial de Reservas */}
       {tab === 'historial' && (
         <div className="space-y-6">
-          {/* Saldo disponible */}
           {confirmedBookings.length > 0 && (
             <div className="bg-green-50 border border-green-200 rounded-2xl p-6 flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -216,14 +217,10 @@ export default function OwnerPagosPage() {
               </div>
               <div className="text-right">
                 <p className="text-3xl font-black text-green-700">${totalRevenue.toLocaleString('es-CO')}</p>
-                <button className="mt-2 text-xs font-bold text-green-700 hover:underline flex items-center gap-1 ml-auto">
-                  Ver detalles <ChevronRight className="h-3 w-3" />
-                </button>
               </div>
             </div>
           )}
 
-          {/* Tabla de reservas */}
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
               <p className="text-xs font-black text-gray-500 uppercase tracking-widest">{bookings.length} reservas totales</p>
@@ -241,11 +238,7 @@ export default function OwnerPagosPage() {
                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                       b.status === 'confirmed' ? 'bg-green-100' : b.status === 'pending' ? 'bg-yellow-100' : 'bg-red-100'
                     }`}>
-                      {b.status === 'confirmed'
-                        ? <CheckCircle className="h-4 w-4 text-green-600" />
-                        : b.status === 'pending'
-                        ? <Clock className="h-4 w-4 text-yellow-600" />
-                        : <XCircle className="h-4 w-4 text-red-500" />}
+                      {b.status === 'confirmed' ? <CheckCircle className="h-4 w-4 text-green-600" /> : b.status === 'pending' ? <Clock className="h-4 w-4 text-yellow-600" /> : <XCircle className="h-4 w-4 text-red-500" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-gray-900 text-sm">{b.guestName}</p>
