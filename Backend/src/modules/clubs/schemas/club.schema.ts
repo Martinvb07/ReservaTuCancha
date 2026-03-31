@@ -37,7 +37,7 @@ export class Club {
   wompiApiKey?: string;
 
   @Prop({ trim: true })
-  wompiEventsSecret?: string; // <--- AGREGADO: Para validar Webhooks de forma segura
+  wompiEventsSecret?: string;
 
   @Prop({ default: false })
   wompiConfigured?: boolean;
