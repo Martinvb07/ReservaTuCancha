@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common'; // 1. Importar forwardRef
 import { MongooseModule } from '@nestjs/mongoose';
 import { BookingsController } from './bookings.controller';
 import { BookingsService } from './bookings.service';
@@ -11,11 +11,11 @@ import { PaymentsModule } from '../payments/payments.module';
   imports: [
     MongooseModule.forFeature([
       { name: Booking.name, schema: BookingSchema },
-      // 3. Registrar el ClubModel aquí para que el BookingsService lo pueda usar
       { name: Club.name, schema: ClubSchema },
     ]),
     NotificationsModule,
-    PaymentsModule, // 4. Agregar el PaymentsModule a los imports
+    // 2. Usar forwardRef para evitar la referencia circular con Payments
+    forwardRef(() => PaymentsModule), 
   ],
   controllers: [BookingsController],
   providers: [BookingsService],
