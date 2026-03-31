@@ -1,15 +1,18 @@
-// 1. Imports SIEMPRE al principio
 import {
-  Injectable, NotFoundException, BadRequestException, ConflictException,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import { Booking, BookingDocument, BookingStatus } from './schemas/booking.schema';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { NotificationsService } from '../notifications/notifications.service';
+import { WompiService } from '../wompi/wompi.service';
+import { Club, ClubDocument } from '../clubs/schemas/club.schema';
 
-// 2. Funciones de utilidad fuera de la clase
 function generateBookingCode(length = 8) {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';
@@ -23,24 +26,102 @@ function generateBookingCode(length = 8) {
 export class BookingsService {
   constructor(
     @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
+    @InjectModel(Club.name) private clubModel: Model<ClubDocument>,
     private readonly notificationsService: NotificationsService,
+    private readonly wompiService: WompiService,
   ) {}
 
-  // 3. Métodos de la clase organizados
-  async findByGuestEmail(email: string): Promise<Booking[]> {
-    return this.bookingModel
-      .find({ guestEmail: email })
-      .populate('courtId', 'name sport location')
-      .lean();
+  // --- MÉTODOS PARA EL WEBHOOK ---
+
+  /**
+   * Busca una reserva por su código único (referencia de Wompi)
+   */
+  async findByCode(code: string): Promise<BookingDocument | null> {
+    return this.bookingModel.findOne({ bookingCode: code }).exec();
   }
 
+  /**
+   * Actualiza el estado y opcionalmente el ID de transacción de Wompi
+   */
+  async updateStatus(
+    id: string, 
+    updateData: { status: string; wompiTransactionId?: string }
+  ): Promise<Booking> {
+    const { status, wompiTransactionId } = updateData;
+    
+    const validStatuses = ['pending', 'confirmed', 'cancelled', 'completed'];
+    if (!validStatuses.includes(status))
+      throw new BadRequestException('Estado inválido');
+
+    const updatePayload: any = { status };
+    if (wompiTransactionId) {
+      updatePayload.wompiTransactionId = wompiTransactionId;
+    }
+
+    const booking = await this.bookingModel.findByIdAndUpdate(
+      id, 
+      { $set: updatePayload }, 
+      { new: true }
+    ).populate('courtId', 'name sport');
+
+    if (!booking) throw new NotFoundException('Reserva no encontrada');
+
+    // Notificaciones automáticas según cambio de estado
+    if (status === 'confirmed') {
+      await this.notificationsService.sendBookingConfirmation(booking as any);
+    }
+
+    if (status === 'completed') {
+      await this.notificationsService.sendReviewRequest(booking as any);
+    }
+
+    return booking;
+  }
+
+  // --- LÓGICA DE PAGOS ---
+
+  async initPayment(bookingId: string, redirectUrl: string) {
+    const booking = await this.bookingModel
+      .findById(bookingId)
+      .populate('courtId');
+      
+    if (!booking) throw new NotFoundException('Reserva no encontrada');
+
+    const court = booking.courtId as any;
+    const club = await this.clubModel.findOne({ ownerUserId: court.ownerId });
+
+    if (!club?.wompiConfigured || !club?.wompiApiKey) {
+      throw new BadRequestException('El club no tiene Wompi configurado');
+    }
+
+    const transaction = await this.wompiService.createTransaction(
+      club.wompiApiKey,
+      booking.totalPrice,
+      `Reserva ${court.name} - ${booking.bookingCode}`,
+      booking.guestEmail,
+      booking.guestPhone,
+      booking.bookingCode,
+      redirectUrl,
+    );
+
+    // Guardamos el ID inicial para rastreo
+    await this.bookingModel.findByIdAndUpdate(bookingId, { 
+      wompiTransactionId: transaction.data.id 
+    });
+
+    return {
+      transactionId: transaction.data.id,
+      redirectUrl: transaction.data.payment_link_url,
+    };
+  }
+
+  // --- GESTIÓN DE RESERVAS ---
+
   async create(createBookingDto: CreateBookingDto): Promise<Booking> {
-    // Convertir courtId a ObjectId si es string
     const courtId = typeof createBookingDto.courtId === 'string'
-      ? new (this.bookingModel.db.base.Types.ObjectId)(createBookingDto.courtId)
+      ? new Types.ObjectId(createBookingDto.courtId)
       : createBookingDto.courtId;
 
-    // Convertir la fecha string (yyyy-MM-dd) a medianoche local (Colombia)
     let localDate: Date;
     if (typeof createBookingDto.date === 'string' && createBookingDto.date.length === 10) {
       const [year, month, day] = createBookingDto.date.split('-').map(Number);
@@ -49,13 +130,11 @@ export class BookingsService {
       localDate = new Date(createBookingDto.date);
     }
 
-    // ✅ NUEVA VALIDACIÓN: Verificar solapamiento de horarios
     const [reqStartHour, reqStartMin] = createBookingDto.startTime.split(':').map(Number);
     const [reqEndHour, reqEndMin] = createBookingDto.endTime.split(':').map(Number);
     const reqStartMins = reqStartHour * 60 + reqStartMin;
     const reqEndMins = reqEndHour * 60 + reqEndMin;
 
-    // Buscar todas las reservas confirmadas o pendientes en esa fecha y cancha
     const existingBookings = await this.bookingModel.find({
       courtId,
       date: {
@@ -65,14 +144,12 @@ export class BookingsService {
       status: { $in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
     });
 
-    // Verificar si hay solapamiento de horarios
     for (const booking of existingBookings) {
       const [existHour, existMin] = booking.startTime.split(':').map(Number);
       const [existEndHour, existEndMin] = booking.endTime.split(':').map(Number);
       const existStartMins = existHour * 60 + existMin;
       const existEndMins = existEndHour * 60 + existEndMin;
 
-      // Si hay solapamiento, rechazar
       if (!(reqEndMins <= existStartMins || reqStartMins >= existEndMins)) {
         throw new ConflictException('El horario seleccionado ya no está disponible');
       }
@@ -87,8 +164,8 @@ export class BookingsService {
 
     const booking = new this.bookingModel({
       ...createBookingDto,
-      courtId, // aseguramos que es ObjectId
-      date: localDate, // aseguramos que es medianoche local
+      courtId,
+      date: localDate,
       cancelToken: uuidv4(),
       reviewToken: uuidv4(),
       bookingCode,
@@ -96,10 +173,7 @@ export class BookingsService {
     });
 
     const saved = await booking.save();
-
-    // Aquí es donde enviamos el email fino que configuramos antes
     await this.notificationsService.sendBookingConfirmation(saved as any);
-
     return saved;
   }
 
@@ -149,35 +223,23 @@ export class BookingsService {
     return { message: 'Reserva cancelada exitosamente' };
   }
 
-  async updateStatus(id: string, status: string): Promise<Booking> {
-    const validStatuses = ['pending', 'confirmed', 'cancelled', 'completed'];
-    if (!validStatuses.includes(status))
-      throw new BadRequestException('Estado inválido');
+  // --- CONSULTAS ---
 
-    const booking = await this.bookingModel.findByIdAndUpdate(
-      id, { status }, { new: true },
-    ).populate('courtId', 'name sport');
-
-    if (!booking) throw new NotFoundException('Reserva no encontrada');
-
-    if (status === 'completed') {
-      await this.notificationsService.sendReviewRequest(booking as any);
-    }
-
-    return booking;
+  async findByGuestEmail(email: string): Promise<Booking[]> {
+    return this.bookingModel
+      .find({ guestEmail: email })
+      .populate('courtId', 'name sport location')
+      .lean();
   }
 
   async findByCourtAndDate(courtId: string, date: string): Promise<any[]> {
-    const { Types } = require('mongoose');
     const courtObjectId = new Types.ObjectId(courtId);
-
     const [year, month, day] = date.split('-').map(Number);
     
-    // Desde el inicio del día hasta el inicio del día siguiente (UTC)
     const startOfDay = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
     const startOfNextDay = new Date(Date.UTC(year, month - 1, day + 1, 0, 0, 0, 0));
 
-    const result = await this.bookingModel
+    return this.bookingModel
       .find({
         courtId: courtObjectId,
         date: {
@@ -188,12 +250,9 @@ export class BookingsService {
       })
       .select('startTime endTime status')
       .lean();
-
-    return result;
   }
 
   async findByOwner(ownerCourtIds: string[]): Promise<Booking[]> {
-    const { Types } = require('mongoose');
     const objectIds = ownerCourtIds.map(id => new Types.ObjectId(id));
     return this.bookingModel
       .find({ courtId: { $in: objectIds } })

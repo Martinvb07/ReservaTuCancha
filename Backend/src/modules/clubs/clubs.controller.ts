@@ -1,4 +1,13 @@
-import { Controller, Get, Query, Patch, Param, Body, UseGuards, Request } from '@nestjs/common';
+import { 
+  Controller, 
+  Get, 
+  Query, 
+  Patch, 
+  Param, 
+  Body, 
+  UseGuards, 
+  Request 
+} from '@nestjs/common';
 import { ClubsService } from './clubs.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -8,6 +17,13 @@ import { UserRole } from '../users/schemas/user.schema';
 @Controller('clubs')
 export class ClubsController {
   constructor(private readonly clubsService: ClubsService) {}
+
+  @Get('my-club')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  async getMyClub(@Request() req) {
+    return this.clubsService.findMyClub(req.user.userId);
+  }
 
   @Get()
   async getClubsBySport(

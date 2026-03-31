@@ -1,4 +1,3 @@
-// 1. Imports SIEMPRE al principio del archivo
 import {
   Controller, Post, Get, Patch, Body, Query,
   Param, UseGuards, Request,
@@ -16,7 +15,6 @@ import { UserRole } from '../users/schemas/user.schema';
 export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
 
-  // 2. Método movido dentro de la clase para corregir el error de "Unexpected keyword"
   @Get('public')
   @ApiOperation({ summary: 'Reservas por email (público)' })
   getByEmailPublic(@Query('guestEmail') guestEmail: string) {
@@ -80,6 +78,16 @@ export class BookingsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Cambiar estado de reserva (owner)' })
   updateStatus(@Param('id') id: string, @Body('status') status: string) {
-    return this.bookingsService.updateStatus(id, status);
+    // IMPORTANTE: Se envía { status } como objeto para coincidir con la nueva firma del servicio
+    return this.bookingsService.updateStatus(id, { status });
+  }
+
+  @Post(':id/payment')
+  @ApiOperation({ summary: 'Iniciar pago con Wompi' })
+  async initPayment(
+    @Param('id') bookingId: string,
+    @Body() body: { redirectUrl: string },
+  ) {
+    return this.bookingsService.initPayment(bookingId, body.redirectUrl);
   }
 }

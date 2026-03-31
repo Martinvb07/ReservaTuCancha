@@ -26,14 +26,18 @@ export class Club {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   ownerUserId: Types.ObjectId;
 
-  @Prop()
+  // --- Configuración de Wompi ---
+  @Prop({ trim: true })
   wompiMerchantId?: string;
 
-  @Prop()
+  @Prop({ trim: true })
   wompiPublicKey?: string;
 
-  @Prop()
+  @Prop({ trim: true })
   wompiApiKey?: string;
+
+  @Prop({ trim: true })
+  wompiEventsSecret?: string; // <--- AGREGADO: Para validar Webhooks de forma segura
 
   @Prop({ default: false })
   wompiConfigured?: boolean;

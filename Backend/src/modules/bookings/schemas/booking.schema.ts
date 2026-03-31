@@ -52,6 +52,9 @@ export class Booking {
   @Prop({ type: Types.ObjectId, ref: 'Payment' })
   paymentId?: Types.ObjectId;
 
+  @Prop({ trim: true })
+  wompiTransactionId?: string; // ID interno de Wompi para seguimiento
+
   // ─── Tokens para acciones sin login ──────────────────────────────────
   @Prop({ required: true, unique: true })
   cancelToken: string; // UUID — enviado por email para cancelar sin login
@@ -59,6 +62,7 @@ export class Booking {
   // Código corto y único para mostrar al usuario
   @Prop({ required: true, unique: true, uppercase: true, trim: true, length: 8 })
   bookingCode: string;
+
   @Prop({ required: true, unique: true })
   reviewToken: string; // UUID — enviado post-reserva para dejar reseña
 
@@ -75,3 +79,4 @@ BookingSchema.index({ cancelToken: 1 });
 BookingSchema.index({ reviewToken: 1 });
 BookingSchema.index({ status: 1 });
 BookingSchema.index({ bookingCode: 1 });
+BookingSchema.index({ wompiTransactionId: 1 }); // Nuevo índice para el Webhook

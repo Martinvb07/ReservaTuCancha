@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Club, ClubDocument } from './schemas/club.schema';
@@ -10,6 +10,20 @@ export class ClubsService {
     @InjectModel(Club.name) private clubModel: Model<ClubDocument>,
     @InjectModel(Court.name) private courtModel: Model<CourtDocument>,
   ) {}
+
+  async findMyClub(userId: string) {
+    const club = await this.clubModel.findOne({ ownerUserId: userId }).exec();
+    if (!club) return null;
+
+    const courts = await this.courtModel.find({ ownerId: userId }).select('sport').exec();
+    const sports = [...new Set(courts.map((c: any) => c.sport))];
+
+    return {
+      ...club.toObject(),
+      sports,
+      totalCourts: courts.length,
+    };
+  }
 
   async findClubsBySportAndCity(deporte: string, ciudad: string) {
     let clubQuery: any = {};
@@ -26,12 +40,13 @@ export class ClubsService {
       const ownerIds = [...new Set(courts.map(c => (c.ownerId as any).toString()))].map(
         id => new Types.ObjectId(id as string)
       );
+      
       if (ownerIds.length === 0) return [];
+      
       clubQuery.ownerUserId = { $in: ownerIds };
       clubs = await this.clubModel.find(clubQuery).exec();
     }
 
-    // Enriquecer con deportes y total de canchas
     const enriched = await Promise.all(
       clubs.map(async (club: any) => {
         const courts = await this.courtModel
@@ -51,6 +66,7 @@ export class ClubsService {
           contactEmail: club.contactEmail,
           contactPhone: club.contactPhone,
           ownerUserId: club.ownerUserId,
+          wompiConfigured: club.wompiConfigured,
           sports,
           totalCourts,
         };
@@ -60,16 +76,19 @@ export class ClubsService {
     return enriched;
   }
 
-  async updateWompiCredentials(clubId: string, wompiData: { wompiMerchantId: string; wompiPublicKey: string; wompiApiKey: string }, userId: string) {
+  async updateWompiCredentials(
+    clubId: string, 
+    wompiData: { wompiMerchantId: string; wompiPublicKey: string; wompiApiKey: string }, 
+    userId: string
+  ) {
     const club = await this.clubModel.findById(clubId);
-    if (!club) throw new Error('Club no encontrado');
     
-    // Verificar que el usuario sea dueño del club
+    if (!club) throw new NotFoundException('Club no encontrado');
+    
     if (club.ownerUserId.toString() !== userId) {
-      throw new Error('No tienes permiso para actualizar este club');
+      throw new ForbiddenException('No tienes permiso para actualizar este club');
     }
 
-    // Actualizar credenciales Wompi
     club.wompiMerchantId = wompiData.wompiMerchantId;
     club.wompiPublicKey = wompiData.wompiPublicKey;
     club.wompiApiKey = wompiData.wompiApiKey;
