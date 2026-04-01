@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CreditCard, DollarSign, TrendingUp, Clock, CheckCircle, XCircle, ChevronRight, Download, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import api from '@/lib/api/axios';
+import { useApiAuth } from '@/hooks/useApiAuth';
 import { toast } from 'sonner';
 
 const ESTADO_STYLES: Record<string, string> = {
@@ -15,6 +16,9 @@ const ESTADO_STYLES: Record<string, string> = {
 
 export default function OwnerPagosPage() {
   const queryClient = useQueryClient();
+  // ✅ Inyectar token en axios
+  useApiAuth();
+  
   const [tab, setTab] = useState<'historial' | 'wompi'>('historial');
   const [showPassword, setShowPassword] = useState(false);
   const [wompiForm, setWompiForm] = useState({
@@ -195,62 +199,61 @@ export default function OwnerPagosPage() {
           )}
 
           {clubInfo && (
-            <div>
-              <label className="block text-sm font-bold text-gray-900 mb-2">Merchant ID de Wompi</label>
-              <input
-                type="text"
-                placeholder="pub_live_xxxxxx..."
-                value={wompiForm.wompiMerchantId}
-                onChange={(e) => setWompiForm({...wompiForm, wompiMerchantId: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-gray-900 mb-2">Public Key</label>
-              <input
-                type="text"
-                placeholder="pk_live_xxxxxx..."
-                value={wompiForm.wompiPublicKey}
-                onChange={(e) => setWompiForm({...wompiForm, wompiPublicKey: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-gray-900 mb-2">API Key (privada)</label>
-              <div className="relative">
+            <div className="bg-white rounded-2xl border border-gray-100 p-8 space-y-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-2">Merchant ID de Wompi</label>
                 <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="sk_live_xxxxxx..."
-                  value={wompiForm.wompiApiKey}
-                  onChange={(e) => setWompiForm({...wompiForm, wompiApiKey: e.target.value})}
+                  type="text"
+                  placeholder="pub_live_xxxxxx..."
+                  value={wompiForm.wompiMerchantId}
+                  onChange={(e) => setWompiForm({...wompiForm, wompiMerchantId: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
               </div>
-            </div>
 
-            <button
-              onClick={() => {
-                console.log('🔘 Click en Guardar. clubInfo:', clubInfo);
-                saveWompi.mutate(wompiForm);
-              }}
-              disabled={saveWompi.isPending || !wompiForm.wompiMerchantId.trim() || !wompiForm.wompiPublicKey.trim() || !wompiForm.wompiApiKey.trim()}
-              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-bold py-3.5 rounded-xl transition-colors shadow-lg shadow-green-100 disabled:shadow-none"
-            >
-              {saveWompi.isPending ? 'Guardando...' : clubInfo?.wompiConfigured ? '✅ Actualizar credenciales' : '🔐 Guardar credenciales'}
-            </button>
-          </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-2">Public Key</label>
+                <input
+                  type="text"
+                  placeholder="pk_live_xxxxxx..."
+                  value={wompiForm.wompiPublicKey}
+                  onChange={(e) => setWompiForm({...wompiForm, wompiPublicKey: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-2">API Key (privada)</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="sk_live_xxxxxx..."
+                    value={wompiForm.wompiApiKey}
+                    onChange={(e) => setWompiForm({...wompiForm, wompiApiKey: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  console.log('🔘 Click en Guardar. clubInfo:', clubInfo);
+                  saveWompi.mutate(wompiForm);
+                }}
+                disabled={saveWompi.isPending || !wompiForm.wompiMerchantId.trim() || !wompiForm.wompiPublicKey.trim() || !wompiForm.wompiApiKey.trim()}
+                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-bold py-3.5 rounded-xl transition-colors shadow-lg shadow-green-100 disabled:shadow-none"
+              >
+                {saveWompi.isPending ? 'Guardando...' : clubInfo?.wompiConfigured ? '✅ Actualizar credenciales' : '🔐 Guardar credenciales'}
+              </button>
+            </div>
           )}
-        </div>
-      )}
 
       {/* TAB: Historial de Reservas */}
       {tab === 'historial' && (

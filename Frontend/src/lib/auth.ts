@@ -39,7 +39,7 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
           
-          console.log('✅ Login exitoso');
+          console.log('✅ Login exitoso, token:', data.accessToken?.substring(0, 20) + '...');
           return {
             id: data.user.id,
             name: data.user.name,
@@ -71,7 +71,8 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role;
         session.user.avatarUrl = token.avatarUrl;
       }
-      session.accessToken = token.accessToken;
+      // ✅ IMPORTANTE: Exponer el accessToken en la sesión para que el cliente lo pueda leer
+      (session as any).accessToken = token.accessToken;
       return session;
     },
   },
@@ -80,6 +81,6 @@ export const authOptions: NextAuthOptions = {
     error: '/auth/login',
     signOut: '/auth/login',
   },
-  session: { strategy: 'jwt' },
+  session: { strategy: 'jwt', maxAge: 30 * 24 * 60 * 60 }, // 30 días
   secret: process.env.NEXTAUTH_SECRET,
 };
