@@ -33,17 +33,27 @@ export default function OwnerPagosPage() {
     },
   });
 
-  // 2. Efecto para rellenar el formulario cuando clubInfo esté disponible
+  // 2. Efecto para rellenar el formulario cuando clubInfo esté disponible (SOLO UNA VEZ)
   useEffect(() => {
-    if (clubInfo) {
+    if (clubInfo && !clubId) {
       setClubId(clubInfo._id);
-      setWompiForm({
-        wompiMerchantId: clubInfo.wompiMerchantId || '',
-        wompiPublicKey: clubInfo.wompiPublicKey || '',
-        wompiApiKey: '', // Por seguridad no precargamos la API Key privada
-      });
+      // Solo precarga si no hay valores guardados previamente (primera carga)
+      if (!clubInfo.wompiMerchantId && !clubInfo.wompiPublicKey) {
+        setWompiForm({
+          wompiMerchantId: '',
+          wompiPublicKey: '',
+          wompiApiKey: '',
+        });
+      } else {
+        // Si hay credenciales guardadas, las precargamos
+        setWompiForm({
+          wompiMerchantId: clubInfo.wompiMerchantId || '',
+          wompiPublicKey: clubInfo.wompiPublicKey || '',
+          wompiApiKey: '',
+        });
+      }
     }
-  }, [clubInfo]);
+  }, [clubInfo, clubId]);
 
   // 3. Obtener reservas
   const { data: bookings = [], isLoading: loadingBookings } = useQuery({
@@ -193,7 +203,7 @@ export default function OwnerPagosPage() {
 
             <button
               onClick={() => saveWompi.mutate(wompiForm)}
-              disabled={saveWompi.isPending || loadingClub || !clubId || !wompiForm.wompiMerchantId || !wompiForm.wompiPublicKey || !wompiForm.wompiApiKey}
+              disabled={saveWompi.isPending || !clubId || !wompiForm.wompiMerchantId.trim() || !wompiForm.wompiPublicKey.trim() || !wompiForm.wompiApiKey.trim()}
               className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-bold py-3.5 rounded-xl transition-colors shadow-lg shadow-green-100 disabled:shadow-none"
             >
               {saveWompi.isPending ? 'Guardando...' : clubInfo?.wompiConfigured ? '✅ Actualizar credenciales' : '🔐 Guardar credenciales'}

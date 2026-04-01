@@ -43,6 +43,12 @@ export class CourtsController {
     return this.courtsService.findById(id);
   }
 
+  @Get(':id/wompi-config')
+  @ApiOperation({ summary: 'Config de Wompi para la cancha (público)' })
+  async getWompiConfig(@Param('id') courtId: string) {
+    return this.courtsService.getWompiConfig(courtId);
+  }
+
   // ─── OWNER ────────────────────────────────────────────────────────────
   @Get('owner/my-courts')
   @UseGuards(JwtAuthGuard, RolesGuard)

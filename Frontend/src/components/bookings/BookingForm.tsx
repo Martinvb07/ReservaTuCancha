@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,7 +10,7 @@ import { format, addMinutes, parse, getDay, isToday, isBefore, startOfDay, addHo
 import { formatInTimeZone } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarDays, Clock, User, Mail, Phone, CreditCard, ChevronLeft, ChevronRight, Timer, CheckCircle, ArrowLeft } from 'lucide-react';
+import { CalendarDays, Clock, User, Mail, Phone, CreditCard, ChevronLeft, ChevronRight, Timer, CheckCircle, ArrowLeft, Lock, AlertCircle } from 'lucide-react';
 import { bookingsApi } from '@/lib/api/bookings.api';
 import type { AvailabilitySlot } from '@/types/court.types';
 import api from '@/lib/api/axios';
@@ -62,11 +62,22 @@ const inp = 'w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm
 const lbl = 'block text-xs font-black text-gray-600 uppercase tracking-widest mb-1.5';
 
 export default function BookingForm({ courtId, courtName, pricePerHour, availability }: BookingFormProps) {
-  const [step, setStep]                = useState<'form' | 'summary' | 'success'>('form');
+  const [step, setStep]                = useState<'form' | 'summary' | 'payment' | 'success'>('form');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [dateOffset, setDateOffset]   = useState(0);
   const [bookingResult, setBookingResult] = useState<any>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'wompi' | null>('wompi');
+  const [wompiLoading, setWompiLoading] = useState(false);
+
+  // Obtener config de Wompi de la cancha
+  const { data: wompiConfig, isLoading: loadingWompi } = useQuery({
+    queryKey: ['wompi-config', courtId],
+    queryFn: async () => {
+      const { data } = await api.get(`/courts/${courtId}/wompi-config`);
+      return data;
+    },
+  });
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -119,20 +130,46 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
 
   const bookedTimes = getBookedSlotsArray(bookedSlots, timeSlots);
 
-  const mutation = useMutation({
+  // Mutación para crear la booking
+  const createBookingMutation = useMutation({
     mutationFn: (values: FormValues) => bookingsApi.create({
       courtId, guestName: values.guestName, guestEmail: values.guestEmail,
       guestPhone: values.guestPhone, date: format(selectedDate!, 'yyyy-MM-dd'),
       startTime: selectedSlots[0], endTime, notes: values.notes, totalPrice,
     }),
-    onSuccess: (data) => { setBookingResult(data); setStep('success'); },
-    onError: (err: Error) => toast.error(err.message || 'Error al crear la reserva'),
+  });
+
+  // Mutación para iniciar el pago
+  const paymentMutation = useMutation({
+    mutationFn: async (bookingId: string) => {
+      const redirectUrl = `${window.location.origin}/booking-status?code={$bookingCode}`;
+      const { data } = await api.post(`/bookings/${bookingId}/payment`, { redirectUrl });
+      return data;
+    },
+    onSuccess: (data) => {
+      // Redirigir a Wompi
+      if (data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+      }
+    },
+    onError: (err: Error) => toast.error(err.message || 'Error al procesar el pago'),
   });
 
   const onSubmit = (values: FormValues) => {
     if (!selectedDate || selectedSlots.length === 0) { toast.error('Selecciona una fecha y horario'); return; }
     if (step === 'form') { setStep('summary'); return; }
-    mutation.mutate(values);
+    if (step === 'summary') { setStep('payment'); return; }
+    if (step === 'payment') { 
+      setWompiLoading(true);
+      createBookingMutation.mutate(values, {
+        onSuccess: (bookingData) => {
+          setWompiLoading(false);
+          // Una vez creada la booking, iniciar el pago
+          paymentMutation.mutate(bookingData._id || bookingData.id);
+        },
+        onError: () => setWompiLoading(false),
+      });
+    }
   };
 
   // ── SUCCESS ───────────────────────────────────────────────────
@@ -185,8 +222,8 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
         </div>
         {/* Steps */}
         <div className="flex items-center gap-2 mt-4">
-          {['Fecha y hora', 'Tus datos', 'Confirmar'].map((s, i) => {
-            const stepIdx = step === 'form' ? 0 : step === 'summary' ? 1 : 2;
+          {['Fecha y hora', 'Tus datos', 'Pago', 'Confirmado'].map((s, i) => {
+            const stepIdx = step === 'form' ? 0 : step === 'summary' ? 1 : step === 'payment' ? 2 : 3;
             const active  = i <= stepIdx;
             return (
               <div key={s} className="flex items-center gap-2 flex-1">
@@ -194,7 +231,7 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
                   {i + 1}
                 </div>
                 <span className={`text-[10px] font-bold uppercase tracking-wide hidden sm:block ${active ? 'text-lime-400' : 'text-gray-600'}`}>{s}</span>
-                {i < 2 && <div className={`flex-1 h-px ${active ? 'bg-lime-400/40' : 'bg-white/10'}`} />}
+                {i < 3 && <div className={`flex-1 h-px ${active ? 'bg-lime-400/40' : 'bg-white/10'}`} />}
               </div>
             );
           })}
@@ -363,15 +400,96 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
               </div>
             </div>
 
-            <button type="submit" disabled={mutation.isPending}
-              className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-black py-4 rounded-2xl transition-colors shadow-lg">
+            <button type="submit"
+              className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-2xl transition-colors shadow-lg">
               <CreditCard className="h-5 w-5" />
-              {mutation.isPending ? 'Procesando...' : 'Confirmar reserva'}
+              Continuar al pago
             </button>
 
             <button type="button" onClick={() => setStep('form')}
               className="w-full flex items-center justify-center gap-2 border border-gray-200 hover:border-gray-400 text-gray-600 font-semibold text-sm py-3 rounded-2xl transition-all">
               <ArrowLeft className="h-4 w-4" /> Volver a editar
+            </button>
+          </>
+        )}
+
+        {/* ── PASO 3: Pago ────────────────────────────── */}
+        {step === 'payment' && (
+          <>
+            {!wompiConfig?.configured ? (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-red-900">Wompi no disponible</p>
+                  <p className="text-sm text-red-700 mt-1">{wompiConfig?.message || 'El propietario de esta cancha no ha configurado Wompi aún'}</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5">
+                  <div className="flex gap-3">
+                    <Lock className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-blue-900">Selecciona método de pago</p>
+                      <p className="text-sm text-blue-700 mt-1">Tu pago es seguro. Puedes cancelar gratis hasta 2h antes de tu reserva.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Opción Wompi */}
+                <div 
+                  onClick={() => setSelectedPaymentMethod('wompi')}
+                  className={`border-2 rounded-2xl p-5 cursor-pointer transition-all ${
+                    selectedPaymentMethod === 'wompi' 
+                      ? 'border-green-500 bg-green-50' 
+                      : 'border-gray-200 hover:border-green-300'
+                  }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                        selectedPaymentMethod === 'wompi' ? 'border-green-500 bg-green-500' : 'border-gray-300'
+                      }`}>
+                        {selectedPaymentMethod === 'wompi' && <span className="text-white text-sm">✓</span>}
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900">Wompi (Tarjeta débito/crédito)</p>
+                        <p className="text-sm text-gray-500">Pago seguro con encriptación</p>
+                      </div>
+                    </div>
+                    <CreditCard className="h-6 w-6 text-gray-400" />
+                  </div>
+                </div>
+
+                {/* Resumen final */}
+                <div className="bg-gray-50 rounded-2xl p-5 space-y-3 text-sm border border-gray-100">
+                  <p className="font-bold text-gray-900 text-base">Resumen de pago</p>
+                  <div>
+                    <span className="text-gray-500">Cancha: <span className="font-bold text-gray-900">{courtName}</span></span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Fecha: <span className="font-bold text-gray-900">{selectedDate ? formatInTimeZone(selectedDate, 'America/Bogota', "dd 'de' MMMM", { locale: es }) : '—'}</span></span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Horario: <span className="font-bold text-gray-900">{selectedSlots[0]} – {endTime}</span></span>
+                  </div>
+                  <div className="h-px bg-gray-200" />
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-gray-900">Total</span>
+                    <span className="text-2xl font-black text-green-700">${totalPrice.toLocaleString('es-CO')} COP</span>
+                  </div>
+                </div>
+
+                <button type="submit" disabled={wompiLoading || paymentMutation.isPending || !selectedPaymentMethod}
+                  className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-black py-4 rounded-2xl transition-colors shadow-lg">
+                  <Lock className="h-5 w-5" />
+                  {wompiLoading || paymentMutation.isPending ? 'Procesando pago...' : '🔒 Confirmar y pagar'}
+                </button>
+              </>
+            )}
+
+            <button type="button" onClick={() => setStep('summary')} disabled={wompiLoading || paymentMutation.isPending}
+              className="w-full flex items-center justify-center gap-2 border border-gray-200 hover:border-gray-400 text-gray-600 font-semibold text-sm py-3 rounded-2xl transition-all disabled:opacity-50">
+              <ArrowLeft className="h-4 w-4" /> Volver al resumen
             </button>
           </>
         )}

@@ -3,10 +3,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { CourtsController } from './courts.controller';
 import { CourtsService } from './courts.service';
 import { Court, CourtSchema } from './schemas/court.schema';
+import { Club, ClubSchema } from '../clubs/schemas/club.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Court.name, schema: CourtSchema }]),
+    MongooseModule.forFeature([
+      { name: Court.name, schema: CourtSchema },
+      { name: Club.name, schema: ClubSchema },
+    ]),
   ],
   controllers: [CourtsController],
   providers: [CourtsService],

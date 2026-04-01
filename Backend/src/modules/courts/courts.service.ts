@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Court, CourtDocument, SportType } from './schemas/court.schema';
 import { CreateCourtDto } from './dto/create-court.dto';
+import { Club, ClubDocument } from '../clubs/schemas/club.schema';
 
 export interface CourtFilters {
   sport?: SportType;
@@ -18,6 +19,7 @@ export interface CourtFilters {
 export class CourtsService {
   constructor(
     @InjectModel(Court.name) private courtModel: Model<CourtDocument>,
+    @InjectModel(Club.name) private clubModel: Model<ClubDocument>,
   ) {}
 
   async findAll(filters: CourtFilters = {}) {
@@ -84,5 +86,26 @@ export class CourtsService {
       averageRating: Math.round(newAvg * 10) / 10,
       totalReviews: total,
     });
+  }
+
+  async getWompiConfig(courtId: string) {
+    const court = await this.courtModel.findById(courtId).lean();
+    if (!court) throw new NotFoundException('Cancha no encontrada');
+
+    const club = await this.clubModel.findOne({ ownerUserId: court.ownerId }).lean();
+    if (!club) throw new NotFoundException('Club no encontrado');
+
+    if (!club.wompiConfigured || !club.wompiPublicKey) {
+      return {
+        configured: false,
+        message: 'El propietario de esta cancha no ha configurado Wompi aún',
+      };
+    }
+
+    return {
+      configured: true,
+      wompiPublicKey: club.wompiPublicKey,
+      wompiMerchantId: club.wompiMerchantId,
+    };
   }
 }
