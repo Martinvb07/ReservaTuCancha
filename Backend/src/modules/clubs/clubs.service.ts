@@ -13,7 +13,7 @@ export class ClubsService {
 
   async findMyClub(userId: string) {
     // Buscamos por ownerUserId que es un string o ObjectId en el schema
-    const club = await this.clubModel.findOne({ ownerUserId: userId }).exec();
+    const club = await this.clubModel.findOne({ ownerUserId: new Types.ObjectId(userId) }).exec();
     if (!club) return null;
 
     // Obtenemos las canchas para sacar los deportes disponibles
