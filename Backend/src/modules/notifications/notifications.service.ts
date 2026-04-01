@@ -48,7 +48,8 @@ export class NotificationsService {
 
   async sendBookingConfirmation(booking: Booking & { _id: any }) {
     // Buscar datos de cancha y club
-    const court = await this.courtsService.findById(booking.courtId.toString());
+    const courtIdStr = (booking.courtId as any)?._id?.toString() ?? booking.courtId.toString();
+    const court = await this.courtsService.findById(courtIdStr);
     let club = null;
     if (court && court.ownerId) {
       club = await this.clubsService['clubModel'].findOne({ ownerUserId: court.ownerId }).lean();
