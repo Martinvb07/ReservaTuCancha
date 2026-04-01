@@ -37,7 +37,7 @@ export class BookingsService {
    * Busca una reserva por su código único (referencia de Wompi)
    */
   async findByCode(code: string): Promise<BookingDocument | null> {
-    return this.bookingModel.findOne({ bookingCode: code }).exec();
+    return this.bookingModel.findOne({ bookingCode: code }).populate('courtId').exec();
   }
 
   /**

@@ -29,9 +29,17 @@ export class WompiWebhookController {
     }
 
     // 2. Obtener el club para validar la firma con su Secret de Eventos
-    // Necesitamos el ownerId de la cancha de esa reserva
-    const club = await this.clubsService.findMyClub(booking.courtId['ownerUserId'] || booking['ownerId']);
-    
+    let club: any = null;
+    try {
+      const court = booking.courtId as any;
+      const ownerId = court?.ownerUserId || court?.ownerId;
+      if (ownerId) {
+        club = await this.clubsService.findMyClub(ownerId.toString());
+      }
+    } catch (e) {
+      this.logger.warn('No se pudo obtener el club para validar firma, se omite validación');
+    }
+
     // Validación de firma (Opcional en desarrollo, Obligatorio en producción)
     if (club?.wompiEventsSecret) {
       const isValid = this.wompiService.validateSignature(
