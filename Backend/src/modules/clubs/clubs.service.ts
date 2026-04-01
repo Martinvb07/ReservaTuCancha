@@ -111,8 +111,11 @@ export class ClubsService {
     // Actualización de campos
     club.wompiMerchantId = wompiData.wompiMerchantId;
     club.wompiPublicKey = wompiData.wompiPublicKey;
-    club.wompiApiKey = wompiData.wompiApiKey;
-    club.wompiConfigured = true;
+    // Solo actualizar la API key si se envió una nueva (no sobrescribir con vacío)
+    if (wompiData.wompiApiKey && wompiData.wompiApiKey.trim()) {
+      club.wompiApiKey = wompiData.wompiApiKey;
+    }
+    club.wompiConfigured = !!(club.wompiApiKey && club.wompiPublicKey && club.wompiMerchantId);
 
     await club.save();
 

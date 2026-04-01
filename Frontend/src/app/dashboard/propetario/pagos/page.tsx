@@ -223,11 +223,16 @@ export default function OwnerPagosPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-900 mb-2">API Key (privada)</label>
+                <label className="block text-sm font-bold text-gray-900 mb-2">
+                  API Key (privada)
+                  {clubInfo?.wompiConfigured && (
+                    <span className="ml-2 text-xs font-normal text-gray-400">— deja vacío para mantener la actual</span>
+                  )}
+                </label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="sk_live_xxxxxx..."
+                    placeholder={clubInfo?.wompiConfigured ? '••••••••••••• (sin cambios)' : 'sk_live_xxxxxx...'}
                     value={wompiForm.wompiApiKey}
                     onChange={(e) => setWompiForm({...wompiForm, wompiApiKey: e.target.value})}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
@@ -243,17 +248,16 @@ export default function OwnerPagosPage() {
               </div>
 
               <button
-                onClick={() => {
-                  console.log('🔘 Click en Guardar. clubInfo:', clubInfo);
-                  saveWompi.mutate(wompiForm);
-                }}
-                disabled={saveWompi.isPending || !wompiForm.wompiMerchantId.trim() || !wompiForm.wompiPublicKey.trim() || !wompiForm.wompiApiKey.trim()}
+                onClick={() => saveWompi.mutate(wompiForm)}
+                disabled={saveWompi.isPending || !wompiForm.wompiMerchantId.trim() || !wompiForm.wompiPublicKey.trim() || (!clubInfo?.wompiConfigured && !wompiForm.wompiApiKey.trim())}
                 className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-bold py-3.5 rounded-xl transition-colors shadow-lg shadow-green-100 disabled:shadow-none"
               >
                 {saveWompi.isPending ? 'Guardando...' : clubInfo?.wompiConfigured ? '✅ Actualizar credenciales' : '🔐 Guardar credenciales'}
               </button>
             </div>
           )}
+        </div>
+      )}
 
       {/* TAB: Historial de Reservas */}
       {tab === 'historial' && (
