@@ -35,6 +35,7 @@ export default function OwnerPagosPage() {
   // 2. Efecto para rellenar el formulario cuando clubInfo esté disponible
   useEffect(() => {
     if (clubInfo) {
+      console.log('🔍 clubInfo recibido:', { _id: clubInfo._id, id: clubInfo.id, wompiMerchantId: clubInfo.wompiMerchantId });
       // Precargar credenciales si existen
       setWompiForm({
         wompiMerchantId: clubInfo.wompiMerchantId || '',
@@ -56,10 +57,15 @@ export default function OwnerPagosPage() {
   // 4. Mutación para guardar credenciales de Wompi
   const saveWompi = useMutation({
     mutationFn: async (formData: typeof wompiForm) => {
-      if (!clubInfo?._id) {
+      const clubId = clubInfo?._id || clubInfo?.id;
+      console.log('💾 Intentando guardar Wompi con clubId:', clubId);
+      
+      if (!clubId) {
+        console.error('❌ No hay clubId disponible:', clubInfo);
         throw new Error('ID del club no detectado. Recarga la página.');
       }
-      return api.patch(`/clubs/${clubInfo._id}/wompi`, formData);
+      
+      return api.patch(`/clubs/${clubId}/wompi`, formData);
     },
     onSuccess: () => {
       toast.success('✅ Credenciales de Wompi guardadas');
@@ -191,8 +197,11 @@ export default function OwnerPagosPage() {
             </div>
 
             <button
-              onClick={() => saveWompi.mutate(wompiForm)}
-              disabled={saveWompi.isPending || !clubInfo?._id || !wompiForm.wompiMerchantId.trim() || !wompiForm.wompiPublicKey.trim() || !wompiForm.wompiApiKey.trim()}
+              onClick={() => {
+                console.log('🔘 Click en Guardar. clubInfo:', clubInfo);
+                saveWompi.mutate(wompiForm);
+              }}
+              disabled={saveWompi.isPending || !wompiForm.wompiMerchantId.trim() || !wompiForm.wompiPublicKey.trim() || !wompiForm.wompiApiKey.trim()}
               className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-bold py-3.5 rounded-xl transition-colors shadow-lg shadow-green-100 disabled:shadow-none"
             >
               {saveWompi.isPending ? 'Guardando...' : clubInfo?.wompiConfigured ? '✅ Actualizar credenciales' : '🔐 Guardar credenciales'}
