@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { createHash, createHmac } from 'crypto';
+import { createHash } from 'crypto';
 
 @Injectable()
 export class WompiService {
@@ -17,8 +17,8 @@ export class WompiService {
     // La fórmula de Wompi para el checksum es:
     // id + status + amount_in_cents + timestamp + events_secret
     const chain = `${transaction.id}${transaction.status}${transaction.amount_in_cents}${timestamp}${eventsSecret}`;
-    
-    const hash = createHmac('sha256', eventsSecret)
+
+    const hash = createHash('sha256')
       .update(chain)
       .digest('hex');
 
