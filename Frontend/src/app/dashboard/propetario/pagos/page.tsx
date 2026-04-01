@@ -17,6 +17,7 @@ export default function OwnerPagosPage() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<'historial' | 'wompi'>('historial');
   const [showPassword, setShowPassword] = useState(false);
+  const [clubId, setClubId] = useState<string | null>(null);
   const [wompiForm, setWompiForm] = useState({
     wompiMerchantId: '',
     wompiPublicKey: '',
@@ -24,7 +25,7 @@ export default function OwnerPagosPage() {
   });
 
   // 1. Obtener info del club (incluyendo Wompi)
-  const { data: clubInfo, isLoading: loadingClub } = useQuery({
+  const { data: clubInfo, isLoading: loadingClub, error: clubError } = useQuery({
     queryKey: ['club-info'],
     queryFn: async () => {
       const { data } = await api.get('/clubs/my-club');
@@ -35,6 +36,7 @@ export default function OwnerPagosPage() {
   // 2. Efecto para rellenar el formulario cuando clubInfo esté disponible
   useEffect(() => {
     if (clubInfo) {
+      setClubId(clubInfo._id);
       setWompiForm({
         wompiMerchantId: clubInfo.wompiMerchantId || '',
         wompiPublicKey: clubInfo.wompiPublicKey || '',
@@ -55,7 +57,6 @@ export default function OwnerPagosPage() {
   // 4. Mutación corregida con validación de ID
   const saveWompi = useMutation({
     mutationFn: async (formData: typeof wompiForm) => {
-      const clubId = clubInfo?._id;
       if (!clubId) {
         throw new Error('ID del club no detectado. Intenta recargar la página.');
       }
@@ -192,7 +193,7 @@ export default function OwnerPagosPage() {
 
             <button
               onClick={() => saveWompi.mutate(wompiForm)}
-              disabled={saveWompi.isPending || loadingClub || !clubInfo?._id || !wompiForm.wompiMerchantId || !wompiForm.wompiApiKey}
+              disabled={saveWompi.isPending || loadingClub || !clubId || !wompiForm.wompiMerchantId || !wompiForm.wompiPublicKey || !wompiForm.wompiApiKey}
               className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-bold py-3.5 rounded-xl transition-colors shadow-lg shadow-green-100 disabled:shadow-none"
             >
               {saveWompi.isPending ? 'Guardando...' : clubInfo?.wompiConfigured ? '✅ Actualizar credenciales' : '🔐 Guardar credenciales'}

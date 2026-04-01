@@ -20,8 +20,12 @@ export class ClubsService {
     const courts = await this.courtModel.find({ ownerId: userId }).select('sport').exec();
     const sports = [...new Set(courts.map((c) => c.sport))];
 
+    // Aseguramos que el _id esté explícitamente incluido
+    const clubObj = club.toObject();
+    
     return {
-      ...club.toObject(),
+      _id: clubObj._id?.toString(),
+      ...clubObj,
       sports,
       totalCourts: courts.length,
     };
