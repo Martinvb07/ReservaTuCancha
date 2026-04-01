@@ -165,7 +165,6 @@ export class BookingsService {
     });
 
     const saved = await booking.save();
-    await this.notificationsService.sendBookingConfirmation(saved as any);
     return saved;
   }
 

@@ -142,7 +142,7 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
   // Mutación para iniciar el pago
   const paymentMutation = useMutation({
     mutationFn: async (bookingId: string) => {
-      const redirectUrl = `${window.location.origin}/booking-status?bookingId=${bookingId}`;
+      const redirectUrl = `${window.location.origin}/reservas/confirmacion?bookingId=${bookingId}`;
       const { data } = await api.post(`/bookings/${bookingId}/payment`, { redirectUrl });
       return data;
     },
