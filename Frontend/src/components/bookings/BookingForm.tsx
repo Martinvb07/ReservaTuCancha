@@ -165,7 +165,7 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
         onSuccess: (bookingData) => {
           setWompiLoading(false);
           // Una vez creada la booking, iniciar el pago
-          paymentMutation.mutate(bookingData._id || bookingData.id);
+          paymentMutation.mutate(bookingData._id);
         },
         onError: () => setWompiLoading(false),
       });
