@@ -24,13 +24,28 @@ export default function OwnerPagosPage() {
   });
 
   // 1. Obtener info del club (incluyendo Wompi)
-  const { data: clubInfo, isLoading: loadingClub } = useQuery({
+  const { data: clubInfo, isLoading: loadingClub, error: clubError, isError } = useQuery({
     queryKey: ['club-info'],
     queryFn: async () => {
-      const { data } = await api.get('/clubs/my-club');
-      return data;
+      try {
+        const { data } = await api.get('/clubs/my-club');
+        console.log('✅ Club info cargado:', data);
+        return data;
+      } catch (err: any) {
+        console.error('❌ Error cargando club:', err.response?.data || err.message);
+        throw err;
+      }
     },
+    retry: 1,
   });
+
+  // Mostrar error si la query falló
+  useEffect(() => {
+    if (isError) {
+      console.error('🔴 Error en query club-info:', clubError);
+      toast.error('No se pudo cargar la información del club');
+    }
+  }, [isError, clubError]);
 
   // 2. Efecto para rellenar el formulario cuando clubInfo esté disponible
   useEffect(() => {
@@ -143,7 +158,33 @@ export default function OwnerPagosPage() {
       {/* TAB: Configurar Wompi */}
       {tab === 'wompi' && (
         <div className="space-y-6">
-          {!clubInfo?.wompiConfigured && (
+          {loadingClub && (
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5">
+              <p className="text-blue-900 font-semibold">⏳ Cargando información del club...</p>
+            </div>
+          )}
+
+          {isError && (
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-start gap-4">
+              <AlertCircle className="h-6 w-6 text-red-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-bold text-red-900">❌ Error al cargar el club</p>
+                <p className="text-sm text-red-700 mt-1">No pudimos cargar la información de tu club. Por favor, recarga la página.</p>
+              </div>
+            </div>
+          )}
+
+          {!loadingClub && !clubInfo && !isError && (
+            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5 flex items-start gap-4">
+              <AlertCircle className="h-6 w-6 text-orange-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-bold text-orange-900">⚠️ No hay club registrado</p>
+                <p className="text-sm text-orange-700 mt-1">Debes crear un club primero desde la sección "Mis Canchas".</p>
+              </div>
+            </div>
+          )}
+
+          {!clubInfo?.wompiConfigured && clubInfo && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-5 flex items-start gap-4">
               <AlertCircle className="h-6 w-6 text-yellow-600 mt-0.5 shrink-0" />
               <div>
@@ -153,7 +194,7 @@ export default function OwnerPagosPage() {
             </div>
           )}
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-8 space-y-6">
+          {clubInfo && (
             <div>
               <label className="block text-sm font-bold text-gray-900 mb-2">Merchant ID de Wompi</label>
               <input
@@ -207,6 +248,7 @@ export default function OwnerPagosPage() {
               {saveWompi.isPending ? 'Guardando...' : clubInfo?.wompiConfigured ? '✅ Actualizar credenciales' : '🔐 Guardar credenciales'}
             </button>
           </div>
+          )}
         </div>
       )}
 
