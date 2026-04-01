@@ -22,9 +22,10 @@ export class ClubsService {
 
     // Aseguramos que el _id esté explícitamente incluido
     const clubObj = club.toObject();
+    const clubId = club._id ? club._id.toString() : clubObj._id;
     
     return {
-      _id: clubObj._id?.toString(),
+      _id: clubId,
       ...clubObj,
       sports,
       totalCourts: courts.length,

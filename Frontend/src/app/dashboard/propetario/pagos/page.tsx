@@ -35,16 +35,21 @@ export default function OwnerPagosPage() {
 
   // 2. Efecto para rellenar el formulario cuando clubInfo esté disponible (SOLO UNA VEZ)
   useEffect(() => {
-    if (clubInfo && !clubId) {
-      setClubId(clubInfo._id);
+    if (clubInfo) {
+      // Obtener el ID - intenta _id primero, luego id
+      const id: string = clubInfo._id || clubInfo.id;
+      if (id && id !== clubId) {
+        setClubId(id);
+      }
+      
       // Solo precarga si no hay valores guardados previamente (primera carga)
-      if (!clubInfo.wompiMerchantId && !clubInfo.wompiPublicKey) {
+      if (!wompiForm.wompiMerchantId && !clubInfo.wompiMerchantId) {
         setWompiForm({
-          wompiMerchantId: '',
-          wompiPublicKey: '',
-          wompiApiKey: '',
+          wompiMerchantId: clubInfo.wompiMerchantId || '',
+          wompiPublicKey: clubInfo.wompiPublicKey || '',
+          wompiApiKey: '', 
         });
-      } else {
+      } else if (!wompiForm.wompiMerchantId && clubInfo.wompiMerchantId) {
         // Si hay credenciales guardadas, las precargamos
         setWompiForm({
           wompiMerchantId: clubInfo.wompiMerchantId || '',
@@ -53,7 +58,7 @@ export default function OwnerPagosPage() {
         });
       }
     }
-  }, [clubInfo, clubId]);
+  }, [clubInfo]);
 
   // 3. Obtener reservas
   const { data: bookings = [], isLoading: loadingBookings } = useQuery({
