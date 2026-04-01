@@ -95,7 +95,7 @@ export class CourtsService {
     const club = await this.clubModel.findOne({ ownerUserId: court.ownerId }).lean();
     if (!club) throw new NotFoundException('Club no encontrado');
 
-    if (!club.wompiConfigured || !club.wompiPublicKey) {
+    if (!club.wompiPublicKey || !club.wompiIntegritySecret) {
       return {
         configured: false,
         message: 'El propietario de esta cancha no ha configurado Wompi aún',
