@@ -17,7 +17,6 @@ export default function OwnerPagosPage() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<'historial' | 'wompi'>('historial');
   const [showPassword, setShowPassword] = useState(false);
-  const [clubId, setClubId] = useState<string | null>(null);
   const [wompiForm, setWompiForm] = useState({
     wompiMerchantId: '',
     wompiPublicKey: '',
@@ -25,7 +24,7 @@ export default function OwnerPagosPage() {
   });
 
   // 1. Obtener info del club (incluyendo Wompi)
-  const { data: clubInfo, isLoading: loadingClub, error: clubError } = useQuery({
+  const { data: clubInfo, isLoading: loadingClub } = useQuery({
     queryKey: ['club-info'],
     queryFn: async () => {
       const { data } = await api.get('/clubs/my-club');
@@ -33,32 +32,17 @@ export default function OwnerPagosPage() {
     },
   });
 
-  // 2. Efecto para rellenar el formulario cuando clubInfo esté disponible (SOLO UNA VEZ)
+  // 2. Efecto para rellenar el formulario cuando clubInfo esté disponible
   useEffect(() => {
     if (clubInfo) {
-      // Obtener el ID - intenta _id primero, luego id
-      const id: string = clubInfo._id || clubInfo.id;
-      if (id && id !== clubId) {
-        setClubId(id);
-      }
-      
-      // Solo precarga si no hay valores guardados previamente (primera carga)
-      if (!wompiForm.wompiMerchantId && !clubInfo.wompiMerchantId) {
-        setWompiForm({
-          wompiMerchantId: clubInfo.wompiMerchantId || '',
-          wompiPublicKey: clubInfo.wompiPublicKey || '',
-          wompiApiKey: '', 
-        });
-      } else if (!wompiForm.wompiMerchantId && clubInfo.wompiMerchantId) {
-        // Si hay credenciales guardadas, las precargamos
-        setWompiForm({
-          wompiMerchantId: clubInfo.wompiMerchantId || '',
-          wompiPublicKey: clubInfo.wompiPublicKey || '',
-          wompiApiKey: '',
-        });
-      }
+      // Precargar credenciales si existen
+      setWompiForm({
+        wompiMerchantId: clubInfo.wompiMerchantId || '',
+        wompiPublicKey: clubInfo.wompiPublicKey || '',
+        wompiApiKey: '',
+      });
     }
-  }, [clubInfo]);
+  }, [clubInfo?.wompiMerchantId, clubInfo?.wompiPublicKey]);
 
   // 3. Obtener reservas
   const { data: bookings = [], isLoading: loadingBookings } = useQuery({
@@ -69,13 +53,13 @@ export default function OwnerPagosPage() {
     },
   });
 
-  // 4. Mutación corregida con validación de ID
+  // 4. Mutación para guardar credenciales de Wompi
   const saveWompi = useMutation({
     mutationFn: async (formData: typeof wompiForm) => {
-      if (!clubId) {
-        throw new Error('ID del club no detectado. Intenta recargar la página.');
+      if (!clubInfo?._id) {
+        throw new Error('ID del club no detectado. Recarga la página.');
       }
-      return api.patch(`/clubs/${clubId}/wompi`, formData);
+      return api.patch(`/clubs/${clubInfo._id}/wompi`, formData);
     },
     onSuccess: () => {
       toast.success('✅ Credenciales de Wompi guardadas');
@@ -208,7 +192,7 @@ export default function OwnerPagosPage() {
 
             <button
               onClick={() => saveWompi.mutate(wompiForm)}
-              disabled={saveWompi.isPending || !clubId || !wompiForm.wompiMerchantId.trim() || !wompiForm.wompiPublicKey.trim() || !wompiForm.wompiApiKey.trim()}
+              disabled={saveWompi.isPending || !clubInfo?._id || !wompiForm.wompiMerchantId.trim() || !wompiForm.wompiPublicKey.trim() || !wompiForm.wompiApiKey.trim()}
               className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-bold py-3.5 rounded-xl transition-colors shadow-lg shadow-green-100 disabled:shadow-none"
             >
               {saveWompi.isPending ? 'Guardando...' : clubInfo?.wompiConfigured ? '✅ Actualizar credenciales' : '🔐 Guardar credenciales'}
