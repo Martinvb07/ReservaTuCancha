@@ -38,7 +38,7 @@ export class ClubsController {
   @Roles(UserRole.OWNER)
   async updateWompiCredentials(
     @Param('id') clubId: string,
-    @Body() wompiData: { wompiMerchantId: string; wompiPublicKey: string; wompiApiKey: string },
+    @Body() wompiData: { wompiPublicKey: string; wompiIntegritySecret?: string; wompiEventsSecret?: string },
     @Request() req
   ) {
     return this.clubsService.updateWompiCredentials(clubId, wompiData, req.user.userId);

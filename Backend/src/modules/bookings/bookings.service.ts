@@ -90,28 +90,20 @@ export class BookingsService {
     const court = booking.courtId as any;
     const club = await this.clubModel.findOne({ ownerUserId: court.ownerId });
 
-    if (!club?.wompiConfigured || !club?.wompiApiKey) {
+    if (!club?.wompiPublicKey || !club?.wompiIntegritySecret) {
       throw new BadRequestException('El club no tiene Wompi configurado');
     }
 
-    const transaction = await this.wompiService.createTransaction(
-      club.wompiApiKey,
+    const checkoutUrl = this.wompiService.generateCheckoutUrl(
+      club.wompiPublicKey,
+      club.wompiIntegritySecret,
       booking.totalPrice,
-      `Reserva ${court.name} - ${booking.bookingCode}`,
-      booking.guestEmail,
-      booking.guestPhone,
       booking.bookingCode,
       redirectUrl,
     );
 
-    // Guardamos el ID inicial para rastreo
-    await this.bookingModel.findByIdAndUpdate(bookingId, { 
-      wompiTransactionId: transaction.data.id 
-    });
-
     return {
-      transactionId: transaction.data.id,
-      redirectUrl: transaction.data.payment_link_url,
+      redirectUrl: checkoutUrl,
     };
   }
 

@@ -1,11 +1,8 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import axios from 'axios';
-import { createHmac } from 'crypto';
+import { Injectable } from '@nestjs/common';
+import { createHash, createHmac } from 'crypto';
 
 @Injectable()
 export class WompiService {
-  private sandboxUrl = 'https://sandbox.wompi.co/api/transactions';
-  private prodUrl = 'https://api.wompi.co/api/transactions';
 
   /**
    * Valida que el webhook venga realmente de Wompi.
@@ -28,58 +25,33 @@ export class WompiService {
     return hash === checksum;
   }
 
-  async createTransaction(
-    apiKey: string,
-    amount: number,
-    description: string,
-    customerEmail: string,
-    customerPhone: string,
-    orderId: string,
+  /**
+   * Genera la URL de checkout de Wompi (hosted payment page).
+   * El usuario es redirigido a esta URL para completar el pago con tarjeta, PSE, etc.
+   * La firma de integridad es requerida por Wompi: SHA256(reference + amount_in_cents + currency + integritySecret)
+   */
+  generateCheckoutUrl(
+    publicKey: string,
+    integritySecret: string,
+    amountCOP: number,
+    reference: string,
     redirectUrl: string,
-  ) {
-    try {
-      const response = await axios.post(
-        this.sandboxUrl,
-        {
-          amount_in_cents: Math.round(amount * 100),
-          currency: 'COP',
-          customer_email: customerEmail,
-          customer_phone: customerPhone,
-          reference: orderId,
-          description,
-          redirect_url: redirectUrl,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-        },
-      );
+  ): string {
+    const amountInCents = Math.round(amountCOP * 100);
+    const currency = 'COP';
 
-      return response.data;
-    } catch (error: any) {
-      console.error('Wompi error:', error.response?.data);
-      throw new BadRequestException(
-        error.response?.data?.message || 'Error al crear transacción en Wompi',
-      );
-    }
-  }
+    const signatureChain = `${reference}${amountInCents}${currency}${integritySecret}`;
+    const signature = createHash('sha256').update(signatureChain).digest('hex');
 
-  async getTransaction(apiKey: string, transactionId: string) {
-    try {
-      const response = await axios.get(
-        `${this.sandboxUrl}/${transactionId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-          },
-        },
-      );
-
-      return response.data;
-    } catch (error: any) {
-      throw new BadRequestException('Error al obtener transacción');
-    }
+    // NO usar URLSearchParams: codifica ":" como "%3A" y Wompi no reconoce "signature%3Aintegrity"
+    return (
+      `https://checkout.wompi.co/p/` +
+      `?public-key=${encodeURIComponent(publicKey)}` +
+      `&currency=${currency}` +
+      `&amount-in-cents=${amountInCents}` +
+      `&reference=${encodeURIComponent(reference)}` +
+      `&redirect-url=${encodeURIComponent(redirectUrl)}` +
+      `&signature:integrity=${signature}`
+    );
   }
 }

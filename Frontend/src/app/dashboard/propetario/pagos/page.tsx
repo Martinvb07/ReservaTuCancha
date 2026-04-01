@@ -22,9 +22,9 @@ export default function OwnerPagosPage() {
   const [tab, setTab] = useState<'historial' | 'wompi'>('historial');
   const [showPassword, setShowPassword] = useState(false);
   const [wompiForm, setWompiForm] = useState({
-    wompiMerchantId: '',
     wompiPublicKey: '',
-    wompiApiKey: '',
+    wompiIntegritySecret: '',
+    wompiEventsSecret: '',
   });
 
   // 1. Obtener info del club (incluyendo Wompi)
@@ -54,15 +54,13 @@ export default function OwnerPagosPage() {
   // 2. Efecto para rellenar el formulario cuando clubInfo esté disponible
   useEffect(() => {
     if (clubInfo) {
-      console.log('🔍 clubInfo recibido:', { _id: clubInfo._id, id: clubInfo.id, wompiMerchantId: clubInfo.wompiMerchantId });
-      // Precargar credenciales si existen
       setWompiForm({
-        wompiMerchantId: clubInfo.wompiMerchantId || '',
         wompiPublicKey: clubInfo.wompiPublicKey || '',
-        wompiApiKey: '',
+        wompiIntegritySecret: '',
+        wompiEventsSecret: '',
       });
     }
-  }, [clubInfo?.wompiMerchantId, clubInfo?.wompiPublicKey]);
+  }, [clubInfo?.wompiPublicKey]);
 
   // 3. Obtener reservas
   const { data: bookings = [], isLoading: loadingBookings } = useQuery({
@@ -200,22 +198,16 @@ export default function OwnerPagosPage() {
 
           {clubInfo && (
             <div className="bg-white rounded-2xl border border-gray-100 p-8 space-y-6">
-              <div>
-                <label className="block text-sm font-bold text-gray-900 mb-2">Merchant ID de Wompi</label>
-                <input
-                  type="text"
-                  placeholder="pub_live_xxxxxx..."
-                  value={wompiForm.wompiMerchantId}
-                  onChange={(e) => setWompiForm({...wompiForm, wompiMerchantId: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
-                />
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800 space-y-1">
+                <p className="font-bold">¿Dónde encuentro estos datos?</p>
+                <p>En tu dashboard de Wompi → <strong>Developers</strong> → <strong>Llaves del API</strong></p>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-900 mb-2">Public Key</label>
+                <label className="block text-sm font-bold text-gray-900 mb-2">Llave pública <span className="text-gray-400 font-normal">(pub_test_... o pub_prod_...)</span></label>
                 <input
                   type="text"
-                  placeholder="pk_live_xxxxxx..."
+                  placeholder="pub_test_xxxxxxxxxxxxxx"
                   value={wompiForm.wompiPublicKey}
                   onChange={(e) => setWompiForm({...wompiForm, wompiPublicKey: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
@@ -224,24 +216,39 @@ export default function OwnerPagosPage() {
 
               <div>
                 <label className="block text-sm font-bold text-gray-900 mb-2">
-                  API Key (privada)
-                  {clubInfo?.wompiConfigured && (
-                    <span className="ml-2 text-xs font-normal text-gray-400">— deja vacío para mantener la actual</span>
-                  )}
+                  Secreto de integridad
+                  <span className="ml-2 text-xs font-normal text-gray-400">(Secretos para integración técnica → Integridad)</span>
+                  {clubInfo?.wompiConfigured && <span className="ml-2 text-xs font-normal text-gray-400">— deja vacío para mantener el actual</span>}
                 </label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    placeholder={clubInfo?.wompiConfigured ? '••••••••••••• (sin cambios)' : 'sk_live_xxxxxx...'}
-                    value={wompiForm.wompiApiKey}
-                    onChange={(e) => setWompiForm({...wompiForm, wompiApiKey: e.target.value})}
+                    placeholder={clubInfo?.wompiConfigured ? '••••••••••••• (sin cambios)' : 'Pega aquí el secreto de integridad'}
+                    value={wompiForm.wompiIntegritySecret}
+                    onChange={(e) => setWompiForm({...wompiForm, wompiIntegritySecret: e.target.value})}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-2">
+                  Secreto de eventos
+                  <span className="ml-2 text-xs font-normal text-gray-400">(Secretos → Eventos — para validar webhooks)</span>
+                  {clubInfo?.wompiConfigured && <span className="ml-2 text-xs font-normal text-gray-400">— deja vacío para mantener el actual</span>}
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder={clubInfo?.wompiConfigured ? '••••••••••••• (sin cambios)' : 'Pega aquí el secreto de eventos'}
+                    value={wompiForm.wompiEventsSecret}
+                    onChange={(e) => setWompiForm({...wompiForm, wompiEventsSecret: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
@@ -249,7 +256,7 @@ export default function OwnerPagosPage() {
 
               <button
                 onClick={() => saveWompi.mutate(wompiForm)}
-                disabled={saveWompi.isPending || !wompiForm.wompiMerchantId.trim() || !wompiForm.wompiPublicKey.trim() || (!clubInfo?.wompiConfigured && !wompiForm.wompiApiKey.trim())}
+                disabled={saveWompi.isPending || !wompiForm.wompiPublicKey.trim() || (!clubInfo?.wompiConfigured && !wompiForm.wompiIntegritySecret.trim())}
                 className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-bold py-3.5 rounded-xl transition-colors shadow-lg shadow-green-100 disabled:shadow-none"
               >
                 {saveWompi.isPending ? 'Guardando...' : clubInfo?.wompiConfigured ? '✅ Actualizar credenciales' : '🔐 Guardar credenciales'}

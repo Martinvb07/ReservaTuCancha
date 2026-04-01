@@ -88,8 +88,8 @@ export class ClubsService {
   }
 
   async updateWompiCredentials(
-    clubId: string, 
-    wompiData: { wompiMerchantId: string; wompiPublicKey: string; wompiApiKey: string }, 
+    clubId: string,
+    wompiData: { wompiPublicKey: string; wompiIntegritySecret?: string; wompiEventsSecret?: string },
     userId: string
   ) {
     // PREVENCIÓN: Validar el ID del club para evitar el crash del server (Error 500)
@@ -109,13 +109,14 @@ export class ClubsService {
     }
 
     // Actualización de campos
-    club.wompiMerchantId = wompiData.wompiMerchantId;
     club.wompiPublicKey = wompiData.wompiPublicKey;
-    // Solo actualizar la API key si se envió una nueva (no sobrescribir con vacío)
-    if (wompiData.wompiApiKey && wompiData.wompiApiKey.trim()) {
-      club.wompiApiKey = wompiData.wompiApiKey;
+    if (wompiData.wompiIntegritySecret?.trim()) {
+      club.wompiIntegritySecret = wompiData.wompiIntegritySecret;
     }
-    club.wompiConfigured = !!(club.wompiApiKey && club.wompiPublicKey && club.wompiMerchantId);
+    if (wompiData.wompiEventsSecret?.trim()) {
+      club.wompiEventsSecret = wompiData.wompiEventsSecret;
+    }
+    club.wompiConfigured = !!(club.wompiPublicKey && club.wompiIntegritySecret);
 
     await club.save();
 

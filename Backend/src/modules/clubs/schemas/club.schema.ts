@@ -39,6 +39,9 @@ export class Club {
   @Prop({ trim: true })
   wompiEventsSecret?: string;
 
+  @Prop({ trim: true })
+  wompiIntegritySecret?: string;
+
   @Prop({ default: false })
   wompiConfigured?: boolean;
 }
