@@ -85,6 +85,7 @@ export interface Booking {
   notes?: string;
   status: BookingStatus;
   totalPrice: number;
+  bookingCode: string;
   paymentId?: string;
   cancelToken: string;
   reviewToken: string;
