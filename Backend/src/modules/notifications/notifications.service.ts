@@ -181,9 +181,10 @@ export class NotificationsService {
                 <p style="color: #9ca3af; font-size: 14px; margin-top: 10px; line-height: 20px;">
                   Hola <strong>${booking.guestName}</strong>, tu reserva fue registrada exitosamente. Recuerda llevar el valor en efectivo el día de tu visita.
                 </p>
-                <div style="background-color: #1f2937; border-radius: 20px; padding: 20px; margin-top: 28px; border: 1px solid #374151;">
-                  <span style="color: #9ca3af; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">Código de Reserva</span>
-                  <span style="color: #f59e0b; font-size: 30px; font-weight: 800; letter-spacing: 2px;">#${booking.bookingCode}</span>
+                <div style="background-color: #1f2937; border-radius: 20px; padding: 24px; margin-top: 28px; border: 1px solid #374151;">
+                  <span style="color: #9ca3af; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px;">Código de Reserva</span>
+                  <span style="color: #f59e0b; font-size: 34px; font-weight: 800; letter-spacing: 4px; display: block;">#${booking.bookingCode}</span>
+                  <span style="color: #6b7280; font-size: 12px; display: block; margin-top: 10px; line-height: 18px;">Presenta este código cuando llegues al lugar para confirmar tu reserva.</span>
                 </div>
               </td>
             </tr>

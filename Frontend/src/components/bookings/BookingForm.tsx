@@ -166,7 +166,7 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
         onSuccess: (bookingData) => {
           if (selectedPaymentMethod === 'efectivo') {
             setWompiLoading(false);
-            window.location.href = `/reservas/confirmacion?bookingId=${bookingData._id}&method=efectivo`;
+            window.location.href = `/reservas/confirmacion?bookingId=${bookingData._id}&method=efectivo&code=${bookingData.bookingCode}`;
           } else {
             paymentMutation.mutate(bookingData._id);
           }
@@ -271,7 +271,7 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
                       <ChevronRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-4 gap-1.5">
                     {visibleDates.map(date => {
                       const isSelected = selectedDate && format(date, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
                       return (
@@ -300,7 +300,7 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
                 {timeSlots.length === 0 ? (
                   <Skeleton className="h-24 rounded-xl" />
                 ) : (
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {timeSlots.map((slot, idx) => {
                       const isBooked   = bookedTimes.includes(slot);
                       const isSelected = selectedSlots.includes(slot);

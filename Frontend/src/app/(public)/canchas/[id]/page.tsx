@@ -48,37 +48,37 @@ export default async function CourtDetailPage({ params }: { params: { id: string
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent" />
 
-        <div className="absolute top-5 left-5">
+        <div className="absolute top-4 left-4">
           <Link href="/empresas"
-            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white text-sm font-semibold px-4 py-2 rounded-full border border-white/20 transition-all">
-            <ArrowLeft className="h-4 w-4" /> Volver a canchas
+            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white text-sm font-semibold px-3 py-2 rounded-full border border-white/20 transition-all">
+            <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Volver a canchas</span>
           </Link>
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+        <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8">
           <div className="max-w-6xl mx-auto">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <span className="inline-flex items-center gap-1.5 bg-lime-400 text-gray-900 text-xs font-black px-3 py-1 rounded-full mb-3">
+            <div className="flex items-end justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <span className="inline-flex items-center gap-1.5 bg-lime-400 text-gray-900 text-xs font-black px-3 py-1 rounded-full mb-2">
                   {sport.emoji} {sport.label}
                 </span>
-                <h1 className="text-3xl md:text-4xl font-black text-white uppercase leading-tight">{court.name}</h1>
-                <div className="flex flex-wrap items-center gap-4 mt-2">
-                  <span className="flex items-center gap-1.5 text-gray-300 text-sm">
-                    <MapPin className="h-4 w-4 text-lime-400" />
-                    {court.location.address}, {court.location.city}
+                <h1 className="text-2xl md:text-4xl font-black text-white uppercase leading-tight truncate">{court.name}</h1>
+                <div className="flex flex-wrap items-center gap-3 mt-1.5">
+                  <span className="flex items-center gap-1.5 text-gray-300 text-xs md:text-sm">
+                    <MapPin className="h-3.5 w-3.5 text-lime-400 shrink-0" />
+                    <span className="truncate">{court.location.address}, {court.location.city}</span>
                   </span>
                   {court.totalReviews > 0 && (
-                    <span className="flex items-center gap-1.5 text-gray-300 text-sm">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    <span className="flex items-center gap-1 text-gray-300 text-xs md:text-sm shrink-0">
+                      <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
                       {court.averageRating.toFixed(1)} · {court.totalReviews} reseñas
                     </span>
                   )}
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-4xl font-black text-lime-400">${court.pricePerHour.toLocaleString('es-CO')}</p>
-                <p className="text-gray-400 text-sm">COP / hora</p>
+              <div className="text-right shrink-0">
+                <p className="text-2xl md:text-4xl font-black text-lime-400">${court.pricePerHour.toLocaleString('es-CO')}</p>
+                <p className="text-gray-400 text-xs">COP / hora</p>
               </div>
             </div>
           </div>
@@ -86,10 +86,10 @@ export default async function CourtDetailPage({ params }: { params: { id: string
       </section>
 
       {/* ── CONTENIDO ────────────────────────────────────────────── */}
-      <section className="max-w-6xl mx-auto px-4 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <section className="max-w-6xl mx-auto px-4 py-6 md:py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
 
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-8 order-2 lg:order-1">
             {court.description && (
               <div className="space-y-3">
                 <h2 className="text-xl font-black text-gray-900 uppercase flex items-center gap-2">
@@ -135,8 +135,8 @@ export default async function CourtDetailPage({ params }: { params: { id: string
             </div>
           </div>
 
-          <div className="lg:col-span-1">
-            <div className="sticky top-6 space-y-4">
+          <div className="lg:col-span-1 order-1 lg:order-2">
+            <div className="lg:sticky lg:top-6 space-y-4">
               <BookingForm
                 courtId={court._id}
                 courtName={court.name}
