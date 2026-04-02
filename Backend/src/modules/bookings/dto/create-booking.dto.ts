@@ -6,6 +6,7 @@ import {
   IsMongoId,
   IsOptional,
   IsInt,
+  IsIn,
   Min,
   Max,
   Matches,
@@ -60,6 +61,6 @@ export class CreateBookingDto {
 
   @ApiProperty({ example: 'wompi', required: false })
   @IsOptional()
-  @IsString()
+  @IsIn(['wompi', 'efectivo'])
   paymentMethod?: 'wompi' | 'efectivo';
 }

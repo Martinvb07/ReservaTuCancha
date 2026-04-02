@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   BadRequestException,
   ConflictException,
@@ -24,6 +25,8 @@ function generateBookingCode(length = 8) {
 
 @Injectable()
 export class BookingsService {
+  private readonly logger = new Logger(BookingsService.name);
+
   constructor(
     @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
     @InjectModel(Club.name) private clubModel: Model<ClubDocument>,
@@ -166,8 +169,14 @@ export class BookingsService {
 
     const saved = await booking.save();
 
+    this.logger.log(`Reserva creada: ${saved.bookingCode} | método: ${createBookingDto.paymentMethod ?? 'no especificado'}`);
+
     if (createBookingDto.paymentMethod === 'efectivo') {
-      await this.notificationsService.sendBookingPendingCash(saved as any);
+      try {
+        await this.notificationsService.sendBookingPendingCash(saved as any);
+      } catch (e) {
+        this.logger.error(`Error enviando email efectivo para ${saved.bookingCode}: ${e.message}`);
+      }
     }
 
     return saved;

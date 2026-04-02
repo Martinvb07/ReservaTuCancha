@@ -48,7 +48,11 @@ export default function ReservasOwnerPage() {
 
   const filtered = bookings
     .filter(b => filterStatus === 'all' || b.status === filterStatus)
-    .filter(b => !search || b.guestName?.toLowerCase().includes(search.toLowerCase()) || b.guestEmail?.toLowerCase().includes(search.toLowerCase()));
+    .filter(b => !search ||
+      b.guestName?.toLowerCase().includes(search.toLowerCase()) ||
+      b.guestEmail?.toLowerCase().includes(search.toLowerCase()) ||
+      b.bookingCode?.toLowerCase().includes(search.replace('#', '').toLowerCase())
+    );
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -93,7 +97,7 @@ export default function ReservasOwnerPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Buscar por cliente o email..."
+            placeholder="Buscar por cliente, email o código (#XXXXXXXX)..."
             value={search}
             onChange={e => handleSearchChange(e.target.value)}
             className="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-green-400 transition"
@@ -145,67 +149,68 @@ export default function ReservasOwnerPage() {
                 key={booking._id}
                 className="bg-white rounded-2xl border border-gray-100 hover:border-green-200 hover:shadow-sm transition-all p-3 sm:p-4"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                  {/* Bloque fecha */}
-                  <div className="bg-green-50 rounded-xl p-2.5 sm:p-3 text-center min-w-[55px] sm:min-w-[60px] shrink-0">
-                    <p className="text-[9px] sm:text-[10px] text-green-600 font-bold uppercase">
+                {/* Fila superior: fecha + info + botones */}
+                <div className="flex items-start gap-3">
+                  {/* Fecha */}
+                  <div className="bg-green-50 rounded-xl px-2.5 py-2 text-center min-w-[44px] shrink-0">
+                    <p className="text-[9px] text-green-600 font-bold uppercase leading-none">
                       {format(new Date(booking.date), 'MMM', { locale: es })}
                     </p>
-                    <p className="text-lg sm:text-xl font-black text-green-700 leading-none">
+                    <p className="text-lg font-black text-green-700 leading-tight">
                       {format(new Date(booking.date), 'd')}
                     </p>
                   </div>
 
-                  {/* Info */}
+                  {/* Info central */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 flex-wrap mb-1.5 sm:mb-1">
-                      {court && <span className="font-bold sm:font-black text-gray-900 text-xs sm:text-sm">{court.name}</span>}
-                      <span className={`inline-flex items-center gap-1.5 text-[9px] sm:text-[10px] font-bold px-2.5 py-0.5 rounded-full w-fit ${st.pill}`}>
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      {court && <span className="font-black text-gray-900 text-sm">{court.name}</span>}
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${st.pill}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
                         {STATUS_LABELS[booking.status]}
                       </span>
                     </div>
-                    <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1.5 sm:gap-3 text-[10px] sm:text-xs text-gray-500">
-                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{booking.startTime} – {booking.endTime}</span>
-                      <span className="flex items-center gap-1 truncate"><User className="h-3 w-3 shrink-0" /><span className="truncate">{booking.guestName}</span></span>
-                      <span className="flex items-center gap-1 truncate"><Mail className="h-3 w-3 shrink-0" /><span className="truncate">{booking.guestEmail}</span></span>
+                    <div className="flex flex-col gap-0.5 text-xs text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3 shrink-0" />{booking.startTime} – {booking.endTime}
+                      </span>
+                      <span className="flex items-center gap-1 truncate">
+                        <User className="h-3 w-3 shrink-0" /><span className="truncate">{booking.guestName}</span>
+                      </span>
+                      <span className="flex items-center gap-1 truncate">
+                        <Mail className="h-3 w-3 shrink-0" /><span className="truncate">{booking.guestEmail}</span>
+                      </span>
                     </div>
                   </div>
 
-                  {/* Precio + botones */}
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 shrink-0">
-                    <div className="text-left">
-                      <p className="font-bold sm:font-black text-green-700 text-xs sm:text-base">${booking.totalPrice?.toLocaleString('es-CO')}</p>
-                      <p className="text-[8px] sm:text-[10px] text-gray-400">COP</p>
-                    </div>
-                    <div className="flex items-center gap-1.5 sm:gap-2 justify-center">
-                      <button
-                        onClick={() => setSelected(booking)}
-                        title="Ver detalles"
-                        className="w-7 h-7 sm:w-9 sm:h-9 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all shrink-0"
-                      >
-                        <Eye className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />
+                  {/* Botones */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button onClick={() => setSelected(booking)} title="Ver detalles"
+                      className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all">
+                      <Eye className="h-3.5 w-3.5" />
+                    </button>
+                    {booking.status === 'pending' && (
+                      <button onClick={() => changeStatus.mutate({ id: booking._id, status: 'confirmed' })} title="Confirmar"
+                        className="w-8 h-8 rounded-full border border-amber-200 bg-amber-50 flex items-center justify-center text-amber-500 hover:bg-amber-100 transition-all">
+                        <CheckCircle className="h-3.5 w-3.5" />
                       </button>
-                      {booking.status === 'pending' && (
-                        <button
-                          onClick={() => changeStatus.mutate({ id: booking._id, status: 'confirmed' })}
-                          title="Confirmar"
-                          className="w-7 h-7 sm:w-9 sm:h-9 rounded-full border border-amber-200 bg-amber-50 flex items-center justify-center text-amber-500 hover:bg-amber-100 transition-all shrink-0"
-                        >
-                          <CheckCircle className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />
-                        </button>
-                      )}
-                      {(booking.status === 'pending' || booking.status === 'confirmed') && (
-                        <button
-                          onClick={() => changeStatus.mutate({ id: booking._id, status: 'cancelled' })}
-                          title="Cancelar reserva"
-                          className="w-7 h-7 sm:w-9 sm:h-9 rounded-full border border-red-200 bg-red-50 flex items-center justify-center text-red-400 hover:bg-red-100 hover:text-red-600 transition-all shrink-0"
-                        >
-                          <X className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />
-                        </button>
-                      )}
-                    </div>
+                    )}
+                    {(booking.status === 'pending' || booking.status === 'confirmed') && (
+                      <button onClick={() => changeStatus.mutate({ id: booking._id, status: 'cancelled' })} title="Cancelar"
+                        className="w-8 h-8 rounded-full border border-red-200 bg-red-50 flex items-center justify-center text-red-400 hover:bg-red-100 transition-all">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
+                </div>
+
+                {/* Fila inferior: código + precio */}
+                <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-gray-50">
+                  {booking.bookingCode
+                    ? <span className="font-mono text-xs font-bold text-gray-400">#{booking.bookingCode}</span>
+                    : <span />
+                  }
+                  <span className="font-black text-green-700 text-sm">${booking.totalPrice?.toLocaleString('es-CO')} <span className="text-[10px] font-normal text-gray-400">COP</span></span>
                 </div>
               </div>
             );
@@ -292,6 +297,12 @@ export default function ReservasOwnerPage() {
                 <div className="flex items-center gap-2 text-gray-600"><Phone className="h-4 w-4 text-green-600" />{selected.guestPhone}</div>
                 {selected.notes && <div className="text-gray-500 pt-1 border-t border-gray-100">📝 {selected.notes}</div>}
               </div>
+              {selected.bookingCode && (
+                <div className="flex items-center justify-between bg-gray-100 rounded-xl px-4 py-3">
+                  <span className="text-sm text-gray-500 font-semibold">Código</span>
+                  <span className="font-black text-gray-700 font-mono tracking-widest">#{selected.bookingCode}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between bg-green-50 rounded-xl px-4 py-3">
                 <span className="text-sm text-gray-600 font-semibold">Total</span>
                 <span className="font-black text-green-700 text-lg">${selected.totalPrice?.toLocaleString('es-CO')} COP</span>

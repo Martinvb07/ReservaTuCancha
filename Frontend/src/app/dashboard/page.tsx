@@ -7,6 +7,7 @@ import {
   ArrowUpRight, Zap, AlertTriangle, RefreshCw,
 } from 'lucide-react';
 import Link from 'next/link';
+import { OwnerHomeWidgets } from '@/components/dashboard/OwnerHomeWidgets';
 
 interface StatsResponse {
   totalBookings: number;
@@ -126,6 +127,9 @@ export default async function DashboardPage() {
             </Link>
           ))}
         </div>
+
+        {/* ── Widgets dinámicos ── */}
+        <OwnerHomeWidgets />
       </div>
     );
   }
