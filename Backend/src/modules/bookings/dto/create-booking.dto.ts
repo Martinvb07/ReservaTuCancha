@@ -57,4 +57,9 @@ export class CreateBookingDto {
   @IsInt()
   @Min(0)
   totalPrice: number;
+
+  @ApiProperty({ example: 'wompi', required: false })
+  @IsOptional()
+  @IsString()
+  paymentMethod?: 'wompi' | 'efectivo';
 }

@@ -69,6 +69,7 @@ export interface CreateBookingPayload {
   players?: number;
   notes?: string;
   totalPrice: number;
+  paymentMethod?: 'wompi' | 'efectivo';
 }
 
 export interface Booking {

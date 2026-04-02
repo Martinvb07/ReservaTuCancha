@@ -55,6 +55,9 @@ export class Booking {
   @Prop({ trim: true })
   wompiTransactionId?: string; // ID interno de Wompi para seguimiento
 
+  @Prop({ enum: ['wompi', 'efectivo'], default: 'wompi' })
+  paymentMethod: string;
+
   // ─── Tokens para acciones sin login ──────────────────────────────────
   @Prop({ required: true, unique: true })
   cancelToken: string; // UUID — enviado por email para cancelar sin login

@@ -165,6 +165,11 @@ export class BookingsService {
     });
 
     const saved = await booking.save();
+
+    if (createBookingDto.paymentMethod === 'efectivo') {
+      await this.notificationsService.sendBookingPendingCash(saved as any);
+    }
+
     return saved;
   }
 

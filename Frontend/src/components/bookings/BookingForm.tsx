@@ -67,7 +67,7 @@ export default function BookingForm({ courtId, courtName, pricePerHour, availabi
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [dateOffset, setDateOffset]   = useState(0);
   const [bookingResult, setBookingResult] = useState<any>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'wompi' | null>('wompi');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'wompi' | 'efectivo' | null>(null);
   const [wompiLoading, setWompiLoading] = useState(false);
 
   // Obtener config de Wompi de la cancha
@@ -136,6 +136,7 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
       courtId, guestName: values.guestName, guestEmail: values.guestEmail,
       guestPhone: values.guestPhone, date: format(selectedDate!, 'yyyy-MM-dd'),
       startTime: selectedSlots[0], endTime, notes: values.notes, totalPrice,
+      paymentMethod: selectedPaymentMethod ?? 'wompi',
     }),
   });
 
@@ -159,13 +160,16 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
     if (!selectedDate || selectedSlots.length === 0) { toast.error('Selecciona una fecha y horario'); return; }
     if (step === 'form') { setStep('summary'); return; }
     if (step === 'summary') { setStep('payment'); return; }
-    if (step === 'payment') { 
+    if (step === 'payment') {
       setWompiLoading(true);
       createBookingMutation.mutate(values, {
         onSuccess: (bookingData) => {
-          setWompiLoading(false);
-          // Una vez creada la booking, iniciar el pago
-          paymentMutation.mutate(bookingData._id);
+          if (selectedPaymentMethod === 'efectivo') {
+            setWompiLoading(false);
+            window.location.href = `/reservas/confirmacion?bookingId=${bookingData._id}&method=efectivo`;
+          } else {
+            paymentMutation.mutate(bookingData._id);
+          }
         },
         onError: () => setWompiLoading(false),
       });
@@ -437,11 +441,11 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
                 </div>
 
                 {/* Opción Wompi */}
-                <div 
+                <div
                   onClick={() => setSelectedPaymentMethod('wompi')}
                   className={`border-2 rounded-2xl p-5 cursor-pointer transition-all ${
-                    selectedPaymentMethod === 'wompi' 
-                      ? 'border-green-500 bg-green-50' 
+                    selectedPaymentMethod === 'wompi'
+                      ? 'border-green-500 bg-green-50'
                       : 'border-gray-200 hover:border-green-300'
                   }`}>
                   <div className="flex items-center justify-between">
@@ -457,6 +461,30 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
                       </div>
                     </div>
                     <CreditCard className="h-6 w-6 text-gray-400" />
+                  </div>
+                </div>
+
+                {/* Opción Efectivo */}
+                <div
+                  onClick={() => setSelectedPaymentMethod('efectivo')}
+                  className={`border-2 rounded-2xl p-5 cursor-pointer transition-all ${
+                    selectedPaymentMethod === 'efectivo'
+                      ? 'border-amber-500 bg-amber-50'
+                      : 'border-gray-200 hover:border-amber-300'
+                  }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                        selectedPaymentMethod === 'efectivo' ? 'border-amber-500 bg-amber-500' : 'border-gray-300'
+                      }`}>
+                        {selectedPaymentMethod === 'efectivo' && <span className="text-white text-sm">✓</span>}
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900">Efectivo (pagar en el lugar)</p>
+                        <p className="text-sm text-gray-500">Lleva el dinero el día de tu reserva</p>
+                      </div>
+                    </div>
+                    <span className="text-2xl">💵</span>
                   </div>
                 </div>
 
@@ -480,9 +508,19 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
                 </div>
 
                 <button type="submit" disabled={wompiLoading || paymentMutation.isPending || !selectedPaymentMethod}
-                  className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-black py-4 rounded-2xl transition-colors shadow-lg">
-                  <Lock className="h-5 w-5" />
-                  {wompiLoading || paymentMutation.isPending ? 'Procesando pago...' : '🔒 Confirmar y pagar'}
+                  className={`w-full flex items-center justify-center gap-2 disabled:opacity-60 text-white font-black py-4 rounded-2xl transition-colors shadow-lg ${
+                    selectedPaymentMethod === 'efectivo'
+                      ? 'bg-amber-500 hover:bg-amber-600'
+                      : 'bg-green-600 hover:bg-green-700'
+                  }`}>
+                  {selectedPaymentMethod === 'efectivo' ? <span>💵</span> : <Lock className="h-5 w-5" />}
+                  {wompiLoading || paymentMutation.isPending
+                    ? 'Procesando...'
+                    : selectedPaymentMethod === 'efectivo'
+                      ? 'Confirmar reserva (pago en el lugar)'
+                      : !selectedPaymentMethod
+                        ? 'Selecciona un método de pago'
+                        : '🔒 Confirmar y pagar'}
                 </button>
               </>
             )}
