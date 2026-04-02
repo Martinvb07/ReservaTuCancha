@@ -175,11 +175,11 @@ export class NotificationsService {
             <tr>
               <td align="center" style="padding: 40px 30px;">
                 <div style="background-color: #f59e0b; width: 64px; height: 64px; border-radius: 50%; margin-bottom: 24px; display: table;">
-                  <span style="display: table-cell; vertical-align: middle; font-size: 30px; color: #111827;">💵</span>
+                  <span style="display: table-cell; vertical-align: middle; font-size: 26px; font-weight: 900; color: #111827; font-family: Georgia, serif;">$</span>
                 </div>
-                <h1 style="color: #ffffff; font-size: 26px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">¡Reserva creada!</h1>
+                <h1 style="color: #ffffff; font-size: 26px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">Reserva Creada</h1>
                 <p style="color: #9ca3af; font-size: 14px; margin-top: 10px; line-height: 20px;">
-                  Hola <strong>${booking.guestName}</strong>, tu reserva está confirmada. Recuerda llevar el pago en efectivo al lugar.
+                  Hola <strong>${booking.guestName}</strong>, tu reserva fue registrada exitosamente. Recuerda llevar el valor en efectivo el día de tu visita.
                 </p>
                 <div style="background-color: #1f2937; border-radius: 20px; padding: 20px; margin-top: 28px; border: 1px solid #374151;">
                   <span style="color: #9ca3af; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">Código de Reserva</span>
@@ -212,7 +212,7 @@ export class NotificationsService {
                   </tr>
                 </table>
                 <div style="margin-top: 20px; background-color: #fef3c7; border-radius: 12px; padding: 16px; text-align: center;">
-                  <p style="color: #92400e; font-size: 13px; margin: 0; font-weight: 600;">💵 Paga en efectivo cuando llegues al lugar</p>
+                  <p style="color: #92400e; font-size: 13px; margin: 0; font-weight: 600;">Pago en efectivo al llegar al lugar</p>
                 </div>
                 <div style="margin-top: 24px; text-align: center;">
                   <a href="${cancelUrl}" style="background-color: #ef4444; color: #ffffff; padding: 16px 32px; border-radius: 16px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block;">
