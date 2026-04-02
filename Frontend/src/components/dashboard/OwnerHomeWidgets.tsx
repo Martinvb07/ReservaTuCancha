@@ -145,7 +145,7 @@ export function OwnerHomeWidgets() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
                 <XAxis
                   dataKey="day"
-                  tick={{ fontSize: 11, fill: '#9ca3af', textTransform: 'capitalize' }}
+                  tick={{ fontSize: 11, fill: '#9ca3af' }}
                   axisLine={false} tickLine={false}
                 />
                 <YAxis
