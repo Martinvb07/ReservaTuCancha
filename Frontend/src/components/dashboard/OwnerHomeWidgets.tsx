@@ -44,13 +44,15 @@ const STATUS_LABEL: Record<string, string> = {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 export function OwnerHomeWidgets() {
-  useApiAuth();
+  const session = useApiAuth();
+  const token = (session as any)?.accessToken;
   const queryClient = useQueryClient();
 
   // ── Plan info ──
   const { data: planInfo } = useQuery<any>({
     queryKey: ['my-plan'],
     queryFn: async () => { const { data } = await api.get('/users/my-plan'); return data; },
+    enabled: !!token,
     retry: 1,
   });
 
@@ -58,12 +60,14 @@ export function OwnerHomeWidgets() {
   const { data: bookings = [], isLoading } = useQuery<any[]>({
     queryKey: ['owner-bookings'],
     queryFn: async () => { const { data } = await api.get('/bookings/owner'); return data; },
+    enabled: !!token,
   });
 
   // ── Club info (Wompi status) ──
   const { data: clubInfo } = useQuery<any>({
     queryKey: ['club-info'],
     queryFn: async () => { const { data } = await api.get('/clubs/my-club'); return data; },
+    enabled: !!token,
     retry: 1,
   });
 
