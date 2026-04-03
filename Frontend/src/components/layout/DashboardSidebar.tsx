@@ -10,6 +10,7 @@ import {
   CreditCard, Image, MessageSquare, Zap,
 } from 'lucide-react';
 import api from '@/lib/api/axios';
+import { useApiAuth } from '@/hooks/useApiAuth';
 
 const OWNER_LINKS = [
   { href: '/dashboard',                            label: 'Inicio',        icon: LayoutDashboard },
@@ -42,11 +43,13 @@ interface Props { role: string; userName: string; }
 export default function DashboardSidebar({ role, userName }: Props) {
   const pathname = usePathname();
   const links    = role === 'admin' ? ADMIN_LINKS : OWNER_LINKS;
+  const session  = useApiAuth();
+  const token    = (session as any)?.accessToken;
 
   const { data: planInfo } = useQuery<any>({
     queryKey: ['my-plan'],
     queryFn: async () => { const { data } = await api.get('/users/my-plan'); return data; },
-    enabled: role === 'owner',
+    enabled: role === 'owner' && !!token,
     staleTime: 5 * 60 * 1000,
   });
 

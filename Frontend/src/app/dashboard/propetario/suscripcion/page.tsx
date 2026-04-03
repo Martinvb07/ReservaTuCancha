@@ -75,7 +75,8 @@ function FeatureValue({ val }: { val: boolean | string }) {
 
 // ─── Página ───────────────────────────────────────────────────────────────────
 export default function SuscripcionPage() {
-  useApiAuth();
+  const session = useApiAuth();
+  const token = (session as any)?.accessToken;
 
   const { data: plan, isLoading } = useQuery({
     queryKey: ['my-plan'],
@@ -83,6 +84,7 @@ export default function SuscripcionPage() {
       const { data } = await api.get('/users/my-plan');
       return data;
     },
+    enabled: !!token,
   });
 
   const planKey = (plan?.plan ?? 'basico') as keyof typeof PLANES;

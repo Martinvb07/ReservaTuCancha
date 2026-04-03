@@ -13,8 +13,10 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      console.error('🔴 Unauthorized - token inválido o expirado');
-      if (typeof window !== 'undefined') {
+      // Solo cerrar sesión si la request llevaba token (evita logout por race condition)
+      const hadToken = !!error.config?.headers?.['Authorization'];
+      if (hadToken && typeof window !== 'undefined') {
+        console.error('🔴 Unauthorized - token inválido o expirado');
         signOut({ callbackUrl: '/auth/login' });
       }
     }
