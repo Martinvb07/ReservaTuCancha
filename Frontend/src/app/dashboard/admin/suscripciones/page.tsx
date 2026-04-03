@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Zap, CheckCircle, XCircle, Clock, ChevronDown, Crown, AlertCircle } from 'lucide-react';
+import { Search, Zap, CheckCircle, XCircle, Clock, ChevronDown, Crown } from 'lucide-react';
 import api from '@/lib/api/axios';
 import { toast } from 'sonner';
 
@@ -107,7 +107,7 @@ export default function AdminSuscripcionesPage() {
     onError: () => toast.error('Error al actualizar'),
   });
 
-  const users: any[] = data?.data ?? [];
+  const users: any[] = Array.isArray(data) ? data : (data?.data ?? []);
 
   const filtered = users.filter(u => {
     const matchSearch = u.name?.toLowerCase().includes(search.toLowerCase()) ||
