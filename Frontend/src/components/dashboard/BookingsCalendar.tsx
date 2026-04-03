@@ -24,6 +24,15 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+const COLOMBIA_TZ = 'America/Bogota';
+
+// Convertir hora 24h (ej: "17:00") a 12h AM/PM (ej: "5:00 PM")
+function formatTime12h(time24h: string): string {
+  const [hours, minutes] = time24h.split(':').map(Number);
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const hours12 = hours % 12 || 12;
+  return `${hours12}:${String(minutes).padStart(2, '0')} ${period}`;
+}
 
 interface Props {
   bookings: Booking[];
@@ -134,7 +143,7 @@ export default function BookingsCalendar({ bookings, onChangeStatus }: Props) {
                             key={b._id}
                             className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-md truncate ${st.pill}`}
                           >
-                            {b.startTime} {court?.name ?? ''}
+                            {formatTime12h(b.startTime)} {court?.name ?? ''}
                           </div>
                         );
                       })}
@@ -208,8 +217,8 @@ export default function BookingsCalendar({ bookings, onChangeStatus }: Props) {
                   <div key={booking._id} className="flex items-center gap-3 px-4 sm:px-5 py-3 hover:bg-gray-50/50 transition-all">
                     {/* Time block */}
                     <div className="w-16 sm:w-20 shrink-0 text-center">
-                      <p className="text-sm sm:text-base font-black text-gray-900">{booking.startTime}</p>
-                      <p className="text-[10px] text-gray-400">{booking.endTime}</p>
+                      <p className="text-sm sm:text-base font-black text-gray-900">{formatTime12h(booking.startTime)}</p>
+                      <p className="text-[10px] text-gray-400">{formatTime12h(booking.endTime)}</p>
                     </div>
 
                     {/* Vertical line with status color */}
@@ -276,7 +285,7 @@ export default function BookingsCalendar({ bookings, onChangeStatus }: Props) {
               </div>
               <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm">
                 <div className="flex items-center gap-2 text-gray-600"><CalendarDays className="h-4 w-4 text-green-600" />{format(new Date(selectedBooking.date), 'PPP', { locale: es })}</div>
-                <div className="flex items-center gap-2 text-gray-600"><Clock className="h-4 w-4 text-green-600" />{selectedBooking.startTime} – {selectedBooking.endTime}</div>
+                <div className="flex items-center gap-2 text-gray-600"><Clock className="h-4 w-4 text-green-600" />{formatTime12h(selectedBooking.startTime)} – {formatTime12h(selectedBooking.endTime)}</div>
                 <div className="flex items-center gap-2 text-gray-600"><User className="h-4 w-4 text-green-600" />{selectedBooking.guestName}</div>
                 <div className="flex items-center gap-2 text-gray-600"><Mail className="h-4 w-4 text-green-600" />{selectedBooking.guestEmail}</div>
                 <div className="flex items-center gap-2 text-gray-600"><Phone className="h-4 w-4 text-green-600" />{selectedBooking.guestPhone}</div>

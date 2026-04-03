@@ -52,6 +52,12 @@ function fmtBig(n: number) {
   if (n >= 1_000)     return `$${(n / 1_000).toFixed(0)}K`;
   return fmtCOP(n);
 }
+function formatTime12h(time24h: string): string {
+  const [hours, minutes] = time24h.split(':').map(Number);
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const hours12 = hours % 12 || 12;
+  return `${hours12}:${String(minutes).padStart(2, '0')} ${period}`;
+}
 
 function inPeriod(dateStr: string, period: Period): boolean {
   const d = parseISO(dateStr);
@@ -68,7 +74,7 @@ function downloadCSV(bookings: any[]) {
     b.guestName ?? '',
     b.guestEmail ?? '',
     b.date ? format(parseISO(b.date), 'dd/MM/yyyy') : '',
-    `${b.startTime ?? ''} – ${b.endTime ?? ''}`,
+    `${b.startTime ? formatTime12h(b.startTime) : ''} – ${b.endTime ? formatTime12h(b.endTime) : ''}`,
     STATUS_LABEL[b.status] ?? b.status,
     METHOD_LABEL[b.paymentMethod]?.label ?? b.paymentMethod ?? 'Wompi',
     b.totalPrice ?? 0,
@@ -358,7 +364,7 @@ export default function OwnerPagosPage() {
                         <p className="text-sm font-semibold text-gray-700">
                           {b.date ? format(parseISO(b.date), 'dd MMM yyyy', { locale: es }) : '—'}
                         </p>
-                        <p className="text-xs text-gray-400">{b.startTime} – {b.endTime}</p>
+                        <p className="text-xs text-gray-400">{formatTime12h(b.startTime)} – {formatTime12h(b.endTime)}</p>
                         {b.bookingCode && (
                           <p className="text-[10px] font-mono text-gray-300 mt-0.5">#{b.bookingCode}</p>
                         )}

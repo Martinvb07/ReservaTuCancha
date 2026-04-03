@@ -122,6 +122,35 @@ export default function ReservasOwnerPage() {
         </div>
       </div>
 
+      {/* Filtros (ambas vistas) */}
+      <div className="flex flex-col gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Buscar por cliente, email o código (#XXXXXXXX)..."
+            value={search}
+            onChange={e => handleSearchChange(e.target.value)}
+            className="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-green-400 transition"
+          />
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {['all', 'pending', 'confirmed', 'cancelled', 'completed'].map(s => (
+            <button
+              key={s}
+              onClick={() => handleFilterChange(s)}
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-bold border-2 transition-all ${
+                filterStatus === s
+                  ? 'bg-gray-900 border-gray-900 text-white'
+                  : 'border-gray-200 text-gray-500 hover:border-gray-400'
+              }`}
+            >
+              {s === 'all' ? 'Todas' : STATUS_LABELS[s]}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Skeletons */}
       {isLoading && (
         <div className="space-y-3">
@@ -140,35 +169,6 @@ export default function ReservasOwnerPage() {
       {/* ═══ LIST VIEW ═══ */}
       {!isLoading && view === 'list' && (
         <>
-          {/* Filtros (solo en vista lista) */}
-          <div className="flex flex-col gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Buscar por cliente, email o código (#XXXXXXXX)..."
-                value={search}
-                onChange={e => handleSearchChange(e.target.value)}
-                className="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-green-400 transition"
-              />
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              {['all', 'pending', 'confirmed', 'cancelled', 'completed'].map(s => (
-                <button
-                  key={s}
-                  onClick={() => handleFilterChange(s)}
-                  className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-bold border-2 transition-all ${
-                    filterStatus === s
-                      ? 'bg-gray-900 border-gray-900 text-white'
-                      : 'border-gray-200 text-gray-500 hover:border-gray-400'
-                  }`}
-                >
-                  {s === 'all' ? 'Todas' : STATUS_LABELS[s]}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Empty */}
           {filtered.length === 0 && (
             <div className="text-center py-16 sm:py-20 bg-white rounded-2xl border border-gray-100">
