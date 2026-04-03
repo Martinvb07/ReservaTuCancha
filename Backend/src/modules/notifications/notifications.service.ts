@@ -11,6 +11,7 @@ export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
   private readonly frontendUrl: string;
   private readonly fromEmail: string;
+  private readonly adminEmail: string;
   private readonly resend: Resend;
 
   constructor(
@@ -20,6 +21,7 @@ export class NotificationsService {
   ) {
     this.frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
     this.fromEmail   = this.configService.get<string>('RESEND_FROM_EMAIL');
+    this.adminEmail  = this.configService.get<string>('ADMIN_NOTIFY_EMAIL', 'martinvelasquezdev@gmail.com');
     this.resend = new Resend(this.configService.get<string>('RESEND_API_KEY'));
   }
 
@@ -360,5 +362,97 @@ export class NotificationsService {
 
   async sendAdminNotification({ subject, html }: { subject: string; html: string }) {
     await this.send({ to: this.fromEmail, from: this.fromEmail, subject, html });
+  }
+
+  async sendNewSolicitudNotification(data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    businessName: string;
+    nit: string;
+    city: string;
+    department: string;
+    message?: string;
+  }) {
+    const receivedAt = new Date().toLocaleDateString('es-CO', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+      timeZone: 'America/Bogota',
+    });
+
+    await this.send({
+      to: this.adminEmail,
+      from: this.fromEmail,
+      subject: `Nueva solicitud de acceso — ${data.businessName}`,
+      html: `
+        <div style="background-color: #f3f4f6; padding: 40px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+          <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 450px; background-color: #111827; border-radius: 32px; overflow: hidden; border-collapse: separate;">
+            <tr>
+              <td align="center" style="padding: 40px 30px;">
+                <div style="background-color: #a3e635; width: 64px; height: 64px; border-radius: 50%; margin-bottom: 24px; display: table;">
+                  <span style="display: table-cell; vertical-align: middle; font-size: 28px; color: #111827; font-weight: 900;">!</span>
+                </div>
+                <h1 style="color: #ffffff; font-size: 26px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">Nueva Solicitud</h1>
+                <p style="color: #9ca3af; font-size: 14px; margin-top: 10px; line-height: 20px;">
+                  Alguien acaba de solicitar acceso a la plataforma. Revisa los datos y aprueba o rechaza desde el panel de administración.
+                </p>
+                <div style="background-color: #1f2937; border-radius: 20px; padding: 20px; margin-top: 28px; border: 1px solid #374151;">
+                  <span style="color: #9ca3af; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">Negocio</span>
+                  <span style="color: #a3e635; font-size: 22px; font-weight: 800; letter-spacing: 1px;">${data.businessName}</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="background-color: #ffffff; padding: 40px 30px; border-radius: 32px 32px 0 0;">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Nombre</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${data.firstName} ${data.lastName}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Email</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${data.email}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Teléfono</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${data.phone}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">NIT / Cédula</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${data.nit}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Ciudad</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${data.city}, ${data.department}</td>
+                  </tr>
+                  ${data.message ? `
+                  <tr>
+                    <td colspan="2" style="padding-top: 16px; border-top: 1px solid #f3f4f6;">
+                      <span style="color: #6b7280; font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Mensaje adicional</span>
+                      <span style="color: #374151; font-size: 13px; line-height: 20px;">${data.message}</span>
+                    </td>
+                  </tr>
+                  ` : ''}
+                  <tr style="height: 50px;">
+                    <td style="color: #6b7280; font-size: 12px; border-top: 1px solid #f3f4f6;">Recibido</td>
+                    <td align="right" style="color: #9ca3af; font-size: 12px; border-top: 1px solid #f3f4f6;">${receivedAt}</td>
+                  </tr>
+                </table>
+
+                <div style="margin-top: 32px; text-align: center;">
+                  <a href="${this.frontendUrl}/dashboard/admin/solicitudes" style="background-color: #111827; color: #ffffff; padding: 16px 32px; border-radius: 16px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                    Ver en el panel admin
+                  </a>
+                </div>
+              </td>
+            </tr>
+          </table>
+          <div style="text-align: center; margin-top: 24px; color: #9ca3af; font-size: 12px;">
+            Enviado por <strong>ReservaTuCancha</strong>
+          </div>
+        </div>
+      `,
+    });
   }
 }

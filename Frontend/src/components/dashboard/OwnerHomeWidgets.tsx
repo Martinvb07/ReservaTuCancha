@@ -5,7 +5,7 @@ import { format, isToday, parseISO, subDays, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
   CheckCircle, Clock, AlertCircle, Calendar, User,
-  TrendingUp, Banknote, CreditCard, ArrowRight,
+  TrendingUp, Banknote, CreditCard, ArrowRight, Zap,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -46,6 +46,13 @@ const STATUS_LABEL: Record<string, string> = {
 export function OwnerHomeWidgets() {
   useApiAuth();
   const queryClient = useQueryClient();
+
+  // ── Plan info ──
+  const { data: planInfo } = useQuery<any>({
+    queryKey: ['my-plan'],
+    queryFn: async () => { const { data } = await api.get('/users/my-plan'); return data; },
+    retry: 1,
+  });
 
   // ── Bookings ──
   const { data: bookings = [], isLoading } = useQuery<any[]>({
@@ -96,6 +103,48 @@ export function OwnerHomeWidgets() {
 
   return (
     <div className="space-y-5">
+
+      {/* ── Banner suscripción vencida ── */}
+      {planInfo?.isExpired && (
+        <Link href="/dashboard/propetario/suscripcion" className="block group">
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex items-center gap-4 hover:bg-red-100 transition-all">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 bg-red-500 rounded-xl flex items-center justify-center shrink-0">
+              <Zap className="h-5 w-5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-black text-red-900 text-sm">Tu suscripción venció</p>
+              <p className="text-xs text-red-700 mt-0.5 leading-snug">
+                Algunas funciones están bloqueadas. Contáctanos para renovar tu plan.
+              </p>
+            </div>
+            <span className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-red-700 bg-red-200 px-3 py-1.5 rounded-full whitespace-nowrap shrink-0 group-hover:bg-red-300 transition-colors">
+              Ver plan <ArrowRight className="h-3.5 w-3.5" />
+            </span>
+          </div>
+        </Link>
+      )}
+
+      {/* ── Banner vencimiento próximo ── */}
+      {planInfo?.isExpiringSoon && !planInfo?.isExpired && (
+        <Link href="/dashboard/propetario/suscripcion" className="block group">
+          <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 sm:p-5 flex items-center gap-4 hover:bg-orange-100 transition-all">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 bg-orange-500 rounded-xl flex items-center justify-center shrink-0">
+              <Clock className="h-5 w-5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-black text-orange-900 text-sm">
+                Tu plan vence en {planInfo.daysLeft} día{planInfo.daysLeft !== 1 ? 's' : ''}
+              </p>
+              <p className="text-xs text-orange-700 mt-0.5 leading-snug">
+                Renueva antes de que expire para mantener el acceso a todas tus funciones.
+              </p>
+            </div>
+            <span className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-orange-700 bg-orange-200 px-3 py-1.5 rounded-full whitespace-nowrap shrink-0 group-hover:bg-orange-300 transition-colors">
+              Renovar <ArrowRight className="h-3.5 w-3.5" />
+            </span>
+          </div>
+        </Link>
+      )}
 
       {/* ── Alerta Wompi ── */}
       {clubInfo && !clubInfo.wompiConfigured && (

@@ -18,7 +18,22 @@ export class SolicitudesService {
 
   async crearSolicitud(data: any) {
     const solicitud = new this.solicitudModel(data);
-    return solicitud.save();
+    const saved = await solicitud.save();
+
+    // Notificar al admin por email
+    this.notificationsService.sendNewSolicitudNotification({
+      firstName:    data.firstName,
+      lastName:     data.lastName,
+      email:        data.email,
+      phone:        data.phone,
+      businessName: data.businessName,
+      nit:          data.nit,
+      city:         data.city,
+      department:   data.department,
+      message:      data.message,
+    }).catch(() => {/* no bloquear si falla el email */});
+
+    return saved;
   }
 
   async listarSolicitudes() {

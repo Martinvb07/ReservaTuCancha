@@ -4,13 +4,15 @@ import { CourtsController } from './courts.controller';
 import { CourtsService } from './courts.service';
 import { Court, CourtSchema } from './schemas/court.schema';
 import { Club, ClubSchema } from '../clubs/schemas/club.schema';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Court.name, schema: CourtSchema },
-      { name: Club.name, schema: ClubSchema },
+      { name: Club.name,  schema: ClubSchema  },
     ]),
+    UsersModule,
   ],
   controllers: [CourtsController],
   providers: [CourtsService],

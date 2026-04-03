@@ -1,6 +1,6 @@
 import {
   Controller, Get, Post, Patch, Delete,
-  Body, Param, UseGuards,
+  Body, Param, UseGuards, Request,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
@@ -16,6 +16,13 @@ import { UserRole } from './schemas/user.schema';
 @ApiBearerAuth()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Get('my-plan')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Plan de suscripción del owner autenticado' })
+  getMyPlan(@Request() req) {
+    return this.usersService.getMyPlan(req.user.userId);
+  }
 
   @Get()
   @ApiOperation({ summary: 'Listar todos los usuarios' })

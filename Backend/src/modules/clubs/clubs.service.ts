@@ -3,12 +3,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Club, ClubDocument } from './schemas/club.schema';
 import { Court, CourtDocument } from '../courts/schemas/court.schema';
+import { PlanLimitsService } from '../users/plan-limits.service';
 
 @Injectable()
 export class ClubsService {
   constructor(
-    @InjectModel(Club.name) private clubModel: Model<ClubDocument>,
-    @InjectModel(Court.name) private courtModel: Model<CourtDocument>,
+    @InjectModel(Club.name)  private clubModel:   Model<ClubDocument>,
+    @InjectModel(Court.name) private courtModel:  Model<CourtDocument>,
+    private readonly planLimits: PlanLimitsService,
   ) {}
 
   async findMyClub(userId: string) {
@@ -92,6 +94,9 @@ export class ClubsService {
     wompiData: { wompiPublicKey: string; wompiIntegritySecret?: string; wompiEventsSecret?: string },
     userId: string
   ) {
+    // PLAN: Verificar que el plan del usuario permite configurar Wompi
+    await this.planLimits.assertCanConfigureWompi(userId);
+
     // PREVENCIÓN: Validar el ID del club para evitar el crash del server (Error 500)
     if (!Types.ObjectId.isValid(clubId)) {
       throw new NotFoundException('El ID del club no es un formato válido de MongoDB.');

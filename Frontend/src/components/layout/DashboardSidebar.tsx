@@ -3,20 +3,23 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
+import { useQuery } from '@tanstack/react-query';
 import {
   LayoutDashboard, CalendarDays, Building2, BarChart3,
   Users, LogOut, Home, FileText, Plus, UserCheck, PenLine,
-  CreditCard, Image, MessageSquare,
+  CreditCard, Image, MessageSquare, Zap,
 } from 'lucide-react';
+import api from '@/lib/api/axios';
 
 const OWNER_LINKS = [
-  { href: '/dashboard',                          label: 'Inicio',       icon: LayoutDashboard },
-  { href: '/dashboard/propetario/canchas',       label: 'Mis canchas',  icon: Building2       },
-  { href: '/dashboard/propetario/reservas',      label: 'Reservas',     icon: CalendarDays    },
-  { href: '/dashboard/propetario/analytics',     label: 'Analytics',    icon: BarChart3       },
-  { href: '/dashboard/propetario/pagos',         label: 'Pagos',        icon: CreditCard      },
-  { href: '/dashboard/propetario/fotos',         label: 'Fotos',        icon: Image           },
-  { href: '/dashboard/propetario/soporte',       label: 'Soporte',      icon: MessageSquare   },
+  { href: '/dashboard',                            label: 'Inicio',        icon: LayoutDashboard },
+  { href: '/dashboard/propetario/canchas',         label: 'Mis canchas',   icon: Building2       },
+  { href: '/dashboard/propetario/reservas',        label: 'Reservas',      icon: CalendarDays    },
+  { href: '/dashboard/propetario/analytics',       label: 'Analytics',     icon: BarChart3       },
+  { href: '/dashboard/propetario/pagos',           label: 'Pagos',         icon: CreditCard      },
+  { href: '/dashboard/propetario/fotos',           label: 'Fotos',         icon: Image           },
+  { href: '/dashboard/propetario/suscripcion',     label: 'Mi Plan',       icon: Zap             },
+  { href: '/dashboard/propetario/soporte',         label: 'Soporte',       icon: MessageSquare   },
 ];
 
 const ADMIN_LINKS = [
@@ -28,11 +31,26 @@ const ADMIN_LINKS = [
   { href: '/dashboard/admin/reportes',     label: 'Reportes',    icon: BarChart3       },
 ];
 
+const PLAN_CHIP: Record<string, { label: string; color: string }> = {
+  basico:      { label: 'Básico',      color: 'bg-gray-700 text-gray-300'    },
+  pro:         { label: 'Pro',         color: 'bg-blue-600 text-white'        },
+  empresarial: { label: 'Empresarial', color: 'bg-purple-600 text-white'      },
+};
+
 interface Props { role: string; userName: string; }
 
 export default function DashboardSidebar({ role, userName }: Props) {
   const pathname = usePathname();
   const links    = role === 'admin' ? ADMIN_LINKS : OWNER_LINKS;
+
+  const { data: planInfo } = useQuery<any>({
+    queryKey: ['my-plan'],
+    queryFn: async () => { const { data } = await api.get('/users/my-plan'); return data; },
+    enabled: role === 'owner',
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const chip = planInfo ? (PLAN_CHIP[planInfo.plan] ?? PLAN_CHIP.basico) : null;
 
   return (
     <aside className="w-48 sm:w-64 bg-gray-900 flex flex-col h-screen overflow-hidden">
@@ -55,9 +73,16 @@ export default function DashboardSidebar({ role, userName }: Props) {
           </div>
           <div className="min-w-0">
             <p className="text-xs font-bold text-white truncate">{userName}</p>
-            <span className="text-[9px] font-bold uppercase tracking-widest text-lime-400">
-              {role === 'admin' ? 'Administrador' : 'Propietario'}
-            </span>
+            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+              <span className="text-[9px] font-bold uppercase tracking-widest text-lime-400">
+                {role === 'admin' ? 'Administrador' : 'Propietario'}
+              </span>
+              {chip && (
+                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${chip.color}`}>
+                  {chip.label}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>

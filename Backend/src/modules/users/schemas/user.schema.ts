@@ -33,6 +33,18 @@ export class User {
 
   @Prop()
   lastLoginAt?: Date;
+
+  @Prop({ enum: ['basico', 'pro', 'empresarial'], default: 'basico' })
+  plan: string;
+
+  @Prop({ enum: ['activa', 'trial', 'vencida', 'cancelada'], default: 'trial' })
+  subscriptionEstado: string;
+
+  @Prop()
+  subscriptionEndsAt?: Date;
+
+  @Prop()
+  subscriptionStartedAt?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

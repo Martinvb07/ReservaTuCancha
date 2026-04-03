@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { ArrowLeft, Building2, MapPin, DollarSign, Clock, Loader2, Plus, CheckCircle2, Users } from 'lucide-react';
 import Link from 'next/link';
 import { courtsApi } from '@/lib/api/courts.api';
+import { UpgradePlanModal, extractUpgradeError } from '@/components/dashboard/UpgradePlanModal';
 
 const schema = z.object({
   name:            z.string().min(3, 'Mínimo 3 caracteres'),
@@ -82,6 +83,7 @@ export default function AdminNuevaCanchaPage() {
   const [availability, setAvailability] = useState<AvailabilitySlot[]>(
     [1,2,3,4,5].map(d => ({ dayOfWeek: d, openTime: '07:00', closeTime: '22:00', slotDurationMinutes: 60 }))
   );
+  const [upgradeError, setUpgradeError] = useState<ReturnType<typeof extractUpgradeError> & { isUpgrade: true } | null>(null);
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -99,9 +101,12 @@ export default function AdminNuevaCanchaPage() {
       location: { address: v.address, city: v.city, department: v.department },
       pricePerHour: v.pricePerHour, currency: v.currency, availability,
     }),
-    
     onSuccess: () => { toast.success('¡Cancha publicada!'); router.push('/dashboard/propetario/canchas'); },
-    onError:   (e: Error) => toast.error(e.message || 'Error al crear la cancha'),
+    onError: (e: any) => {
+      const ue = extractUpgradeError(e);
+      if (ue.isUpgrade) { setUpgradeError(ue as any); }
+      else { toast.error(e?.response?.data?.message || e.message || 'Error al crear la cancha'); }
+    },
   });
 
   const toggleDay = (day: number) =>
@@ -351,6 +356,15 @@ export default function AdminNuevaCanchaPage() {
           </button>
         </div>
       </form>
+
+      <UpgradePlanModal
+        open={!!upgradeError}
+        onClose={() => setUpgradeError(null)}
+        code={upgradeError?.code}
+        message={upgradeError?.message}
+        currentPlan={upgradeError?.currentPlan}
+        limit={upgradeError?.limit}
+      />
     </div>
   );
 }

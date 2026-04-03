@@ -12,6 +12,7 @@ import { es } from 'date-fns/locale';
 import api from '@/lib/api/axios';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import { toast } from 'sonner';
+import { UpgradePlanModal, extractUpgradeError } from '@/components/dashboard/UpgradePlanModal';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 const STATUS_PILL: Record<string, string> = {
@@ -94,6 +95,7 @@ export default function OwnerPagosPage() {
   const [wompiForm, setWompiForm]       = useState({
     wompiPublicKey: '', wompiIntegritySecret: '', wompiEventsSecret: '',
   });
+  const [upgradeError, setUpgradeError] = useState<ReturnType<typeof extractUpgradeError> | null>(null);
 
   // ── Queries ──
   const { data: clubInfo, isLoading: loadingClub, isError } = useQuery({
@@ -119,7 +121,11 @@ export default function OwnerPagosPage() {
       return api.patch(`/clubs/${clubId}/wompi`, formData);
     },
     onSuccess: () => { toast.success('Credenciales de Wompi guardadas'); queryClient.invalidateQueries({ queryKey: ['club-info'] }); },
-    onError: (e: any) => toast.error(e.response?.data?.message || 'Error al guardar credenciales'),
+    onError: (e: any) => {
+      const ue = extractUpgradeError(e);
+      if (ue.isUpgrade) { setUpgradeError(ue); }
+      else { toast.error(e.response?.data?.message || 'Error al guardar credenciales'); }
+    },
   });
 
   // ── Filtrado ──
@@ -528,6 +534,14 @@ export default function OwnerPagosPage() {
           )}
         </div>
       )}
+
+      <UpgradePlanModal
+        open={!!upgradeError?.isUpgrade}
+        onClose={() => setUpgradeError(null)}
+        code={upgradeError?.code}
+        message={upgradeError?.message}
+        currentPlan={upgradeError?.currentPlan}
+      />
     </div>
   );
 }

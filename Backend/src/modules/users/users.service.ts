@@ -63,13 +63,47 @@ export class UsersService {
   }
 
   async updateSubscription(id: string, data: { plan: string; estado: string }) {
-    const user = await this.userModel.findByIdAndUpdate(
-      id,
-      { plan: data.plan, subscriptionEstado: data.estado },
-      { new: true },
-    ).select('-passwordHash');
+    const now = new Date();
+    const update: any = {
+      plan: data.plan,
+      subscriptionEstado: data.estado,
+    };
+
+    if (data.estado === 'activa' && data.plan !== 'basico') {
+      update.subscriptionStartedAt = now;
+      update.subscriptionEndsAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // +30 días
+    } else if (data.estado === 'trial') {
+      update.subscriptionStartedAt = now;
+      update.subscriptionEndsAt = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // +14 días
+    } else if (data.plan === 'basico') {
+      update.subscriptionEndsAt = null;
+    }
+
+    const user = await this.userModel.findByIdAndUpdate(id, update, { new: true }).select('-passwordHash');
     if (!user) throw new NotFoundException('Usuario no encontrado');
     return user;
+  }
+
+  async getMyPlan(userId: string) {
+    const user = await this.userModel
+      .findById(userId)
+      .select('name email plan subscriptionEstado subscriptionEndsAt subscriptionStartedAt')
+      .lean();
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+
+    const now = new Date();
+    const endsAt = user.subscriptionEndsAt ? new Date(user.subscriptionEndsAt) : null;
+    const daysLeft = endsAt ? Math.ceil((endsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
+
+    return {
+      plan: user.plan ?? 'basico',
+      estado: user.subscriptionEstado ?? 'trial',
+      endsAt: user.subscriptionEndsAt ?? null,
+      startedAt: user.subscriptionStartedAt ?? null,
+      daysLeft,
+      isExpired: endsAt ? endsAt < now : false,
+      isExpiringSoon: daysLeft !== null && daysLeft <= 7 && daysLeft > 0,
+    };
   }
 
   async deleteUser(id: string) {

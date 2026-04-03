@@ -4,6 +4,7 @@ import { Model, Types } from 'mongoose';
 import { Court, CourtDocument, SportType } from './schemas/court.schema';
 import { CreateCourtDto } from './dto/create-court.dto';
 import { Club, ClubDocument } from '../clubs/schemas/club.schema';
+import { PlanLimitsService } from '../users/plan-limits.service';
 
 export interface CourtFilters {
   sport?: SportType;
@@ -19,7 +20,8 @@ export interface CourtFilters {
 export class CourtsService {
   constructor(
     @InjectModel(Court.name) private courtModel: Model<CourtDocument>,
-    @InjectModel(Club.name) private clubModel: Model<ClubDocument>,
+    @InjectModel(Club.name)  private clubModel:  Model<ClubDocument>,
+    private readonly planLimits: PlanLimitsService,
   ) {}
 
   async findAll(filters: CourtFilters = {}) {
@@ -69,6 +71,7 @@ export class CourtsService {
   }
 
   async create(ownerId: string, dto: CreateCourtDto): Promise<Court> {
+    await this.planLimits.assertCanCreateCourt(ownerId);
     const court = new this.courtModel({ ...dto, ownerId: new Types.ObjectId(ownerId) });
     return court.save();
   }

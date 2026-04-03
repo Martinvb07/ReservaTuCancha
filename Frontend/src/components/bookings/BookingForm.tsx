@@ -10,7 +10,7 @@ import { format, addMinutes, parse, getDay, isToday, isBefore, startOfDay, addHo
 import { formatInTimeZone } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarDays, Clock, User, Mail, Phone, CreditCard, ChevronLeft, ChevronRight, Timer, CheckCircle, ArrowLeft, Lock, AlertCircle } from 'lucide-react';
+import { CalendarDays, Clock, User, Mail, Phone, CreditCard, ChevronLeft, ChevronRight, Timer, CheckCircle, ArrowLeft, Lock, AlertCircle, Banknote } from 'lucide-react';
 import { bookingsApi } from '@/lib/api/bookings.api';
 import type { AvailabilitySlot } from '@/types/court.types';
 import api from '@/lib/api/axios';
@@ -456,7 +456,7 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
                         {selectedPaymentMethod === 'wompi' && <span className="text-white text-sm">✓</span>}
                       </div>
                       <div>
-                        <p className="font-bold text-gray-900">Wompi (Tarjeta débito/crédito)</p>
+                        <p className="font-bold text-gray-900">Wompi (Nequi/Davidplata/Tarjeta)</p>
                         <p className="text-sm text-gray-500">Pago seguro con encriptación</p>
                       </div>
                     </div>
@@ -484,7 +484,7 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
                         <p className="text-sm text-gray-500">Lleva el dinero el día de tu reserva</p>
                       </div>
                     </div>
-                    <span className="text-2xl">💵</span>
+                    <Banknote className="h-6 w-6 text-amber-500" />
                   </div>
                 </div>
 
@@ -508,19 +508,21 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
                 </div>
 
                 <button type="submit" disabled={wompiLoading || paymentMutation.isPending || !selectedPaymentMethod}
-                  className={`w-full flex items-center justify-center gap-2 disabled:opacity-60 text-white font-black py-4 rounded-2xl transition-colors shadow-lg ${
+                  className={`w-full flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black py-4 rounded-2xl transition-colors shadow-lg ${
                     selectedPaymentMethod === 'efectivo'
                       ? 'bg-amber-500 hover:bg-amber-600'
                       : 'bg-green-600 hover:bg-green-700'
                   }`}>
-                  {selectedPaymentMethod === 'efectivo' ? <span>💵</span> : <Lock className="h-5 w-5" />}
+                  {selectedPaymentMethod === 'efectivo'
+                    ? <Banknote className="h-5 w-5" />
+                    : <CreditCard className="h-5 w-5" />
+                  }
                   {wompiLoading || paymentMutation.isPending
                     ? 'Procesando...'
                     : selectedPaymentMethod === 'efectivo'
                       ? 'Confirmar reserva (pago en el lugar)'
-                      : !selectedPaymentMethod
-                        ? 'Selecciona un método de pago'
-                        : '🔒 Confirmar y pagar'}
+                      : 'Confirmar y pagar'
+                  }
                 </button>
               </>
             )}
