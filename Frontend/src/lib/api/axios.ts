@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { signOut } from 'next-auth/react';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api',
@@ -14,7 +15,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       console.error('🔴 Unauthorized - token inválido o expirado');
       if (typeof window !== 'undefined') {
-        window.location.href = '/auth/login';
+        signOut({ callbackUrl: '/auth/login' });
       }
     }
     

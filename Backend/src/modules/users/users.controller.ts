@@ -18,7 +18,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('my-plan')
-  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Plan de suscripción del owner autenticado' })
   getMyPlan(@Request() req) {
     return this.usersService.getMyPlan(req.user.userId);
