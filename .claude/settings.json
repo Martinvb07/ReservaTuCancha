@@ -8,7 +8,8 @@
       "Read(//tmp/**)"
     ],
     "additionalDirectories": [
-      "C:\\Users\\marti\\Devps\\ReservaTuCancha\\Frontend\\src\\app\\dashboard\\propetario"
+      "C:\\Users\\marti\\Devps\\ReservaTuCancha\\Frontend\\src\\app\\dashboard\\propetario",
+      "C:\\Users\\marti\\Devps\\ReservaTuCancha\\Frontend\\src\\app\\(public)\\club"
     ]
   }
 }

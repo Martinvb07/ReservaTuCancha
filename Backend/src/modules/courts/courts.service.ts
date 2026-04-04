@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Court, CourtDocument, SportType } from './schemas/court.schema';
@@ -84,6 +84,23 @@ export class CourtsService {
     if (!court) throw new NotFoundException('Cancha no encontrada');
     if (court.ownerId.toString() !== ownerId) throw new ForbiddenException('No tienes permiso');
     Object.assign(court, dto);
+    return court.save();
+  }
+
+  async addPhoto(courtId: string, ownerId: string, url: string): Promise<Court> {
+    const court = await this.courtModel.findById(courtId);
+    if (!court) throw new NotFoundException('Cancha no encontrada');
+    if (court.ownerId.toString() !== ownerId) throw new ForbiddenException('No tienes permiso');
+    if (court.photos.includes(url)) return court.toObject();
+    court.photos.push(url);
+    return court.save();
+  }
+
+  async removePhoto(courtId: string, ownerId: string, url: string): Promise<Court> {
+    const court = await this.courtModel.findById(courtId);
+    if (!court) throw new NotFoundException('Cancha no encontrada');
+    if (court.ownerId.toString() !== ownerId) throw new ForbiddenException('No tienes permiso');
+    court.photos = court.photos.filter(p => p !== url);
     return court.save();
   }
 

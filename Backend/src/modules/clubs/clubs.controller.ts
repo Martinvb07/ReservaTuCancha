@@ -25,6 +25,20 @@ export class ClubsController {
     return this.clubsService.findMyClub(req.user.userId);
   }
 
+  @Get('my-club/ensure-slug')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  async ensureMySlug(@Request() req) {
+    const club = await this.clubsService.findMyClub(req.user.userId);
+    if (!club) throw new Error('Club no encontrado');
+    return this.clubsService.ensureSlug(club._id.toString());
+  }
+
+  @Get('slug/:slug')
+  async getBySlug(@Param('slug') slug: string) {
+    return this.clubsService.findBySlug(slug);
+  }
+
   @Get()
   async getClubsBySport(
     @Query('deporte') deporte: string,

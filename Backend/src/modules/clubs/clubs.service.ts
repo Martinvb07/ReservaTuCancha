@@ -3,13 +3,26 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Club, ClubDocument } from './schemas/club.schema';
 import { Court, CourtDocument } from '../courts/schemas/court.schema';
+import { Review, ReviewDocument } from '../reviews/schemas/review.schema';
 import { PlanLimitsService } from '../users/plan-limits.service';
+
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // quitar tildes
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
 
 @Injectable()
 export class ClubsService {
   constructor(
-    @InjectModel(Club.name)  private clubModel:   Model<ClubDocument>,
-    @InjectModel(Court.name) private courtModel:  Model<CourtDocument>,
+    @InjectModel(Club.name)   private clubModel:   Model<ClubDocument>,
+    @InjectModel(Court.name)  private courtModel:  Model<CourtDocument>,
+    @InjectModel(Review.name) private reviewModel: Model<ReviewDocument>,
     private readonly planLimits: PlanLimitsService,
   ) {}
 
@@ -129,5 +142,86 @@ export class ClubsService {
       message: 'Credenciales de Wompi vinculadas correctamente',
       wompiConfigured: true,
     };
+  }
+
+  async findBySlug(slug: string) {
+    let club = await this.clubModel.findOne({ slug }).lean();
+
+    // Si no tiene slug aún, buscar todos y generar (migración lazy)
+    if (!club) {
+      const all = await this.clubModel.find().lean();
+      for (const c of all) {
+        if (!c.slug) {
+          const generated = generateSlug(c.name);
+          await this.clubModel.findByIdAndUpdate(c._id, { slug: generated });
+          if (generated === slug) {
+            club = { ...c, slug: generated };
+          }
+        }
+      }
+    }
+
+    if (!club) throw new NotFoundException('Club no encontrado');
+
+    // Canchas con fotos
+    const courts = await this.courtModel
+      .find({ ownerId: club.ownerUserId, isActive: true })
+      .lean();
+
+    // Reseñas de todas las canchas del club
+    const courtIds = courts.map(c => c._id);
+    const reviews = await this.reviewModel
+      .find({ courtId: { $in: courtIds }, isVisible: true })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean();
+
+    const avgRating = reviews.length
+      ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10
+      : 0;
+
+    return {
+      _id: club._id,
+      name: club.name,
+      slug: club.slug,
+      logo: club.logo,
+      address: club.address,
+      city: club.city,
+      description: (club as any).description,
+      contactPhone: club.contactPhone,
+      contactEmail: club.contactEmail,
+      courts: courts.map(c => ({
+        _id: c._id,
+        name: c.name,
+        sport: c.sport,
+        pricePerHour: c.pricePerHour,
+        photos: c.photos,
+        averageRating: c.averageRating,
+        totalReviews: c.totalReviews,
+        amenities: c.amenities,
+        availability: c.availability,
+      })),
+      reviews: reviews.map(r => ({
+        _id: r._id,
+        guestName: r.guestName,
+        rating: r.rating,
+        comment: r.comment,
+        createdAt: (r as any).createdAt,
+        courtName: courts.find(c => c._id.toString() === r.courtId.toString())?.name ?? '',
+      })),
+      totalCourts: courts.length,
+      totalReviews: reviews.length,
+      avgRating,
+    };
+  }
+
+  async ensureSlug(clubId: string) {
+    const club = await this.clubModel.findById(clubId);
+    if (!club) throw new NotFoundException('Club no encontrado');
+    if (!club.slug) {
+      club.slug = generateSlug(club.name);
+      await club.save();
+    }
+    return { slug: club.slug };
   }
 }

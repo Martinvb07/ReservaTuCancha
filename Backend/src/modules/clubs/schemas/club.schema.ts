@@ -44,6 +44,13 @@ export class Club {
 
   @Prop({ default: false })
   wompiConfigured?: boolean;
+
+  @Prop({ trim: true, lowercase: true })
+  slug?: string;
+
+  @Prop({ trim: true })
+  description?: string;
 }
 
 export const ClubSchema = SchemaFactory.createForClass(Club);
+ClubSchema.index({ slug: 1 }, { unique: true, sparse: true });

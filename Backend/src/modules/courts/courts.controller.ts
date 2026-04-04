@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Request, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CourtsService, CourtFilters } from './courts.service';
 import { CreateCourtDto } from './dto/create-court.dto';
@@ -76,6 +76,28 @@ export class CourtsController {
   @ApiOperation({ summary: 'Editar cancha' })
   update(@Param('id') id: string, @Request() req, @Body() dto: Partial<CreateCourtDto>) {
     return this.courtsService.update(id, req.user.userId, dto);
+  }
+
+  // ─── FOTOS ────────────────────────────────────────────────────────────
+
+  @Post(':id/photos')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Agregar foto a cancha (owner)' })
+  addPhoto(@Param('id') id: string, @Request() req, @Body('url') url: string) {
+    if (!url) throw new BadRequestException('url es requerida');
+    return this.courtsService.addPhoto(id, req.user.userId, url);
+  }
+
+  @Delete(':id/photos')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Eliminar foto de cancha (owner)' })
+  removePhoto(@Param('id') id: string, @Request() req, @Body('url') url: string) {
+    if (!url) throw new BadRequestException('url es requerida');
+    return this.courtsService.removePhoto(id, req.user.userId, url);
   }
 
   // ─── BLOQUEO DE HORARIOS ──────────────────────────────────────────────

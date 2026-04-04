@@ -70,10 +70,20 @@ export function OwnerHomeWidgets() {
     enabled: !!token,
   });
 
-  // ── Club info (Wompi status) ──
+  // ── Club info (Wompi status + slug) ──
   const { data: clubInfo } = useQuery<any>({
     queryKey: ['club-info'],
-    queryFn: async () => { const { data } = await api.get('/clubs/my-club'); return data; },
+    queryFn: async () => {
+      const { data } = await api.get('/clubs/my-club');
+      // Si no tiene slug, generarlo
+      if (data && !data.slug) {
+        try {
+          const { data: slugData } = await api.get('/clubs/my-club/ensure-slug');
+          data.slug = slugData.slug;
+        } catch {}
+      }
+      return data;
+    },
     enabled: !!token,
     retry: 1,
   });
@@ -175,6 +185,39 @@ export function OwnerHomeWidgets() {
             </span>
           </div>
         </Link>
+      )}
+
+      {/* ── Mi página pública ── */}
+      {clubInfo?.slug && (
+        <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-4 sm:p-5 flex items-center gap-4">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 bg-lime-400 rounded-xl flex items-center justify-center shrink-0 text-xl">
+            🔗
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-black text-white text-sm">Tu página pública</p>
+            <p className="text-xs text-gray-400 mt-0.5 truncate">
+              reservatucancha.site/club/{clubInfo.slug}
+            </p>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(`https://reservatucancha.site/club/${clubInfo.slug}`);
+                toast.success('Link copiado');
+              }}
+              className="text-xs font-bold text-gray-900 bg-lime-400 hover:bg-lime-300 px-3 py-1.5 rounded-full transition-colors whitespace-nowrap"
+            >
+              Copiar link
+            </button>
+            <Link
+              href={`/club/${clubInfo.slug}`}
+              target="_blank"
+              className="text-xs font-bold text-gray-300 hover:text-white border border-gray-600 hover:border-gray-400 px-3 py-1.5 rounded-full transition-colors whitespace-nowrap"
+            >
+              Ver página
+            </Link>
+          </div>
+        </div>
       )}
 
       {/* ── Gráfica semana + Pendientes ── */}
