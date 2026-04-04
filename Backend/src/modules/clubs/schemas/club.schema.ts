@@ -53,6 +53,20 @@ export class Club {
 
   @Prop({ type: [String], default: [] })
   photos: string[];
+
+  @Prop({ trim: true })
+  slogan?: string;
+
+  @Prop({ trim: true })
+  schedule?: string;
+
+  @Prop({ type: Object, default: {} })
+  socialLinks?: {
+    instagram?: string;
+    facebook?: string;
+    tiktok?: string;
+    whatsapp?: string;
+  };
 }
 
 export const ClubSchema = SchemaFactory.createForClass(Club);

@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { MapPin, Phone, Mail, Star, Users, Trophy, Camera } from 'lucide-react';
+import { MapPin, Phone, Mail, Star, Users, Trophy, Camera, Clock, Instagram } from 'lucide-react';
 
 const API = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ?? 'http://localhost:4000';
 
@@ -79,14 +79,22 @@ export default async function ClubPublicPage({ params }: { params: { slug: strin
 
           <div className="flex-1 text-center md:text-left">
             <p className="text-lime-400 text-xs font-bold uppercase tracking-widest mb-2">Club deportivo</p>
-            <h1 className="text-4xl font-black uppercase tracking-tight mb-3">{club.name}</h1>
+            <h1 className="text-4xl font-black uppercase tracking-tight mb-2">{club.name}</h1>
+            {club.slogan && (
+              <p className="text-lime-300/80 text-sm font-medium italic mb-3">"{club.slogan}"</p>
+            )}
             {club.description && (
               <p className="text-gray-400 text-sm max-w-xl">{club.description}</p>
             )}
             <div className="flex flex-wrap items-center gap-4 mt-4 justify-center md:justify-start">
-              {club.city && (
+              {club.address && (
                 <span className="flex items-center gap-1.5 text-gray-400 text-sm">
-                  <MapPin className="h-4 w-4 text-lime-400" /> {club.city}
+                  <MapPin className="h-4 w-4 text-lime-400" /> {club.address}{club.city ? `, ${club.city}` : ''}
+                </span>
+              )}
+              {club.schedule && (
+                <span className="flex items-center gap-1.5 text-gray-400 text-sm">
+                  <Clock className="h-4 w-4 text-lime-400" /> {club.schedule}
                 </span>
               )}
               {club.contactPhone && (
@@ -94,12 +102,36 @@ export default async function ClubPublicPage({ params }: { params: { slug: strin
                   <Phone className="h-4 w-4 text-lime-400" /> {club.contactPhone}
                 </span>
               )}
-              {club.contactEmail && (
-                <span className="flex items-center gap-1.5 text-gray-400 text-sm">
-                  <Mail className="h-4 w-4 text-lime-400" /> {club.contactEmail}
-                </span>
-              )}
             </div>
+            {/* Redes sociales */}
+            {(club.socialLinks?.instagram || club.socialLinks?.facebook || club.socialLinks?.tiktok || club.socialLinks?.whatsapp) && (
+              <div className="flex items-center gap-3 mt-4 justify-center md:justify-start">
+                {club.socialLinks.instagram && (
+                  <a href={club.socialLinks.instagram} target="_blank" rel="noopener noreferrer"
+                    className="w-9 h-9 rounded-full bg-white/10 hover:bg-lime-400 hover:text-gray-900 text-gray-400 flex items-center justify-center transition-all text-sm font-bold">
+                    📸
+                  </a>
+                )}
+                {club.socialLinks.facebook && (
+                  <a href={club.socialLinks.facebook} target="_blank" rel="noopener noreferrer"
+                    className="w-9 h-9 rounded-full bg-white/10 hover:bg-lime-400 hover:text-gray-900 text-gray-400 flex items-center justify-center transition-all text-sm font-bold">
+                    📘
+                  </a>
+                )}
+                {club.socialLinks.tiktok && (
+                  <a href={club.socialLinks.tiktok} target="_blank" rel="noopener noreferrer"
+                    className="w-9 h-9 rounded-full bg-white/10 hover:bg-lime-400 hover:text-gray-900 text-gray-400 flex items-center justify-center transition-all text-sm font-bold">
+                    🎵
+                  </a>
+                )}
+                {club.socialLinks.whatsapp && (
+                  <a href={club.socialLinks.whatsapp} target="_blank" rel="noopener noreferrer"
+                    className="w-9 h-9 rounded-full bg-white/10 hover:bg-lime-400 hover:text-gray-900 text-gray-400 flex items-center justify-center transition-all text-sm font-bold">
+                    💬
+                  </a>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Stats */}

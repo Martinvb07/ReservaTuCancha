@@ -14,7 +14,6 @@ async function uploadToCloudinary(file: File): Promise<string> {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', UPLOAD_PRESET);
-  formData.append('folder', 'clubs');
   const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
     method: 'POST', body: formData,
   });
@@ -31,6 +30,8 @@ export default function MiClubPage() {
   const [form, setForm] = useState({
     name: '', description: '', address: '', city: '',
     contactPhone: '', contactEmail: '',
+    slogan: '', schedule: '',
+    instagram: '', facebook: '', tiktok: '', whatsapp: '',
   });
   const [logoUrl, setLogoUrl] = useState('');
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -54,6 +55,12 @@ export default function MiClubPage() {
         city: club.city || '',
         contactPhone: club.contactPhone || '',
         contactEmail: club.contactEmail || '',
+        slogan: club.slogan || '',
+        schedule: club.schedule || '',
+        instagram: club.socialLinks?.instagram || '',
+        facebook: club.socialLinks?.facebook || '',
+        tiktok: club.socialLinks?.tiktok || '',
+        whatsapp: club.socialLinks?.whatsapp || '',
       });
       setLogoUrl(club.logo || '');
     }
@@ -61,7 +68,12 @@ export default function MiClubPage() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await api.patch('/clubs/my-club/profile', { ...form, logo: logoUrl });
+      const { instagram, facebook, tiktok, whatsapp, ...rest } = form;
+      await api.patch('/clubs/my-club/profile', {
+        ...rest,
+        logo: logoUrl,
+        socialLinks: { instagram, facebook, tiktok, whatsapp },
+      });
     },
     onSuccess: () => {
       toast.success('Perfil actualizado');
@@ -229,6 +241,59 @@ export default function MiClubPage() {
           <div>
             <label className="text-xs font-bold text-gray-600 mb-1 block">Email de contacto</label>
             <input value={form.contactEmail} onChange={e => setForm(f => ({ ...f, contactEmail: e.target.value }))}
+              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none text-sm" />
+          </div>
+        </div>
+
+        <div>
+          <label className="text-xs font-bold text-gray-600 mb-1 block">Slogan</label>
+          <input value={form.slogan} onChange={e => setForm(f => ({ ...f, slogan: e.target.value }))}
+            placeholder="La mejor cancha sintética de Villavicencio"
+            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none text-sm" />
+        </div>
+
+        <div>
+          <label className="text-xs font-bold text-gray-600 mb-1 block">Horario de atención</label>
+          <input value={form.schedule} onChange={e => setForm(f => ({ ...f, schedule: e.target.value }))}
+            placeholder="Lunes a viernes 7am-10pm · Sábados y domingos 8am-8pm"
+            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none text-sm" />
+        </div>
+
+        <button onClick={handleSave} disabled={saving}
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-colors">
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          Guardar cambios
+        </button>
+      </div>
+
+      {/* Redes sociales */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+        <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Redes sociales</p>
+        <p className="text-xs text-gray-400 -mt-2">Estos links aparecen en tu página pública. Deja vacío para no mostrar.</p>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-bold text-gray-600 mb-1 block flex items-center gap-1.5">📸 Instagram</label>
+            <input value={form.instagram} onChange={e => setForm(f => ({ ...f, instagram: e.target.value }))}
+              placeholder="https://instagram.com/tuclub"
+              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none text-sm" />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-gray-600 mb-1 block flex items-center gap-1.5">📘 Facebook</label>
+            <input value={form.facebook} onChange={e => setForm(f => ({ ...f, facebook: e.target.value }))}
+              placeholder="https://facebook.com/tuclub"
+              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none text-sm" />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-gray-600 mb-1 block flex items-center gap-1.5">🎵 TikTok</label>
+            <input value={form.tiktok} onChange={e => setForm(f => ({ ...f, tiktok: e.target.value }))}
+              placeholder="https://tiktok.com/@tuclub"
+              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none text-sm" />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-gray-600 mb-1 block flex items-center gap-1.5">💬 WhatsApp</label>
+            <input value={form.whatsapp} onChange={e => setForm(f => ({ ...f, whatsapp: e.target.value }))}
+              placeholder="https://wa.me/573001234567"
               className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none text-sm" />
           </div>
         </div>
