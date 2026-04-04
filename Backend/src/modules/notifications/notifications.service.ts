@@ -31,25 +31,16 @@ function formatPrice(price: number): string {
   return `$${price?.toLocaleString('es-CO')} COP`;
 }
 
-// ─── Email template base ────────────────────────────────────────────────────
+// ─── Template base (solo para emails NUEVOS) ────────────────────────────────
 
 interface EmailTemplateOptions {
-  iconBg: string;       // color del círculo del ícono
-  iconContent: string;  // contenido del ícono (emoji o carácter)
-  iconColor?: string;   // color del texto del ícono
-  title: string;
-  subtitle: string;
-  badgeCode?: string;
-  badgeLabel?: string;
-  badgeColor?: string;
+  iconBg: string; iconContent: string; iconColor?: string;
+  title: string; subtitle: string;
+  badgeCode?: string; badgeLabel?: string; badgeColor?: string;
   rows: { label: string; value: string; highlight?: boolean }[];
-  ctaText?: string;
-  ctaUrl?: string;
-  ctaBg?: string;
-  ctaNote?: string;
+  ctaText?: string; ctaUrl?: string; ctaBg?: string; ctaNote?: string;
   alertBox?: { bg: string; color: string; text: string };
   secondaryCta?: { text: string; url: string };
-  footer?: string;
 }
 
 function buildEmailHtml(opts: EmailTemplateOptions): string {
@@ -117,7 +108,7 @@ function buildEmailHtml(opts: EmailTemplateOptions): string {
         </tr>
       </table>
       <div style="text-align: center; margin-top: 24px; color: #9ca3af; font-size: 12px;">
-        ${opts.footer || 'Enviado por <strong>ReservaTuCancha</strong>'}
+        Enviado por <strong>ReservaTuCancha</strong>
       </div>
     </div>
   `;
@@ -169,127 +160,365 @@ export class NotificationsService {
     return { court, club };
   }
 
-  // ─── CONFIRMACIÓN DE RESERVA ──────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════
+  // EMAILS ORIGINALES (restaurados tal cual)
+  // ═══════════════════════════════════════════════════════════════════════
 
   async sendBookingConfirmation(booking: Booking & { _id: any }) {
     const { court, club } = await this.getCourtAndClub(booking);
-    const cancelUrl = `${this.frontendUrl}/reservas/cancelar?token=${booking.cancelToken}`;
-
+    const cancelUrl  = `${this.frontendUrl}/reservas/cancelar?token=${booking.cancelToken}`;
+    const bookingDate = formatDateCO(booking.date);
+    const startAmPm = toAmPm(booking.startTime);
+    const endAmPm = toAmPm(booking.endTime);
+    const sportLabel = formatSport(court?.sport);
     await this.send({
       to: booking.guestEmail,
       from: this.fromEmail,
       subject: `Gracias por tu Reserva — #${booking.bookingCode}`,
-      html: buildEmailHtml({
-        iconBg: '#a3e635', iconContent: '✓',
-        title: '¡RESERVA CREADA!',
-        subtitle: `Gracias por reservar con nosotros, <strong>${booking.guestName}</strong>. Tu reserva fue creada exitosamente.`,
-        badgeCode: booking.bookingCode,
-        badgeColor: '#a3e635',
-        rows: [
-          { label: 'Club', value: club?.name || '-' },
-          { label: 'Dirección', value: club?.address || '-' },
-          { label: 'Deporte', value: formatSport(court?.sport) },
-          { label: 'Fecha', value: formatDateCO(booking.date) },
-          { label: 'Horario', value: `${toAmPm(booking.startTime)} – ${toAmPm(booking.endTime)}` },
-          { label: 'Total', value: formatPrice(booking.totalPrice), highlight: true },
-        ],
-        ctaText: 'Cancelar reserva', ctaUrl: cancelUrl, ctaBg: '#ef4444',
-        ctaNote: 'Cancelación gratuita hasta 2 horas antes del turno.',
-      }),
+      html: `
+        <div style="background-color: #f3f4f6; padding: 40px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+          <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 450px; background-color: #111827; border-radius: 32px; overflow: hidden; border-collapse: separate;">
+            <tr>
+              <td align="center" style="padding: 40px 30px;">
+                <div style="background-color: #a3e635; width: 64px; height: 64px; border-radius: 50%; margin-bottom: 24px; display: table;">
+                  <span style="display: table-cell; vertical-align: middle; font-size: 30px; color: #111827;">✓</span>
+                </div>
+                <h1 style="color: #ffffff; font-size: 26px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">¡RESERVA CREADA!</h1>
+                <p style="color: #9ca3af; font-size: 14px; margin-top: 10px; line-height: 20px;">
+                  Gracias por reservar con nosotros, <strong>${booking.guestName}</strong>. Tu reserva fue creada exitosamente. Aquí tienes los detalles de tu reserva:
+                </p>
+                <div style="background-color: #1f2937; border-radius: 20px; padding: 20px; margin-top: 28px; border: 1px solid #374151;">
+                  <span style="color: #9ca3af; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">Código de Reserva</span>
+                  <span style="color: #a3e635; font-size: 30px; font-weight: 800; letter-spacing: 2px;">#${booking.bookingCode}</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="background-color: #ffffff; padding: 40px 30px; border-radius: 32px 32px 0 0;">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Club</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${club?.name || '-'}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Dirección</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${club?.address || '-'}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Deporte</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${sportLabel}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Fecha</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${bookingDate}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Horario</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${startAmPm} – ${endAmPm}</td>
+                  </tr>
+                  <tr style="height: 65px;">
+                    <td style="color: #6b7280; font-size: 14px; border-top: 1px solid #f3f4f6;">Total</td>
+                    <td align="right" style="color: #059669; font-size: 18px; font-weight: 800; border-top: 1px solid #f3f4f6;">$${booking.totalPrice?.toLocaleString('es-CO')} COP</td>
+                  </tr>
+                </table>
+                <div style="margin-top: 32px; text-align: center;">
+                  <a href="${cancelUrl}" style="background-color: #ef4444; color: #ffffff; padding: 16px 32px; border-radius: 16px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                    Cancelar reserva
+                  </a>
+                  <p style="color: #9ca3af; font-size: 12px; margin-top: 20px;">
+                    Cancelación gratuita hasta 2 horas antes del turno.
+                  </p>
+                </div>
+              </td>
+            </tr>
+          </table>
+          <div style="text-align: center; margin-top: 24px; color: #9ca3af; font-size: 12px;">
+             Enviado por <strong>ReservaTuCancha</strong>
+          </div>
+        </div>
+      `,
     });
   }
-
-  // ─── RESERVA PENDIENTE (EFECTIVO) ─────────────────────────────────────
 
   async sendBookingPendingCash(booking: Booking & { _id: any }) {
     const { court, club } = await this.getCourtAndClub(booking);
     const cancelUrl = `${this.frontendUrl}/reservas/cancelar?token=${booking.cancelToken}`;
-
+    const bookingDate = formatDateCO(booking.date);
     await this.send({
       to: booking.guestEmail,
       from: this.fromEmail,
       subject: `Reserva pendiente de pago — #${booking.bookingCode}`,
-      html: buildEmailHtml({
-        iconBg: '#f59e0b', iconContent: '$', iconColor: '#111827',
-        title: 'RESERVA CREADA',
-        subtitle: `Hola <strong>${booking.guestName}</strong>, tu reserva fue registrada exitosamente. Recuerda llevar el valor en efectivo el día de tu visita.`,
-        badgeCode: booking.bookingCode,
-        badgeLabel: 'Código de Reserva',
-        badgeColor: '#f59e0b',
-        rows: [
-          { label: 'Club', value: club?.name || '-' },
-          { label: 'Dirección', value: club?.address || '-' },
-          { label: 'Fecha', value: formatDateCO(booking.date) },
-          { label: 'Horario', value: `${toAmPm(booking.startTime)} – ${toAmPm(booking.endTime)}` },
-          { label: 'Total a pagar', value: formatPrice(booking.totalPrice), highlight: true },
-        ],
-        alertBox: { bg: '#fef3c7', color: '#92400e', text: 'Pago en efectivo al llegar al lugar' },
-        ctaText: 'Cancelar reserva', ctaUrl: cancelUrl, ctaBg: '#ef4444',
-        ctaNote: 'Cancelación gratuita hasta 2 horas antes del turno.',
-      }),
+      html: `
+        <div style="background-color: #f3f4f6; padding: 40px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+          <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 450px; background-color: #111827; border-radius: 32px; overflow: hidden; border-collapse: separate;">
+            <tr>
+              <td align="center" style="padding: 40px 30px;">
+                <div style="background-color: #f59e0b; width: 64px; height: 64px; border-radius: 50%; margin-bottom: 24px; display: table;">
+                  <span style="display: table-cell; vertical-align: middle; font-size: 26px; font-weight: 900; color: #111827; font-family: Georgia, serif;">$</span>
+                </div>
+                <h1 style="color: #ffffff; font-size: 26px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">Reserva Creada</h1>
+                <p style="color: #9ca3af; font-size: 14px; margin-top: 10px; line-height: 20px;">
+                  Hola <strong>${booking.guestName}</strong>, tu reserva fue registrada exitosamente. Recuerda llevar el valor en efectivo el día de tu visita.
+                </p>
+                <div style="background-color: #1f2937; border-radius: 20px; padding: 24px; margin-top: 28px; border: 1px solid #374151;">
+                  <span style="color: #9ca3af; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px;">Código de Reserva</span>
+                  <span style="color: #f59e0b; font-size: 34px; font-weight: 800; letter-spacing: 4px; display: block;">#${booking.bookingCode}</span>
+                  <span style="color: #6b7280; font-size: 12px; display: block; margin-top: 10px; line-height: 18px;">Presenta este código cuando llegues al lugar para confirmar tu reserva.</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="background-color: #ffffff; padding: 40px 30px; border-radius: 32px 32px 0 0;">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Club</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${club?.name || '-'}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Dirección</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${club?.address || '-'}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Fecha</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${bookingDate}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Horario</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${toAmPm(booking.startTime)} – ${toAmPm(booking.endTime)}</td>
+                  </tr>
+                  <tr style="height: 65px;">
+                    <td style="color: #6b7280; font-size: 14px; border-top: 1px solid #f3f4f6;">Total a pagar</td>
+                    <td align="right" style="color: #d97706; font-size: 18px; font-weight: 800; border-top: 1px solid #f3f4f6;">$${booking.totalPrice?.toLocaleString('es-CO')} COP</td>
+                  </tr>
+                </table>
+                <div style="margin-top: 20px; background-color: #fef3c7; border-radius: 12px; padding: 16px; text-align: center;">
+                  <p style="color: #92400e; font-size: 13px; margin: 0; font-weight: 600;">Pago en efectivo al llegar al lugar</p>
+                </div>
+                <div style="margin-top: 24px; text-align: center;">
+                  <a href="${cancelUrl}" style="background-color: #ef4444; color: #ffffff; padding: 16px 32px; border-radius: 16px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block;">
+                    Cancelar reserva
+                  </a>
+                  <p style="color: #9ca3af; font-size: 12px; margin-top: 20px;">Cancelación gratuita hasta 2 horas antes del turno.</p>
+                </div>
+              </td>
+            </tr>
+          </table>
+          <div style="text-align: center; margin-top: 24px; color: #9ca3af; font-size: 12px;">
+            Enviado por <strong>ReservaTuCancha</strong>
+          </div>
+        </div>
+      `,
     });
   }
 
-  // ─── CANCELACIÓN ──────────────────────────────────────────────────────
+  async sendApprovalEmail(email: string, name: string, tempPassword: string, userData?: { id: string; nit: string; businessName: string }) {
+    await this.send({
+      to: email,
+      from: this.fromEmail,
+      subject: `¡Tu solicitud fue aprobada! — #${userData?.id || 'N/A'}`,
+      html: `
+        <div style="background-color: #f3f4f6; padding: 40px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+          <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 450px; background-color: #111827; border-radius: 32px; overflow: hidden; border-collapse: separate;">
+            <tr>
+              <td align="center" style="padding: 40px 30px;">
+                <div style="background-color: #a3e635; width: 64px; height: 64px; border-radius: 50%; margin-bottom: 24px; display: table;">
+                  <span style="display: table-cell; vertical-align: middle; font-size: 30px; color: #111827;">✓</span>
+                </div>
+                <h1 style="color: #ffffff; font-size: 26px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">¡BIENVENIDO!</h1>
+                <p style="color: #9ca3af; font-size: 14px; margin-top: 10px; line-height: 20px;">
+                  Tu solicitud fue aprobada, <strong>${name}</strong>. Tu cuenta está lista para usar. Aquí tienes tus credenciales de acceso:
+                </p>
+                <div style="background-color: #1f2937; border-radius: 20px; padding: 20px; margin-top: 28px; border: 1px solid #374151;">
+                  <span style="color: #9ca3af; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">ID de Propietario</span>
+                  <span style="color: #a3e635; font-size: 30px; font-weight: 800; letter-spacing: 2px;">#${userData?.id || 'N/A'}</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="background-color: #ffffff; padding: 40px 30px; border-radius: 32px 32px 0 0;">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Empresa</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${userData?.businessName || 'N/A'}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">NIT</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${userData?.nit || 'N/A'}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Email</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${email}</td>
+                  </tr>
+                  <tr style="height: 65px;">
+                    <td style="color: #6b7280; font-size: 14px; border-top: 1px solid #f3f4f6;">Contraseña</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700; border-top: 1px solid #f3f4f6;"><code style="background:#f0fdf4;padding:6px 12px;border-radius:6px;font-size:16px;font-weight:600;">${tempPassword}</code></td>
+                  </tr>
+                </table>
+                <div style="margin-top: 32px; text-align: center;">
+                  <a href="${this.frontendUrl}/auth/login" style="background-color: #16a34a; color: #ffffff; padding: 16px 32px; border-radius: 16px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                    Ingresar al panel →
+                  </a>
+                  <p style="color: #9ca3af; font-size: 12px; margin-top: 20px;">
+                    Recomendamos cambiar tu contraseña al primer ingreso.
+                  </p>
+                </div>
+              </td>
+            </tr>
+          </table>
+          <div style="text-align: center; margin-top: 24px; color: #9ca3af; font-size: 12px;">
+             Enviado por <strong>ReservaTuCancha</strong>
+          </div>
+        </div>
+      `,
+    });
+  }
+
+  async sendRejectionEmail(email: string, name: string) {
+    await this.send({
+      to: email,
+      from: this.fromEmail,
+      subject: 'Actualización sobre tu solicitud — ReservaTuCancha',
+      html: `<p>Hola ${name}, revisamos tu solicitud y no pudimos aprobarla en este momento.</p>`,
+    });
+  }
 
   async sendCancellationConfirmation(booking: Booking & { _id: any }) {
-    const { court, club } = await this.getCourtAndClub(booking);
-
     await this.send({
       to: booking.guestEmail,
       from: this.fromEmail,
-      subject: `Reserva cancelada — #${booking.bookingCode}`,
-      html: buildEmailHtml({
-        iconBg: '#ef4444', iconContent: '✕', iconColor: '#ffffff',
-        title: 'RESERVA CANCELADA',
-        subtitle: `Hola <strong>${booking.guestName}</strong>, tu reserva fue cancelada exitosamente. Si realizaste un pago, el reembolso se procesará en 3-5 días hábiles.`,
-        badgeCode: booking.bookingCode,
-        badgeLabel: 'Reserva Cancelada',
-        badgeColor: '#ef4444',
-        rows: [
-          { label: 'Club', value: club?.name || '-' },
-          { label: 'Cancha', value: court?.name || '-' },
-          { label: 'Fecha', value: formatDateCO(booking.date) },
-          { label: 'Horario', value: `${toAmPm(booking.startTime)} – ${toAmPm(booking.endTime)}` },
-          { label: 'Reembolso', value: booking.paymentMethod === 'efectivo' ? 'No aplica (efectivo)' : 'En proceso (3-5 días)', highlight: true },
-        ],
-        ctaText: 'Ver otras canchas', ctaUrl: `${this.frontendUrl}/empresas`, ctaBg: '#16a34a',
-        ctaNote: '¡Te esperamos pronto!',
-      }),
+      subject: 'Reserva cancelada — ReservaTuCancha',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #eee;border-radius:12px;">
+          <h2 style="color:#dc2626;">Reserva cancelada</h2>
+          <p>Hola <strong>${booking.guestName}</strong>, tu reserva fue cancelada exitosamente.</p>
+          <p>Si realizaste un pago, el reembolso se procesará en 3-5 días hábiles.</p>
+          <div style="margin-top:20px;">
+            <a href="${this.frontendUrl}/empresas" style="color:#16a34a;font-weight:bold;">Ver otras canchas disponibles →</a>
+          </div>
+        </div>
+      `,
     });
   }
-
-  // ─── SOLICITUD DE RESEÑA ──────────────────────────────────────────────
 
   async sendReviewRequest(booking: Booking & { _id: any }) {
-    const { court, club } = await this.getCourtAndClub(booking);
     const reviewUrl = `${this.frontendUrl}/resena?token=${booking.reviewToken}`;
-
     await this.send({
       to: booking.guestEmail,
       from: this.fromEmail,
-      subject: `¿Cómo estuvo tu experiencia? — #${booking.bookingCode}`,
-      html: buildEmailHtml({
-        iconBg: '#fbbf24', iconContent: '★', iconColor: '#111827',
-        title: '¡GRACIAS POR JUGAR!',
-        subtitle: `Hola <strong>${booking.guestName}</strong>, esperamos que hayas disfrutado tu partido. Tu opinión nos ayuda a mejorar.`,
-        badgeCode: booking.bookingCode,
-        badgeLabel: 'Tu Reserva',
-        badgeColor: '#fbbf24',
-        rows: [
-          { label: 'Club', value: club?.name || '-' },
-          { label: 'Cancha', value: court?.name || '-' },
-          { label: 'Deporte', value: formatSport(court?.sport) },
-          { label: 'Fecha', value: formatDateCO(booking.date) },
-          { label: 'Horario', value: `${toAmPm(booking.startTime)} – ${toAmPm(booking.endTime)}` },
-        ],
-        ctaText: 'Dejar mi reseña', ctaUrl: reviewUrl, ctaBg: '#f59e0b',
-        ctaNote: 'Solo toma 30 segundos. ¡Tu opinión importa!',
-      }),
+      subject: '¿Cómo estuvo tu experiencia? — ReservaTuCancha',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;text-align:center;padding:40px;background:#f9fafb;border-radius:16px;">
+          <h2 style="color:#111827;">¡Gracias por jugar con nosotros!</h2>
+          <p style="color:#4b5563;">Hola ${booking.guestName}, califica tu experiencia en la cancha.</p>
+          <div style="margin:30px 0;">
+            <a href="${reviewUrl}" style="background:#16a34a;color:white;padding:16px 32px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:16px;">
+              Dejar reseña
+            </a>
+          </div>
+        </div>
+      `,
     });
   }
 
-  // ─── RECORDATORIO 24H ─────────────────────────────────────────────────
+  async sendChangelogNotification(titulo: string, descripcion: string, version?: string) {
+    await this.send({
+      to: this.fromEmail,
+      from: this.fromEmail,
+      subject: `Nueva actualización: ${titulo}`,
+      html: `<h2>${titulo} ${version || ''}</h2><p>${descripcion}</p>`,
+    });
+  }
+
+  async sendAdminNotification({ subject, html }: { subject: string; html: string }) {
+    await this.send({ to: this.fromEmail, from: this.fromEmail, subject, html });
+  }
+
+  async sendNewSolicitudNotification(data: {
+    firstName: string; lastName: string; email: string; phone: string;
+    businessName: string; nit: string; city: string; department: string; message?: string;
+  }) {
+    const receivedAt = new Date().toLocaleDateString('es-CO', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota',
+    });
+
+    await this.send({
+      to: this.adminEmail,
+      from: this.fromEmail,
+      subject: `Nueva solicitud de acceso — ${data.businessName}`,
+      html: `
+        <div style="background-color: #f3f4f6; padding: 40px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+          <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 450px; background-color: #111827; border-radius: 32px; overflow: hidden; border-collapse: separate;">
+            <tr>
+              <td align="center" style="padding: 40px 30px;">
+                <div style="background-color: #a3e635; width: 64px; height: 64px; border-radius: 50%; margin-bottom: 24px; display: table;">
+                  <span style="display: table-cell; vertical-align: middle; font-size: 28px; color: #111827; font-weight: 900;">!</span>
+                </div>
+                <h1 style="color: #ffffff; font-size: 26px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">Nueva Solicitud</h1>
+                <p style="color: #9ca3af; font-size: 14px; margin-top: 10px; line-height: 20px;">
+                  Alguien acaba de solicitar acceso a la plataforma. Revisa los datos y aprueba o rechaza desde el panel de administración.
+                </p>
+                <div style="background-color: #1f2937; border-radius: 20px; padding: 20px; margin-top: 28px; border: 1px solid #374151;">
+                  <span style="color: #9ca3af; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">Negocio</span>
+                  <span style="color: #a3e635; font-size: 22px; font-weight: 800; letter-spacing: 1px;">${data.businessName}</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="background-color: #ffffff; padding: 40px 30px; border-radius: 32px 32px 0 0;">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Nombre</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${data.firstName} ${data.lastName}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Email</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${data.email}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Teléfono</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${data.phone}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">NIT / Cédula</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${data.nit}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Ciudad</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${data.city}, ${data.department}</td>
+                  </tr>
+                  ${data.message ? `
+                  <tr>
+                    <td colspan="2" style="padding-top: 16px; border-top: 1px solid #f3f4f6;">
+                      <span style="color: #6b7280; font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Mensaje adicional</span>
+                      <span style="color: #374151; font-size: 13px; line-height: 20px;">${data.message}</span>
+                    </td>
+                  </tr>
+                  ` : ''}
+                  <tr style="height: 50px;">
+                    <td style="color: #6b7280; font-size: 12px; border-top: 1px solid #f3f4f6;">Recibido</td>
+                    <td align="right" style="color: #9ca3af; font-size: 12px; border-top: 1px solid #f3f4f6;">${receivedAt}</td>
+                  </tr>
+                </table>
+                <div style="margin-top: 32px; text-align: center;">
+                  <a href="${this.frontendUrl}/dashboard/admin/solicitudes" style="background-color: #111827; color: #ffffff; padding: 16px 32px; border-radius: 16px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                    Ver en el panel admin
+                  </a>
+                </div>
+              </td>
+            </tr>
+          </table>
+          <div style="text-align: center; margin-top: 24px; color: #9ca3af; font-size: 12px;">
+            Enviado por <strong>ReservaTuCancha</strong>
+          </div>
+        </div>
+      `,
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // EMAILS NUEVOS (recordatorio 24h + notificación al owner)
+  // ═══════════════════════════════════════════════════════════════════════
 
   async sendBookingReminder(booking: Booking & { _id: any }) {
     const { court, club } = await this.getCourtAndClub(booking);
@@ -324,8 +553,6 @@ export class NotificationsService {
     });
   }
 
-  // ─── NOTIFICACIÓN AL OWNER (NUEVA RESERVA) ───────────────────────────
-
   async sendOwnerNewBookingNotification(booking: Booking & { _id: any }, ownerEmail: string) {
     const { court, club } = await this.getCourtAndClub(booking);
 
@@ -350,119 +577,6 @@ export class NotificationsService {
           { label: 'Total', value: formatPrice(booking.totalPrice), highlight: true },
         ],
         ctaText: 'Ver en el panel', ctaUrl: `${this.frontendUrl}/dashboard/propetario/reservas`, ctaBg: '#111827',
-      }),
-    });
-  }
-
-  // ─── APROBACIÓN DE SOLICITUD ──────────────────────────────────────────
-
-  async sendApprovalEmail(email: string, name: string, tempPassword: string, userData?: { id: string; nit: string; businessName: string }) {
-    await this.send({
-      to: email,
-      from: this.fromEmail,
-      subject: `¡Tu solicitud fue aprobada! — #${userData?.id || 'N/A'}`,
-      html: buildEmailHtml({
-        iconBg: '#a3e635', iconContent: '✓',
-        title: '¡BIENVENIDO!',
-        subtitle: `Tu solicitud fue aprobada, <strong>${name}</strong>. Tu cuenta está lista para usar. Aquí tienes tus credenciales de acceso:`,
-        badgeCode: userData?.id || 'N/A',
-        badgeLabel: 'ID de Propietario',
-        badgeColor: '#a3e635',
-        rows: [
-          { label: 'Empresa', value: userData?.businessName || 'N/A' },
-          { label: 'NIT', value: userData?.nit || 'N/A' },
-          { label: 'Email', value: email },
-          { label: 'Contraseña', value: `<code style="background:#f0fdf4;padding:6px 12px;border-radius:6px;font-size:16px;font-weight:600;">${tempPassword}</code>`, highlight: true },
-        ],
-        ctaText: 'Ingresar al panel →', ctaUrl: `${this.frontendUrl}/auth/login`, ctaBg: '#16a34a',
-        ctaNote: 'Recomendamos cambiar tu contraseña al primer ingreso.',
-      }),
-    });
-  }
-
-  // ─── RECHAZO DE SOLICITUD ─────────────────────────────────────────────
-
-  async sendRejectionEmail(email: string, name: string) {
-    await this.send({
-      to: email,
-      from: this.fromEmail,
-      subject: 'Actualización sobre tu solicitud — ReservaTuCancha',
-      html: buildEmailHtml({
-        iconBg: '#6b7280', iconContent: 'i', iconColor: '#ffffff',
-        title: 'SOLICITUD NO APROBADA',
-        subtitle: `Hola <strong>${name}</strong>, revisamos tu solicitud y lamentablemente no pudimos aprobarla en este momento. Si crees que fue un error, no dudes en contactarnos.`,
-        rows: [
-          { label: 'Estado', value: '<span style="color:#ef4444;font-weight:800;">No aprobada</span>' },
-          { label: 'Siguiente paso', value: 'Contactar soporte' },
-        ],
-        ctaText: 'Contactar soporte', ctaUrl: `${this.frontendUrl}/soporte`, ctaBg: '#6b7280',
-        ctaNote: 'Puedes volver a aplicar en cualquier momento.',
-        secondaryCta: { text: 'Volver a solicitar acceso', url: `${this.frontendUrl}/solicitar-acceso` },
-      }),
-    });
-  }
-
-  // ─── CHANGELOG ────────────────────────────────────────────────────────
-
-  async sendChangelogNotification(titulo: string, descripcion: string, version?: string) {
-    await this.send({
-      to: this.fromEmail,
-      from: this.fromEmail,
-      subject: `Nueva actualización: ${titulo}`,
-      html: buildEmailHtml({
-        iconBg: '#8b5cf6', iconContent: '🚀', iconColor: '#ffffff',
-        title: titulo,
-        subtitle: descripcion,
-        badgeCode: version || 'latest',
-        badgeLabel: 'Versión',
-        badgeColor: '#8b5cf6',
-        rows: [],
-      }),
-    });
-  }
-
-  // ─── NOTIFICACIÓN ADMIN ───────────────────────────────────────────────
-
-  async sendAdminNotification({ subject, html }: { subject: string; html: string }) {
-    await this.send({ to: this.fromEmail, from: this.fromEmail, subject, html });
-  }
-
-  // ─── NUEVA SOLICITUD AL ADMIN ─────────────────────────────────────────
-
-  async sendNewSolicitudNotification(data: {
-    firstName: string; lastName: string; email: string; phone: string;
-    businessName: string; nit: string; city: string; department: string; message?: string;
-  }) {
-    const receivedAt = new Date().toLocaleDateString('es-CO', {
-      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-      hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota',
-    });
-
-    const rows: { label: string; value: string; highlight?: boolean }[] = [
-      { label: 'Nombre', value: `${data.firstName} ${data.lastName}` },
-      { label: 'Email', value: data.email },
-      { label: 'Teléfono', value: data.phone },
-      { label: 'NIT / Cédula', value: data.nit },
-      { label: 'Ciudad', value: `${data.city}, ${data.department}` },
-    ];
-    if (data.message) {
-      rows.push({ label: 'Mensaje', value: data.message });
-    }
-    rows.push({ label: 'Recibido', value: receivedAt });
-
-    await this.send({
-      to: this.adminEmail,
-      from: this.fromEmail,
-      subject: `Nueva solicitud de acceso — ${data.businessName}`,
-      html: buildEmailHtml({
-        iconBg: '#a3e635', iconContent: '!', iconColor: '#111827',
-        title: 'NUEVA SOLICITUD',
-        subtitle: 'Alguien acaba de solicitar acceso a la plataforma. Revisa los datos y aprueba o rechaza desde el panel.',
-        badgeCode: data.businessName,
-        badgeLabel: 'Negocio',
-        badgeColor: '#a3e635',
-        rows,
-        ctaText: 'Ver en el panel admin', ctaUrl: `${this.frontendUrl}/dashboard/admin/solicitudes`, ctaBg: '#111827',
       }),
     });
   }
