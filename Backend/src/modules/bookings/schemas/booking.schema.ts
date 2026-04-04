@@ -71,6 +71,9 @@ export class Booking {
 
   @Prop({ default: false })
   reviewTokenUsed: boolean;
+
+  @Prop({ default: false })
+  reminderSent: boolean;
 }
 
 export const BookingSchema = SchemaFactory.createForClass(Booking);

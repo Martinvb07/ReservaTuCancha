@@ -12,6 +12,13 @@ import { toast } from 'sonner';
 import type { Booking } from '@/types/booking.types';
 import BookingsCalendar from '@/components/dashboard/BookingsCalendar';
 
+function formatTime12h(time24h: string): string {
+  const [hours, minutes] = time24h.split(':').map(Number);
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const hours12 = hours % 12 || 12;
+  return `${hours12}:${String(minutes).padStart(2, '0')} ${period}`;
+}
+
 const STATUS_STYLES: Record<string, { pill: string; dot: string }> = {
   pending:   { pill: 'bg-yellow-100 text-yellow-700',  dot: 'bg-yellow-400'  },
   confirmed: { pill: 'bg-green-100 text-green-700',    dot: 'bg-green-500'   },
@@ -210,7 +217,7 @@ export default function ReservasOwnerPage() {
                         </div>
                         <div className="flex flex-col gap-0.5 text-xs text-gray-500">
                           <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3 shrink-0" />{booking.startTime} – {booking.endTime}
+                            <Clock className="h-3 w-3 shrink-0" />{formatTime12h(booking.startTime)} – {formatTime12h(booking.endTime)}
                           </span>
                           <span className="flex items-center gap-1 truncate">
                             <User className="h-3 w-3 shrink-0" /><span className="truncate">{booking.guestName}</span>
@@ -321,7 +328,7 @@ export default function ReservasOwnerPage() {
               </div>
               <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm">
                 <div className="flex items-center gap-2 text-gray-600"><CalendarDays className="h-4 w-4 text-green-600" />{format(new Date(selected.date), 'PPP', { locale: es })}</div>
-                <div className="flex items-center gap-2 text-gray-600"><Clock className="h-4 w-4 text-green-600" />{selected.startTime} – {selected.endTime}</div>
+                <div className="flex items-center gap-2 text-gray-600"><Clock className="h-4 w-4 text-green-600" />{formatTime12h(selected.startTime)} – {formatTime12h(selected.endTime)}</div>
                 <div className="flex items-center gap-2 text-gray-600"><User className="h-4 w-4 text-green-600" />{selected.guestName}</div>
                 <div className="flex items-center gap-2 text-gray-600"><Mail className="h-4 w-4 text-green-600" />{selected.guestEmail}</div>
                 <div className="flex items-center gap-2 text-gray-600"><Phone className="h-4 w-4 text-green-600" />{selected.guestPhone}</div>

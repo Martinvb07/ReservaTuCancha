@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   LayoutDashboard, CalendarDays, Building2, BarChart3,
   Users, LogOut, Home, FileText, Plus, UserCheck, PenLine,
-  CreditCard, Image, MessageSquare, Zap,
+  CreditCard, Image, MessageSquare, Zap, Ban,
 } from 'lucide-react';
 import api from '@/lib/api/axios';
 import { useApiAuth } from '@/hooks/useApiAuth';
@@ -18,6 +18,7 @@ const OWNER_LINKS = [
   { href: '/dashboard/propetario/reservas',        label: 'Reservas',      icon: CalendarDays    },
   { href: '/dashboard/propetario/analytics',       label: 'Analytics',     icon: BarChart3       },
   { href: '/dashboard/propetario/pagos',           label: 'Pagos',         icon: CreditCard      },
+  { href: '/dashboard/propetario/bloqueos',        label: 'Bloqueos',      icon: Ban             },
   { href: '/dashboard/propetario/fotos',           label: 'Fotos',         icon: Image           },
   { href: '/dashboard/propetario/suscripcion',     label: 'Mi Plan',       icon: Zap             },
   { href: '/dashboard/propetario/soporte',         label: 'Soporte',       icon: MessageSquare   },

@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CourtsService, CourtFilters } from './courts.service';
 import { CreateCourtDto } from './dto/create-court.dto';
+import { BlockSlotDto } from './dto/block-slot.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -75,5 +76,40 @@ export class CourtsController {
   @ApiOperation({ summary: 'Editar cancha' })
   update(@Param('id') id: string, @Request() req, @Body() dto: Partial<CreateCourtDto>) {
     return this.courtsService.update(id, req.user.userId, dto);
+  }
+
+  // ─── BLOQUEO DE HORARIOS ──────────────────────────────────────────────
+
+  @Get('blocked-slots/my')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Mis bloqueos de horarios (owner)' })
+  getMyBlockedSlots(@Request() req) {
+    return this.courtsService.getBlockedSlotsByOwner(req.user.userId);
+  }
+
+  @Get(':id/blocked-slots')
+  @ApiOperation({ summary: 'Bloqueos de una cancha (público, para el BookingForm)' })
+  getBlockedSlots(@Param('id') courtId: string, @Query('date') date?: string) {
+    return this.courtsService.getBlockedSlots(courtId, date);
+  }
+
+  @Post('blocked-slots')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Bloquear horario (owner)' })
+  createBlockedSlot(@Request() req, @Body() dto: BlockSlotDto) {
+    return this.courtsService.createBlockedSlot(req.user.userId, dto);
+  }
+
+  @Delete('blocked-slots/:slotId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Eliminar bloqueo (owner)' })
+  deleteBlockedSlot(@Request() req, @Param('slotId') slotId: string) {
+    return this.courtsService.deleteBlockedSlot(req.user.userId, slotId);
   }
 }

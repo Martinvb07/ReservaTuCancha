@@ -8,12 +8,18 @@ import { UserRole } from '../users/schemas/user.schema';
 
 @ApiTags('Analytics')
 @Controller('analytics')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@ApiBearerAuth()
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
+  @Get('public')
+  @ApiOperation({ summary: 'Stats públicas para la landing page' })
+  getPublicStats() {
+    return this.analyticsService.getPublicStats();
+  }
+
   @Get('owner')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
   @Roles(UserRole.OWNER)
   @ApiOperation({ summary: 'Stats del propietario' })
   getOwnerStats(@Request() req) {
@@ -21,6 +27,8 @@ export class AnalyticsController {
   }
 
   @Get('owner/monthly')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
   @Roles(UserRole.OWNER)
   @ApiOperation({ summary: 'Ingresos mensuales del propietario' })
   getOwnerMonthly(@Request() req) {
@@ -28,6 +36,8 @@ export class AnalyticsController {
   }
 
   @Get('admin')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Stats globales (admin)' })
   getAdminStats() {
@@ -35,6 +45,8 @@ export class AnalyticsController {
   }
 
   @Get('admin/monthly')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Ingresos mensuales globales' })
   getAdminMonthly() {

@@ -16,8 +16,16 @@ export class UsersService {
     return this.userModel.findById(id).select('-passwordHash');
   }
 
+  async findByIdWithRefreshToken(id: string): Promise<UserDocument | null> {
+    return this.userModel.findById(id).select('-passwordHash +refreshToken');
+  }
+
   async updateLastLogin(id: string) {
     await this.userModel.findByIdAndUpdate(id, { lastLoginAt: new Date() });
+  }
+
+  async updateRefreshToken(id: string, hashedToken: string | null) {
+    await this.userModel.findByIdAndUpdate(id, { refreshToken: hashedToken });
   }
 
   async findAll() {

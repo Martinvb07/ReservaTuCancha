@@ -1,8 +1,10 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Court, CourtDocument, SportType } from './schemas/court.schema';
+import { BlockedSlot, BlockedSlotDocument } from './schemas/blocked-slot.schema';
 import { CreateCourtDto } from './dto/create-court.dto';
+import { BlockSlotDto } from './dto/block-slot.dto';
 import { Club, ClubDocument } from '../clubs/schemas/club.schema';
 import { PlanLimitsService } from '../users/plan-limits.service';
 
@@ -21,6 +23,7 @@ export class CourtsService {
   constructor(
     @InjectModel(Court.name) private courtModel: Model<CourtDocument>,
     @InjectModel(Club.name)  private clubModel:  Model<ClubDocument>,
+    @InjectModel(BlockedSlot.name) private blockedSlotModel: Model<BlockedSlotDocument>,
     private readonly planLimits: PlanLimitsService,
   ) {}
 
@@ -110,5 +113,79 @@ export class CourtsService {
       wompiPublicKey: club.wompiPublicKey,
       wompiMerchantId: club.wompiMerchantId,
     };
+  }
+
+  // ─── BLOQUEO DE HORARIOS ──────────────────────────────────────────────
+
+  async createBlockedSlot(ownerId: string, dto: BlockSlotDto) {
+    const court = await this.courtModel.findById(dto.courtId);
+    if (!court) throw new NotFoundException('Cancha no encontrada');
+    if (court.ownerId.toString() !== ownerId) throw new ForbiddenException('No tienes permiso');
+
+    const [year, month, day] = dto.date.split('-').map(Number);
+    const localDate = new Date(year, month - 1, day);
+
+    const slot = new this.blockedSlotModel({
+      courtId: new Types.ObjectId(dto.courtId),
+      date: localDate,
+      startTime: dto.startTime,
+      endTime: dto.endTime,
+      reason: dto.reason,
+    });
+    return slot.save();
+  }
+
+  async getBlockedSlots(courtId: string, date?: string) {
+    const filter: any = { courtId: new Types.ObjectId(courtId) };
+    if (date) {
+      const [year, month, day] = date.split('-').map(Number);
+      const start = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+      const end = new Date(Date.UTC(year, month - 1, day + 1, 0, 0, 0));
+      filter.date = { $gte: start, $lt: end };
+    }
+    return this.blockedSlotModel.find(filter).sort({ date: 1, startTime: 1 }).lean();
+  }
+
+  async getBlockedSlotsByOwner(ownerId: string): Promise<any[]> {
+    const courts = await this.courtModel.find({ ownerId: new Types.ObjectId(ownerId) }).select('_id name').lean();
+    const courtIds = courts.map(c => c._id);
+    const slots = await this.blockedSlotModel.find({ courtId: { $in: courtIds } })
+      .sort({ date: 1, startTime: 1 }).lean();
+    // Enriquecer con nombre de cancha
+    const courtMap = new Map(courts.map(c => [c._id.toString(), c.name]));
+    return slots.map(s => ({ ...s, courtName: courtMap.get(s.courtId.toString()) || '-' }));
+  }
+
+  async deleteBlockedSlot(ownerId: string, slotId: string) {
+    const slot = await this.blockedSlotModel.findById(slotId);
+    if (!slot) throw new NotFoundException('Bloqueo no encontrado');
+    const court = await this.courtModel.findById(slot.courtId);
+    if (!court || court.ownerId.toString() !== ownerId) throw new ForbiddenException('No tienes permiso');
+    await this.blockedSlotModel.findByIdAndDelete(slotId);
+    return { message: 'Bloqueo eliminado' };
+  }
+
+  async isSlotBlocked(courtId: string, date: Date, startTime: string, endTime: string): Promise<boolean> {
+    const startOfDay = new Date(date); startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date); endOfDay.setHours(23, 59, 59, 999);
+
+    const [reqStartH, reqStartM] = startTime.split(':').map(Number);
+    const [reqEndH, reqEndM] = endTime.split(':').map(Number);
+    const reqStartMins = reqStartH * 60 + reqStartM;
+    const reqEndMins = reqEndH * 60 + reqEndM;
+
+    const blocks = await this.blockedSlotModel.find({
+      courtId: new Types.ObjectId(courtId),
+      date: { $gte: startOfDay, $lte: endOfDay },
+    }).lean();
+
+    for (const block of blocks) {
+      const [bStartH, bStartM] = block.startTime.split(':').map(Number);
+      const [bEndH, bEndM] = block.endTime.split(':').map(Number);
+      const bStartMins = bStartH * 60 + bStartM;
+      const bEndMins = bEndH * 60 + bEndM;
+      if (!(reqEndMins <= bStartMins || reqStartMins >= bEndMins)) return true;
+    }
+    return false;
   }
 }

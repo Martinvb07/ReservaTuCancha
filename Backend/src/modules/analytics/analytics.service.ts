@@ -282,4 +282,32 @@ export class AnalyticsService {
       revenueGrowth,
     };
   }
+
+  async getPublicStats() {
+    const [totalCourts, totalBookings, totalCities, avgRating] = await Promise.all([
+      this.courtModel.countDocuments({ isActive: true }),
+      this.bookingModel.countDocuments({ status: { $in: ['confirmed', 'completed'] } }),
+      this.courtModel.distinct('location.city', { isActive: true }).then(c => c.length),
+      this.courtModel.aggregate([
+        { $match: { isActive: true, totalReviews: { $gt: 0 } } },
+        { $group: { _id: null, avg: { $avg: '$averageRating' } } },
+      ]).then(r => r[0]?.avg ? Math.round(r[0].avg * 10) / 10 : 4.8),
+    ]);
+
+    // Top canchas para la landing
+    const featuredCourts = await this.courtModel.find({ isActive: true })
+      .sort({ averageRating: -1, totalReviews: -1 })
+      .limit(8)
+      .select('name sport location pricePerHour photos averageRating totalReviews')
+      .lean();
+
+    // Testimonios: últimas reseñas 5 estrellas (hacemos un aggregate en bookings + reviews no está aquí, así que usamos courts con mejor rating)
+    return {
+      totalCourts,
+      totalBookings,
+      totalCities,
+      avgRating,
+      featuredCourts,
+    };
+  }
 }

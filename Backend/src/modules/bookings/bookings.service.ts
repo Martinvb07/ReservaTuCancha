@@ -4,6 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -13,6 +14,10 @@ import { CreateBookingDto } from './dto/create-booking.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { WompiService } from '../wompi/wompi.service';
 import { Club, ClubDocument } from '../clubs/schemas/club.schema';
+import { Court, CourtDocument } from '../courts/schemas/court.schema';
+import { User, UserDocument } from '../users/schemas/user.schema';
+import { BlockedSlot, BlockedSlotDocument } from '../courts/schemas/blocked-slot.schema';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 
 function generateBookingCode(length = 8) {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -30,8 +35,12 @@ export class BookingsService {
   constructor(
     @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
     @InjectModel(Club.name) private clubModel: Model<ClubDocument>,
+    @InjectModel(Court.name) private courtModel: Model<CourtDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(BlockedSlot.name) private blockedSlotModel: Model<BlockedSlotDocument>,
     private readonly notificationsService: NotificationsService,
     private readonly wompiService: WompiService,
+    private readonly notificationsGateway: NotificationsGateway,
   ) {}
 
   // --- MÉTODOS PARA EL WEBHOOK ---
@@ -47,38 +56,50 @@ export class BookingsService {
    * Actualiza el estado y opcionalmente el ID de transacción de Wompi
    */
   async updateStatus(
-    id: string, 
-    updateData: { status: string; wompiTransactionId?: string }
+    id: string,
+    updateData: { status: string; wompiTransactionId?: string },
+    userId?: string,
+    userRole?: string,
   ): Promise<Booking> {
     const { status, wompiTransactionId } = updateData;
-    
+
     const validStatuses = ['pending', 'confirmed', 'cancelled', 'completed'];
     if (!validStatuses.includes(status))
       throw new BadRequestException('Estado inválido');
+
+    // Validar ownership: solo el owner de la cancha o un admin puede cambiar el estado
+    if (userId && userRole !== 'admin') {
+      const booking = await this.bookingModel.findById(id).populate('courtId', 'ownerId');
+      if (!booking) throw new NotFoundException('Reserva no encontrada');
+      const court = booking.courtId as any;
+      if (court?.ownerId?.toString() !== userId) {
+        throw new ForbiddenException('No tienes permiso para modificar esta reserva');
+      }
+    }
 
     const updatePayload: any = { status };
     if (wompiTransactionId) {
       updatePayload.wompiTransactionId = wompiTransactionId;
     }
 
-    const booking = await this.bookingModel.findByIdAndUpdate(
-      id, 
-      { $set: updatePayload }, 
+    const updated = await this.bookingModel.findByIdAndUpdate(
+      id,
+      { $set: updatePayload },
       { new: true }
     ).populate('courtId', 'name sport');
 
-    if (!booking) throw new NotFoundException('Reserva no encontrada');
+    if (!updated) throw new NotFoundException('Reserva no encontrada');
 
     // Notificaciones automáticas según cambio de estado
     if (status === 'confirmed') {
-      await this.notificationsService.sendBookingConfirmation(booking as any);
+      await this.notificationsService.sendBookingConfirmation(updated as any);
     }
 
     if (status === 'completed') {
-      await this.notificationsService.sendReviewRequest(booking as any);
+      await this.notificationsService.sendReviewRequest(updated as any);
     }
 
-    return booking;
+    return updated;
   }
 
   // --- LÓGICA DE PAGOS ---
@@ -150,6 +171,25 @@ export class BookingsService {
       }
     }
 
+    // Verificar si el horario está bloqueado por el owner
+    const blocks = await this.blockedSlotModel.find({
+      courtId,
+      date: {
+        $gte: new Date(localDate).setHours(0, 0, 0, 0),
+        $lt: new Date(localDate).setHours(23, 59, 59, 999),
+      },
+    }).lean();
+
+    for (const block of blocks) {
+      const [bStartH, bStartM] = block.startTime.split(':').map(Number);
+      const [bEndH, bEndM] = block.endTime.split(':').map(Number);
+      const bStartMins = bStartH * 60 + bStartM;
+      const bEndMins = bEndH * 60 + bEndM;
+      if (!(reqEndMins <= bStartMins || reqStartMins >= bEndMins)) {
+        throw new ConflictException('Este horario está bloqueado por el propietario');
+      }
+    }
+
     let bookingCode;
     let exists = true;
     while (exists) {
@@ -177,6 +217,26 @@ export class BookingsService {
       } catch (e) {
         this.logger.error(`Error enviando email efectivo para ${saved.bookingCode}: ${e.message}`);
       }
+    }
+
+    // Notificación en tiempo real + email al owner
+    try {
+      const court = await this.courtModel.findById(courtId).select('ownerId name').lean();
+      if (court) {
+        this.notificationsGateway.notifyNewBooking(court.ownerId.toString(), {
+          ...saved.toObject(),
+          courtId: court,
+        });
+        // Email al owner
+        const owner = await this.userModel.findById(court.ownerId).select('email').lean();
+        if (owner?.email) {
+          this.notificationsService.sendOwnerNewBookingNotification(saved as any, owner.email).catch(
+            (e) => this.logger.error(`Error email owner: ${e.message}`),
+          );
+        }
+      }
+    } catch (e) {
+      this.logger.error(`Error enviando notification al owner: ${e.message}`);
     }
 
     return saved;
@@ -225,6 +285,20 @@ export class BookingsService {
     booking.status = BookingStatus.CANCELLED;
     await booking.save();
     await this.notificationsService.sendCancellationConfirmation(booking as any);
+
+    // Notificación en tiempo real al owner
+    try {
+      const court = await this.courtModel.findById(booking.courtId).select('ownerId name').lean();
+      if (court) {
+        this.notificationsGateway.notifyBookingCancelled(court.ownerId.toString(), {
+          ...booking.toObject(),
+          courtId: court,
+        });
+      }
+    } catch (e) {
+      this.logger.error(`Error enviando WS cancel notification: ${e.message}`);
+    }
+
     return { message: 'Reserva cancelada exitosamente' };
   }
 
@@ -254,6 +328,16 @@ export class BookingsService {
         status: { $in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
       })
       .select('startTime endTime status')
+      .lean();
+  }
+
+  async findByOwnerId(ownerId: string): Promise<Booking[]> {
+    const courts = await this.courtModel.find({ ownerId: new Types.ObjectId(ownerId) }).select('_id');
+    const courtIds = courts.map(c => c._id);
+    return this.bookingModel
+      .find({ courtId: { $in: courtIds } })
+      .populate('courtId', 'name sport')
+      .sort({ date: -1 })
       .lean();
   }
 

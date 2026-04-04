@@ -45,6 +45,9 @@ export class User {
 
   @Prop()
   subscriptionStartedAt?: Date;
+
+  @Prop()
+  refreshToken?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

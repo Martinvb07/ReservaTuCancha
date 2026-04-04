@@ -1,10 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // 0. HELMET: Headers de seguridad HTTP
+  app.use(helmet());
 
   // 1. TRUST PROXY: Vital para que NestJS sepa que Nginx está manejando el SSL
   const instance = app.getHttpAdapter().getInstance();

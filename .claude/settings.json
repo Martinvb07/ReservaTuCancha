@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm ls:*)",
+      "Read(//c/Users/marti/Devps/ReservaTuCancha/Frontend/**)",
+      "Bash(ls src/hooks/useSocket*)",
+      "Read(//c/Users/marti/Devps/ReservaTuCancha/Backend/**)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\marti\\Devps\\ReservaTuCancha\\Frontend\\src\\app\\dashboard\\propetario"
+    ]
+  }
+}

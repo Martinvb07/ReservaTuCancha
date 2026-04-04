@@ -6,6 +6,7 @@ import api from '@/lib/api/axios';
 
 import DashboardShell from '@/components/layout/DashboardShell';
 import ChangelogFloatingButton from '@/components/layout/ChangelogFloatingButton';
+import RealtimeNotifications from '@/components/dashboard/RealtimeNotifications';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
@@ -40,6 +41,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     >
       {children}
       {role === 'owner' && <ChangelogFloatingButton />}
+      <RealtimeNotifications />
     </DashboardShell>
   );
 }

@@ -110,25 +110,32 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
   enabled: !!selectedDate,
 });
 
-  function getBookedSlotsArray(bookedSlots: any[], timeSlots: string[]) {
-  const booked: string[] = [];
-    
-    bookedSlots.forEach((slot) => {
-      const start = slot.startTime; // Ejemplo: "16:00"
-      const end = slot.endTime;     // Ejemplo: "19:00"
+  // Horarios bloqueados por el owner
+  const { data: blockedSlots = [] } = useQuery<{ startTime: string; endTime: string; reason?: string }[]>({
+    queryKey: ['blocked-slots', courtId, selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null],
+    queryFn: async () => {
+      if (!selectedDate) return [];
+      const dateStr = format(selectedDate, 'yyyy-MM-dd');
+      const { data } = await api.get(`/courts/${courtId}/blocked-slots`, { params: { date: dateStr } });
+      return data;
+    },
+    enabled: !!selectedDate,
+  });
 
+  function getUnavailableSlotsArray(slots: { startTime: string; endTime: string }[], timeSlots: string[]) {
+    const unavailable: string[] = [];
+    slots.forEach((slot) => {
       timeSlots.forEach(t => {
-        // t viene de generateTimeSlots y es "16:00", "17:00", etc.
-        if (t >= start && t < end) {
-          booked.push(t);
+        if (t >= slot.startTime && t < slot.endTime) {
+          unavailable.push(t);
         }
       });
     });
-    return booked;
+    return unavailable;
   }
 
-
-  const bookedTimes = getBookedSlotsArray(bookedSlots, timeSlots);
+  const bookedTimes  = getUnavailableSlotsArray(bookedSlots, timeSlots);
+  const blockedTimes = getUnavailableSlotsArray(blockedSlots, timeSlots);
 
   // Mutación para crear la booking
   const createBookingMutation = useMutation({
@@ -303,26 +310,30 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {timeSlots.map((slot, idx) => {
                       const isBooked   = bookedTimes.includes(slot);
+                      const isBlocked  = blockedTimes.includes(slot);
+                      const isUnavailable = isBooked || isBlocked;
                       const isSelected = selectedSlots.includes(slot);
-                      const canSelect   = !isBooked && (selectedSlots.length === 0 || selectedSlots[selectedSlots.length - 1] === timeSlots[idx - 1]);
+                      const canSelect   = !isUnavailable && (selectedSlots.length === 0 || selectedSlots[selectedSlots.length - 1] === timeSlots[idx - 1]);
                       const slot12h    = format(parse(slot, 'HH:mm', new Date()), 'hh:mm a');
                       const slotEnd    = format(addMinutes(parse(slot, 'HH:mm', new Date()), slotDuration), 'hh:mm a');
                       return (
                         <button key={slot} type="button"
-                          disabled={isBooked || (!canSelect && !isSelected)}
+                          disabled={isUnavailable || (!canSelect && !isSelected)}
                           onClick={() => {
                             if (isSelected) { setSelectedSlots(selectedSlots.filter(s => s !== slot)); return; }
                             if (selectedSlots.length === 0 || canSelect) setSelectedSlots([...selectedSlots, slot]);
                           }}
                           className={`flex flex-col items-center py-2.5 rounded-xl border-2 text-xs transition-all ${
-                            isBooked ? 'border-red-500 bg-red-100 text-red-700 cursor-not-allowed font-bold'
+                            isBlocked ? 'border-orange-400 bg-orange-50 text-orange-600 cursor-not-allowed font-bold'
+                            : isBooked ? 'border-red-500 bg-red-100 text-red-700 cursor-not-allowed font-bold'
                             : isSelected ? 'border-green-500 bg-green-50 text-green-700 font-bold'
                             : canSelect ? 'border-gray-200 hover:border-green-300 text-gray-700'
                             : 'border-gray-100 text-gray-300 cursor-not-allowed opacity-50'
                           }`}>
                           <span className="font-bold">{slot12h}</span>
                           <span className="text-[10px] opacity-60">→ {slotEnd}</span>
-                          {isBooked && <span className="text-[9px] text-red-700 mt-0.5 font-bold">Ocupado</span>}
+                          {isBlocked && <span className="text-[9px] text-orange-600 mt-0.5 font-bold">Bloqueado</span>}
+                          {isBooked && !isBlocked && <span className="text-[9px] text-red-700 mt-0.5 font-bold">Ocupado</span>}
                         </button>
                       );
                     })}

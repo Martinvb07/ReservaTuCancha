@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -25,6 +26,35 @@ async function getReviews(courtId: string) {
   });
   if (!res.ok) return [];
   return res.json();
+}
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const court = await getCourt(params.id);
+  if (!court) return { title: 'Cancha no encontrada' };
+
+  const sport = SPORT_LABELS[court.sport] ?? { label: court.sport, emoji: '', img: '' };
+  const title = `${court.name} — ${sport.label} en ${court.location.city}`;
+  const description = court.description
+    ? court.description.slice(0, 155)
+    : `Reserva ${court.name} (${sport.label}) en ${court.location.address}, ${court.location.city}. $${court.pricePerHour.toLocaleString('es-CO')} COP/hora.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: court.photos?.[0] ? [{ url: court.photos[0], width: 1200, height: 630 }] : [],
+      type: 'website',
+      locale: 'es_CO',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: court.photos?.[0] ? [court.photos[0]] : [],
+    },
+  };
 }
 
 export default async function CourtDetailPage({ params }: { params: { id: string } }) {

@@ -1,5 +1,17 @@
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import EmpresasPageClient from './page.client';
+
+export const metadata: Metadata = {
+  title: 'Canchas deportivas en Colombia',
+  description: 'Encuentra y reserva canchas de futbol, padel y voley playa cerca de ti. Sin registro, pago seguro y confirmacion inmediata.',
+  openGraph: {
+    title: 'Canchas deportivas en Colombia | ReservaTuCancha',
+    description: 'Encuentra y reserva canchas de futbol, padel y voley playa cerca de ti.',
+    type: 'website',
+    locale: 'es_CO',
+  },
+};
 
 export default function EmpresasPage() {
   return (

@@ -50,7 +50,7 @@ export class BookingsController {
   @Roles(UserRole.OWNER)
   @ApiBearerAuth()
   findByOwner(@Request() req) {
-    return this.bookingsService.findByOwner(req.user.courtIds || []);
+    return this.bookingsService.findByOwnerId(req.user.userId);
   }
 
   @Get()
@@ -74,12 +74,11 @@ export class BookingsController {
 
   @Patch(':id/status')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.OWNER)
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Cambiar estado de reserva (owner)' })
-  updateStatus(@Param('id') id: string, @Body('status') status: string) {
-    // IMPORTANTE: Se envía { status } como objeto para coincidir con la nueva firma del servicio
-    return this.bookingsService.updateStatus(id, { status });
+  @ApiOperation({ summary: 'Cambiar estado de reserva (owner/admin)' })
+  updateStatus(@Param('id') id: string, @Body('status') status: string, @Request() req) {
+    return this.bookingsService.updateStatus(id, { status }, req.user.userId, req.user.role);
   }
 
   @Post(':id/payment')

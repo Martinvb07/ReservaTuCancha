@@ -1,5 +1,27 @@
-	import type { NextAuthOptions } from 'next-auth';
+import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+
+async function refreshAccessToken(token: any) {
+  try {
+    const res = await fetch(`${process.env.NEXTAUTH_URL}/api/backend-login/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: token.refreshToken }),
+    });
+
+    if (!res.ok) throw new Error('Refresh failed');
+
+    const data = await res.json();
+    return {
+      ...token,
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
+      accessTokenExpires: Date.now() + 14 * 60 * 1000, // 14 min (refresh before 15min expiry)
+    };
+  } catch {
+    return { ...token, error: 'RefreshAccessTokenError' };
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -10,18 +32,10 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Contrasena', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          console.error('Missing credentials');
-          return null;
-        }
-        
-        console.log('🔐 Intentando login con:', credentials.email);
-        
+        if (!credentials?.email || !credentials?.password) return null;
+
         try {
-          const url = `${process.env.NEXTAUTH_URL}/api/backend-login`;
-          console.log('📡 URL:', url);
-          
-          const res = await fetch(url, {
+          const res = await fetch(`${process.env.NEXTAUTH_URL}/api/backend-login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -29,17 +43,10 @@ export const authOptions: NextAuthOptions = {
               password: credentials.password,
             }),
           });
-          
-          console.log('📊 Response status:', res.status);
+
           const data = await res.json();
-          console.log('📦 Response:', data);
-          
-          if (!res.ok) {
-            console.error('❌ Login failed');
-            return null;
-          }
-          
-          console.log('✅ Login exitoso, token:', data.accessToken?.substring(0, 20) + '...');
+          if (!res.ok) return null;
+
           return {
             id: data.user.id,
             name: data.user.name,
@@ -47,9 +54,9 @@ export const authOptions: NextAuthOptions = {
             role: data.user.role,
             avatarUrl: data.user.avatarUrl,
             accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
           } as any;
-        } catch (error) {
-          console.error('❌ Auth error:', error);
+        } catch {
           return null;
         }
       },
@@ -57,13 +64,24 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }: any) {
+      // Login inicial: guardar tokens
       if (user) {
         token.id = user.id;
         token.role = user.role;
         token.avatarUrl = user.avatarUrl;
         token.accessToken = user.accessToken;
+        token.refreshToken = user.refreshToken;
+        token.accessTokenExpires = Date.now() + 14 * 60 * 1000; // 14 min
+        return token;
       }
-      return token;
+
+      // Token aún vigente
+      if (Date.now() < (token.accessTokenExpires as number)) {
+        return token;
+      }
+
+      // Token expirado: intentar refresh
+      return refreshAccessToken(token);
     },
     async session({ session, token }: any) {
       if (session.user) {
@@ -71,8 +89,8 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role;
         session.user.avatarUrl = token.avatarUrl;
       }
-      // ✅ IMPORTANTE: Exponer el accessToken en la sesión para que el cliente lo pueda leer
-      (session as any).accessToken = token.accessToken;
+      session.accessToken = token.accessToken;
+      session.error = token.error;
       return session;
     },
   },
@@ -81,6 +99,6 @@ export const authOptions: NextAuthOptions = {
     error: '/auth/login',
     signOut: '/auth/login',
   },
-  session: { strategy: 'jwt', maxAge: 30 * 24 * 60 * 60 }, // 30 días
+  session: { strategy: 'jwt', maxAge: 7 * 24 * 60 * 60 }, // 7 días (tied to refresh token)
   secret: process.env.NEXTAUTH_SECRET,
 };
