@@ -92,7 +92,11 @@ export class BookingsService {
 
     // Notificaciones automáticas según cambio de estado
     if (status === 'confirmed') {
-      await this.notificationsService.sendBookingConfirmation(updated as any);
+      if (updated.paymentMethod === 'efectivo') {
+        await this.notificationsService.sendCashPaymentConfirmed(updated as any);
+      } else {
+        await this.notificationsService.sendBookingConfirmation(updated as any);
+      }
     }
 
     if (status === 'completed') {

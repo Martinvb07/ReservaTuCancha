@@ -311,6 +311,81 @@ export class NotificationsService {
     });
   }
 
+  async sendCashPaymentConfirmed(booking: Booking & { _id: any }) {
+    const { court, club } = await this.getCourtAndClub(booking);
+    const bookingDate = formatDateCO(booking.date);
+    const startAmPm = toAmPm(booking.startTime);
+    const endAmPm = toAmPm(booking.endTime);
+    const sportLabel = formatSport(court?.sport);
+    const courtName = (booking.courtId as any)?.name || court?.name || 'tu cancha';
+    await this.send({
+      to: booking.guestEmail,
+      from: this.fromEmail,
+      subject: `¡Pago recibido! — #${booking.bookingCode}`,
+      html: `
+        <div style="background-color: #f3f4f6; padding: 40px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+          <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 450px; background-color: #111827; border-radius: 32px; overflow: hidden; border-collapse: separate;">
+            <tr>
+              <td align="center" style="padding: 40px 30px;">
+                <div style="background-color: #22c55e; width: 64px; height: 64px; border-radius: 50%; margin-bottom: 24px; display: table;">
+                  <span style="display: table-cell; vertical-align: middle; font-size: 30px; color: #ffffff;">✓</span>
+                </div>
+                <h1 style="color: #ffffff; font-size: 26px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">¡PAGO CONFIRMADO!</h1>
+                <p style="color: #9ca3af; font-size: 14px; margin-top: 10px; line-height: 20px;">
+                  Gracias por tu pago <strong>${booking.guestName}</strong>, fue recibido exitosamente. ¡Disfruta de ${courtName}! Este correo es tu comprobante de pago.
+                </p>
+                <div style="background-color: #1f2937; border-radius: 20px; padding: 20px; margin-top: 28px; border: 1px solid #374151;">
+                  <span style="color: #9ca3af; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">Código de Reserva</span>
+                  <span style="color: #22c55e; font-size: 30px; font-weight: 800; letter-spacing: 2px;">#${booking.bookingCode}</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="background-color: #ffffff; padding: 40px 30px; border-radius: 32px 32px 0 0;">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Cancha</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${courtName}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Club</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${club?.name || '-'}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Deporte</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${sportLabel}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Fecha</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${bookingDate}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Horario</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${startAmPm} – ${endAmPm}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Método de pago</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">Efectivo</td>
+                  </tr>
+                  <tr style="height: 65px;">
+                    <td style="color: #6b7280; font-size: 14px; border-top: 1px solid #f3f4f6;">Total pagado</td>
+                    <td align="right" style="color: #22c55e; font-size: 18px; font-weight: 800; border-top: 1px solid #f3f4f6;">$${booking.totalPrice?.toLocaleString('es-CO')} COP</td>
+                  </tr>
+                </table>
+                <div style="margin-top: 20px; background-color: #f0fdf4; border-radius: 12px; padding: 16px; text-align: center;">
+                  <p style="color: #166534; font-size: 13px; margin: 0; font-weight: 600;">Comprobante de pago — ${courtName}</p>
+                </div>
+              </td>
+            </tr>
+          </table>
+          <div style="text-align: center; margin-top: 24px; color: #9ca3af; font-size: 12px;">
+            Enviado por <strong>ReservaTuCancha</strong>
+          </div>
+        </div>
+      `,
+    });
+  }
+
   async sendApprovalEmail(email: string, name: string, tempPassword: string, userData?: { id: string; nit: string; businessName: string }) {
     await this.send({
       to: email,

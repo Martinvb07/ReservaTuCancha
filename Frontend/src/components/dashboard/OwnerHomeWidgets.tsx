@@ -17,6 +17,13 @@ import { useApiAuth } from '@/hooks/useApiAuth';
 import { toast } from 'sonner';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
+function to12h(time: string) {
+  const [h, m] = time.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hour = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
 function fmtCOP(n: number) {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000)     return `$${(n / 1_000).toFixed(0)}K`;
@@ -277,7 +284,7 @@ export function OwnerHomeWidgets() {
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-gray-800 truncate">{b.guestName}</p>
                       <p className="text-[10px] text-gray-400 truncate">
-                        {b.date ? format(parseISO(b.date), 'dd MMM', { locale: es }) : ''} · {b.startTime}
+                        {b.date ? format(parseISO(b.date), 'dd MMM', { locale: es }) : ''} · {to12h(b.startTime)}
                         {court ? ` · ${court.name}` : ''}
                       </p>
                       <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full mt-0.5 ${
@@ -356,7 +363,7 @@ export function OwnerHomeWidgets() {
                   {/* Hora + precio */}
                   <div className="flex items-center justify-between mb-2.5">
                     <span className={`text-sm font-black ${STATUS_TIME[b.status] ?? STATUS_TIME.pending}`}>
-                      {b.startTime} – {b.endTime}
+                      {to12h(b.startTime)} – {to12h(b.endTime)}
                     </span>
                     <span className="text-xs font-bold text-gray-500 bg-white/70 px-2 py-0.5 rounded-full">
                       ${b.totalPrice?.toLocaleString('es-CO')}
