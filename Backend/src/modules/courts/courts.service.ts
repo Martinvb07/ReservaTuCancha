@@ -70,7 +70,7 @@ export class CourtsService {
   }
 
   async findByOwner(ownerId: string): Promise<(Court & { _id: any })[]> {
-    return this.courtModel.find({ ownerId: new Types.ObjectId(ownerId) }).lean();
+    return this.courtModel.find({ ownerId: new Types.ObjectId(ownerId), isActive: true }).lean();
   }
 
   async create(ownerId: string, dto: CreateCourtDto): Promise<Court> {
