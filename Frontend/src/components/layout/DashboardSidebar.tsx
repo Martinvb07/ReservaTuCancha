@@ -20,6 +20,7 @@ const OWNER_LINKS = [
   { href: '/dashboard/propetario/pagos',           label: 'Pagos',         icon: CreditCard      },
   { href: '/dashboard/propetario/bloqueos',        label: 'Bloqueos',      icon: Ban             },
   { href: '/dashboard/propetario/fotos',           label: 'Fotos',         icon: Image           },
+  { href: '/dashboard/propetario/mi-club',         label: 'Mi Club',       icon: Building2       },
   { href: '/dashboard/propetario/suscripcion',     label: 'Mi Plan',       icon: Zap             },
   { href: '/dashboard/propetario/soporte',         label: 'Soporte',       icon: MessageSquare   },
 ];

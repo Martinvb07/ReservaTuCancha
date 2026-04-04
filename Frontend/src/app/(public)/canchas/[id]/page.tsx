@@ -112,6 +112,22 @@ export default async function CourtDetailPage({ params }: { params: { id: string
         </div>
       </section>
 
+      {/* ── GALERÍA DE FOTOS ──────────────────────────────────────── */}
+      {court.photos?.length > 1 && (
+        <section className="max-w-6xl mx-auto px-4 pt-6">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+            {court.photos.map((url: string, i: number) => (
+              <div key={i} className={`relative rounded-xl overflow-hidden ${i === 0 ? 'ring-2 ring-lime-400' : ''}`}>
+                <Image src={url} alt={`${court.name} foto ${i + 1}`} width={300} height={200} className="w-full h-24 sm:h-28 object-cover hover:scale-105 transition-transform" />
+                {i === 0 && (
+                  <span className="absolute top-1 left-1 bg-lime-400 text-gray-900 text-[9px] font-black px-1.5 py-0.5 rounded-full">Principal</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ── CONTENIDO ────────────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-4 py-6 md:py-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">

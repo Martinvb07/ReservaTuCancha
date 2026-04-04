@@ -102,6 +102,47 @@ export class ClubsService {
     return enriched;
   }
 
+  async updateProfile(userId: string, body: {
+    name?: string; description?: string; address?: string;
+    city?: string; contactPhone?: string; contactEmail?: string; logo?: string;
+  }) {
+    const club = await this.clubModel.findOne({ ownerUserId: new Types.ObjectId(userId) });
+    if (!club) throw new NotFoundException('Club no encontrado');
+
+    if (body.name !== undefined) {
+      club.name = body.name;
+      club.slug = generateSlug(body.name);
+    }
+    if (body.description !== undefined) (club as any).description = body.description;
+    if (body.address !== undefined) club.address = body.address;
+    if (body.city !== undefined) club.city = body.city;
+    if (body.contactPhone !== undefined) club.contactPhone = body.contactPhone;
+    if (body.contactEmail !== undefined) club.contactEmail = body.contactEmail;
+    if (body.logo !== undefined) club.logo = body.logo;
+
+    await club.save();
+    return club.toObject();
+  }
+
+  async addClubPhoto(userId: string, url: string) {
+    const club = await this.clubModel.findOne({ ownerUserId: new Types.ObjectId(userId) });
+    if (!club) throw new NotFoundException('Club no encontrado');
+    if (!(club as any).photos) (club as any).photos = [];
+    if (!(club as any).photos.includes(url)) {
+      (club as any).photos.push(url);
+      await club.save();
+    }
+    return club.toObject();
+  }
+
+  async removeClubPhoto(userId: string, url: string) {
+    const club = await this.clubModel.findOne({ ownerUserId: new Types.ObjectId(userId) });
+    if (!club) throw new NotFoundException('Club no encontrado');
+    (club as any).photos = ((club as any).photos || []).filter((p: string) => p !== url);
+    await club.save();
+    return club.toObject();
+  }
+
   async updateWompiCredentials(
     clubId: string,
     wompiData: { wompiPublicKey: string; wompiIntegritySecret?: string; wompiEventsSecret?: string },
@@ -190,6 +231,7 @@ export class ClubsService {
       description: (club as any).description,
       contactPhone: club.contactPhone,
       contactEmail: club.contactEmail,
+      photos: (club as any).photos || [],
       courts: courts.map(c => ({
         _id: c._id,
         name: c.name,

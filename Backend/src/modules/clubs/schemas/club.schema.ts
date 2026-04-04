@@ -50,6 +50,9 @@ export class Club {
 
   @Prop({ trim: true })
   description?: string;
+
+  @Prop({ type: [String], default: [] })
+  photos: string[];
 }
 
 export const ClubSchema = SchemaFactory.createForClass(Club);

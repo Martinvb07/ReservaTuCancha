@@ -1,12 +1,14 @@
-import { 
-  Controller, 
-  Get, 
-  Query, 
-  Patch, 
-  Param, 
-  Body, 
-  UseGuards, 
-  Request 
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Query,
+  Patch,
+  Param,
+  Body,
+  UseGuards,
+  Request
 } from '@nestjs/common';
 import { ClubsService } from './clubs.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -45,6 +47,30 @@ export class ClubsController {
     @Query('ciudad') ciudad: string
   ) {
     return this.clubsService.findClubsBySportAndCity(deporte, ciudad);
+  }
+
+  @Patch('my-club/profile')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  async updateProfile(@Request() req, @Body() body: {
+    name?: string; description?: string; address?: string;
+    city?: string; contactPhone?: string; contactEmail?: string; logo?: string;
+  }) {
+    return this.clubsService.updateProfile(req.user.userId, body);
+  }
+
+  @Post('my-club/photos')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  async addClubPhoto(@Request() req, @Body('url') url: string) {
+    return this.clubsService.addClubPhoto(req.user.userId, url);
+  }
+
+  @Delete('my-club/photos')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  async removeClubPhoto(@Request() req, @Body('url') url: string) {
+    return this.clubsService.removeClubPhoto(req.user.userId, url);
   }
 
   @Patch(':id/wompi')

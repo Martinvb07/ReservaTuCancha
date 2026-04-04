@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { MapPin, Phone, Mail, Star, Users, Trophy } from 'lucide-react';
+import { MapPin, Phone, Mail, Star, Users, Trophy, Camera } from 'lucide-react';
 
 const API = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ?? 'http://localhost:4000';
 
@@ -197,6 +197,22 @@ export default async function ClubPublicPage({ params }: { params: { slug: strin
             </div>
           )}
         </section>
+
+        {/* Fotos del club / instalaciones */}
+        {club.photos?.length > 0 && (
+          <section>
+            <h2 className="text-2xl font-black text-gray-900 uppercase mb-6 flex items-center gap-2">
+              <Camera className="h-6 w-6 text-lime-500" /> Nuestras instalaciones
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {club.photos.map((url: string, i: number) => (
+                <div key={i} className="rounded-2xl overflow-hidden">
+                  <img src={url} alt={`Instalación ${i + 1}`} className="w-full h-44 object-cover hover:scale-105 transition-transform" />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Reseñas */}
         {club.reviews.length > 0 && (
