@@ -45,7 +45,7 @@ function ResenaContent() {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const { data } = await api.post('/reviews', { token, rating, comment });
+      const { data } = await api.post('/reviews', { reviewToken: token, rating, comment });
       return data;
     },
     onSuccess: () => setSent(true),

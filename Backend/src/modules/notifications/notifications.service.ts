@@ -476,19 +476,54 @@ export class NotificationsService {
   }
 
   async sendReviewRequest(booking: Booking & { _id: any }) {
+    const { court, club } = await this.getCourtAndClub(booking);
+    const courtName = (booking.courtId as any)?.name || court?.name || 'tu cancha';
+    const clubName = club?.name || 'el club';
+    const bookingDate = formatDateCO(booking.date);
     const reviewUrl = `${this.frontendUrl}/resena?token=${booking.reviewToken}`;
     await this.send({
       to: booking.guestEmail,
       from: this.fromEmail,
       subject: '¿Cómo estuvo tu experiencia? — ReservaTuCancha',
       html: `
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;text-align:center;padding:40px;background:#f9fafb;border-radius:16px;">
-          <h2 style="color:#111827;">¡Gracias por jugar con nosotros!</h2>
-          <p style="color:#4b5563;">Hola ${booking.guestName}, califica tu experiencia en la cancha.</p>
-          <div style="margin:30px 0;">
-            <a href="${reviewUrl}" style="background:#16a34a;color:white;padding:16px 32px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:16px;">
-              Dejar reseña
-            </a>
+        <div style="background-color: #f3f4f6; padding: 40px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+          <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 450px; background-color: #111827; border-radius: 32px; overflow: hidden; border-collapse: separate;">
+            <tr>
+              <td align="center" style="padding: 40px 30px;">
+                <div style="background-color: #a3e635; width: 64px; height: 64px; border-radius: 50%; margin-bottom: 24px; display: table;">
+                  <span style="display: table-cell; vertical-align: middle; font-size: 30px; color: #111827;">★</span>
+                </div>
+                <h1 style="color: #ffffff; font-size: 24px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">¿Cómo estuvo la cancha?</h1>
+                <p style="color: #9ca3af; font-size: 14px; margin-top: 12px; line-height: 22px;">
+                  Hola <strong style="color: #ffffff;">${booking.guestName}</strong>, gracias por jugar en <strong style="color: #a3e635;">${courtName}</strong>. Tu opinión nos ayuda a mejorar y ayuda a otros jugadores a elegir.
+                </p>
+                <div style="background-color: #1f2937; border-radius: 20px; padding: 20px; margin-top: 28px; border: 1px solid #374151;">
+                  <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                    <tr style="height: 35px;">
+                      <td style="color: #9ca3af; font-size: 13px;">Cancha</td>
+                      <td align="right" style="color: #ffffff; font-size: 13px; font-weight: 700;">${courtName}</td>
+                    </tr>
+                    <tr style="height: 35px;">
+                      <td style="color: #9ca3af; font-size: 13px;">Club</td>
+                      <td align="right" style="color: #ffffff; font-size: 13px; font-weight: 700;">${clubName}</td>
+                    </tr>
+                    <tr style="height: 35px;">
+                      <td style="color: #9ca3af; font-size: 13px;">Fecha</td>
+                      <td align="right" style="color: #ffffff; font-size: 13px; font-weight: 700;">${bookingDate}</td>
+                    </tr>
+                  </table>
+                </div>
+                <div style="margin-top: 32px;">
+                  <a href="${reviewUrl}" style="display: inline-block; background-color: #a3e635; color: #111827; padding: 16px 40px; border-radius: 16px; text-decoration: none; font-weight: 800; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    ⭐ Dejar mi reseña
+                  </a>
+                </div>
+                <p style="color: #6b7280; font-size: 11px; margin-top: 16px;">Solo toma 30 segundos</p>
+              </td>
+            </tr>
+          </table>
+          <div style="text-align: center; margin-top: 24px; color: #9ca3af; font-size: 12px;">
+            Enviado por <strong>ReservaTuCancha</strong>
           </div>
         </div>
       `,
