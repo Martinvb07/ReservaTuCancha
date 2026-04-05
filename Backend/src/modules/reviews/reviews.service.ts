@@ -1,13 +1,22 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { IsString, IsNumber, IsOptional, Min, Max } from 'class-validator';
 import { Review, ReviewDocument } from './schemas/review.schema';
 import { Booking, BookingDocument } from '../bookings/schemas/booking.schema';
 import { CourtsService } from '../courts/courts.service';
 
 export class CreateReviewDto {
+  @IsString()
   reviewToken: string;
+
+  @IsNumber()
+  @Min(1)
+  @Max(5)
   rating: number;
+
+  @IsOptional()
+  @IsString()
   comment?: string;
 }
 
