@@ -13,6 +13,14 @@ function formatTime12h(time24h: string): string {
   return `${hours12}:${String(minutes).padStart(2, '0')} ${period}`;
 }
 
+function formatDateShort(date: string): string {
+  try {
+    return new Date(date).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' });
+  } catch {
+    return '';
+  }
+}
+
 export default function RealtimeNotifications() {
   const { on } = useSocket();
   const queryClient = useQueryClient();
@@ -21,7 +29,7 @@ export default function RealtimeNotifications() {
     const unsub1 = on('new-booking', (data) => {
       const b = data.booking;
       toast.success('Nueva reserva recibida', {
-        description: `${b.guestName} — ${b.courtName} · ${b.startTime ? formatTime12h(b.startTime) : ''} ${b.endTime ? '- ' + formatTime12h(b.endTime) : ''} · $${Number(b.totalPrice).toLocaleString('es-CO')}`,
+        description: `${b.guestName} — ${b.courtName} · ${b.date ? formatDateShort(b.date) + ' · ' : ''}${b.startTime ? formatTime12h(b.startTime) : ''} ${b.endTime ? '- ' + formatTime12h(b.endTime) : ''} · $${Number(b.totalPrice).toLocaleString('es-CO')}`,
         icon: <CalendarDays className="h-5 w-5 text-green-500" />,
         duration: 8000,
       });

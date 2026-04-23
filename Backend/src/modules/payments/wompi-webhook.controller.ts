@@ -68,7 +68,10 @@ export class WompiWebhookController {
         // AQUÍ PODRÍAS DISPARAR EL ENVÍO DE EMAIL DE CONFIRMACIÓN
       } else if (transaction.status === 'DECLINED' || transaction.status === 'ERROR') {
         this.logger.warn(`❌ Pago rechazado/error para reserva: ${booking.bookingCode}`);
-        // Opcional: marcar como cancelada o notificar al usuario
+        await this.bookingsService.updateStatus(booking._id.toString(), {
+          status: 'cancelled',
+          wompiTransactionId: transaction.id,
+        });
       }
     }
 

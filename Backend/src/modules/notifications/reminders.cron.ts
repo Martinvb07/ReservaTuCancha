@@ -48,4 +48,26 @@ export class RemindersCron {
       }
     }
   }
+
+  /**
+   * Cada 10 minutos cancela reservas Wompi pending creadas hace más de 30 min.
+   * Pago abandonado: el cliente inició la reserva pero nunca completó el pago.
+   */
+  @Cron('*/10 * * * *')
+  async expireAbandonedWompiBookings() {
+    const cutoff = new Date(Date.now() - 30 * 60 * 1000);
+
+    const result = await this.bookingModel.updateMany(
+      {
+        status: BookingStatus.PENDING,
+        paymentMethod: 'wompi',
+        createdAt: { $lt: cutoff },
+      } as any,
+      { $set: { status: BookingStatus.CANCELLED } },
+    );
+
+    if (result.modifiedCount > 0) {
+      this.logger.log(`Expiradas ${result.modifiedCount} reservas Wompi abandonadas (>30min sin pago)`);
+    }
+  }
 }
