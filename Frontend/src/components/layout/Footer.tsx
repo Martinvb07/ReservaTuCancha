@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { MapPin, Mail, Phone, Instagram, Facebook } from 'lucide-react';
+import { LOGO_URL } from '@/lib/logo';
 
 export default function Footer() {
   return (
@@ -12,7 +13,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="md:col-span-1 space-y-4">
             <Link href="/" className="flex items-center gap-3">
-              <img src="/logos/logo.png" alt="logo" className="h-9 w-9 object-contain" />
+              <img src={LOGO_URL} alt="ReservaTuCancha" className="h-9 w-9 object-contain" />
               <span className="font-black text-lg tracking-tight">
                 Reserva<span className="text-lime-400">TuCancha</span>
               </span>

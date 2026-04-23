@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import api from '@/lib/api/axios';
 import { useApiAuth } from '@/hooks/useApiAuth';
+import { LOGO_URL } from '@/lib/logo';
 
 const OWNER_LINKS = [
   { href: '/dashboard',                            label: 'Inicio',        icon: LayoutDashboard },
@@ -63,7 +64,7 @@ export default function DashboardSidebar({ role, userName }: Props) {
       {/* Logo */}
       <div className="px-5 py-5 border-b border-white/10">
         <Link href="/" className="flex items-center gap-3">
-          <img src="/logos/Logo.png" alt="logo" className="h-8 w-8 object-contain" />
+          <img src={LOGO_URL} alt="ReservaTuCancha" className="h-8 w-8 object-contain" />
           <span className="font-black text-sm text-white tracking-tight">
             Reserva<span className="text-lime-400">TuCancha</span>
           </span>
