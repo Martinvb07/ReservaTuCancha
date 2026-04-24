@@ -142,11 +142,11 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
   const todayStr = format(nowInBogota, 'yyyy-MM-dd');
   const selectedStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
   const isPastDate = !!selectedStr && selectedStr < todayStr;
-  const isToday = selectedStr === todayStr;
+  const selectedIsToday = selectedStr === todayStr;
   const nowMinsCO = nowInBogota.getHours() * 60 + nowInBogota.getMinutes();
   const isSlotPast = (slot: string) => {
     if (isPastDate) return true;
-    if (!isToday) return false;
+    if (!selectedIsToday) return false;
     const [sh, sm] = slot.split(':').map(Number);
     return sh * 60 + sm <= nowMinsCO;
   };
