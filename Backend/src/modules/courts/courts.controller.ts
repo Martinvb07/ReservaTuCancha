@@ -78,6 +78,15 @@ export class CourtsController {
     return this.courtsService.update(id, req.user.userId, dto);
   }
 
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Eliminar cancha (owner/admin)' })
+  remove(@Param('id') id: string, @Request() req) {
+    return this.courtsService.remove(id, req.user.userId, req.user.role);
+  }
+
   // ─── FOTOS ────────────────────────────────────────────────────────────
 
   @Post(':id/photos')

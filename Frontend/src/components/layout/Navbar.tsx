@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { LayoutDashboard, LogOut, User, ChevronDown, Menu, X } from 'lucide-react';
+import { LOGO_URL } from '@/lib/logo';
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -49,7 +50,7 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 shrink-0">
-            <img src="/logos/Logo.png" alt="logo" className="h-9 w-9 object-contain" />
+            <img src={LOGO_URL} alt="ReservaTuCancha" className="h-9 w-9 object-contain" />
             <span className="font-black text-xl text-gray-900 tracking-tight hidden sm:block">
               Reserva<span className="text-green-600">TuCancha</span>
             </span>

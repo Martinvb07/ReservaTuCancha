@@ -87,6 +87,17 @@ export class CourtsService {
     return court.save();
   }
 
+  async remove(id: string, ownerId: string, userRole?: string): Promise<{ message: string }> {
+    const court = await this.courtModel.findById(id);
+    if (!court) throw new NotFoundException('Cancha no encontrada');
+    if (userRole !== 'admin' && court.ownerId.toString() !== ownerId) {
+      throw new ForbiddenException('No tienes permiso');
+    }
+    court.isActive = false;
+    await court.save();
+    return { message: 'Cancha eliminada' };
+  }
+
   async addPhoto(courtId: string, ownerId: string, url: string): Promise<Court> {
     const court = await this.courtModel.findById(courtId);
     if (!court) throw new NotFoundException('Cancha no encontrada');

@@ -9,6 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Loader2, ChevronRight, Shield, BarChart3, CalendarDays, ArrowLeft } from 'lucide-react';
+import { LOGO_URL } from '@/lib/logo';
 
 const schema = z.object({
   email:    z.string().email('Email inválido'),
@@ -67,7 +68,7 @@ export default function LoginPage() {
         {/* Logo top */}
         <div className="relative z-10 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
-            <img src="/logos/Logo.png" alt="logo" className="h-9 w-9 object-contain" />
+            <img src={LOGO_URL} alt="ReservaTuCancha" className="h-9 w-9 object-contain" />
             <span className="font-black text-xl text-white tracking-tight">
               Reserva<span className="text-lime-400">TuCancha</span>
             </span>
@@ -138,7 +139,7 @@ export default function LoginPage() {
           {/* Logo mobile */}
           <div className="lg:hidden">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/logos/Logo.png" alt="logo" className="h-7 w-7 object-contain" />
+              <img src={LOGO_URL} alt="ReservaTuCancha" className="h-7 w-7 object-contain" />
               <span className="font-black text-base text-gray-900 tracking-tight">
                 Reserva<span className="text-green-600">TuCancha</span>
               </span>
