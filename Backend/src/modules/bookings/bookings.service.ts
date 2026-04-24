@@ -155,6 +155,26 @@ export class BookingsService {
     const reqStartMins = reqStartHour * 60 + reqStartMin;
     const reqEndMins = reqEndHour * 60 + reqEndMin;
 
+    // Validar que la reserva no sea en el pasado (hora Colombia)
+    const fmt = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Bogota',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    });
+    const nowParts = Object.fromEntries(fmt.formatToParts(new Date()).map(p => [p.type, p.value]));
+    const todayYMD = `${nowParts.year}-${nowParts.month}-${nowParts.day}`;
+    const nowMins = Number(nowParts.hour) * 60 + Number(nowParts.minute);
+    const bookingYMD = typeof createBookingDto.date === 'string' && createBookingDto.date.length >= 10
+      ? createBookingDto.date.slice(0, 10)
+      : `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, '0')}-${String(localDate.getDate()).padStart(2, '0')}`;
+
+    if (bookingYMD < todayYMD) {
+      throw new BadRequestException('No puedes reservar una fecha que ya pasó');
+    }
+    if (bookingYMD === todayYMD && reqStartMins <= nowMins) {
+      throw new BadRequestException('No puedes reservar un horario que ya pasó');
+    }
+
     const existingBookings = await this.bookingModel.find({
       courtId,
       date: {

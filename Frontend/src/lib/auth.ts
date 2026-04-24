@@ -1,9 +1,13 @@
 import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
+// URL del backend NestJS para llamadas internas server-side (no depende de NEXTAUTH_URL).
+// En prod/dev el backend corre en el mismo host que Next.
+const BACKEND_INTERNAL_URL = process.env.BACKEND_INTERNAL_URL || 'http://127.0.0.1:4000';
+
 async function refreshAccessToken(token: any) {
   try {
-    const res = await fetch(`${process.env.NEXTAUTH_URL}/api/backend-login/refresh`, {
+    const res = await fetch(`${BACKEND_INTERNAL_URL}/api/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken: token.refreshToken }),
@@ -35,7 +39,7 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) return null;
 
         try {
-          const res = await fetch(`${process.env.NEXTAUTH_URL}/api/backend-login`, {
+          const res = await fetch(`${BACKEND_INTERNAL_URL}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

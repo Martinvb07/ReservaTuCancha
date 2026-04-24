@@ -137,6 +137,20 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
   const bookedTimes  = getUnavailableSlotsArray(bookedSlots, timeSlots);
   const blockedTimes = getUnavailableSlotsArray(blockedSlots, timeSlots);
 
+  // Slots pasados (hora Colombia)
+  const nowInBogota = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+  const todayStr = format(nowInBogota, 'yyyy-MM-dd');
+  const selectedStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
+  const isPastDate = !!selectedStr && selectedStr < todayStr;
+  const isToday = selectedStr === todayStr;
+  const nowMinsCO = nowInBogota.getHours() * 60 + nowInBogota.getMinutes();
+  const isSlotPast = (slot: string) => {
+    if (isPastDate) return true;
+    if (!isToday) return false;
+    const [sh, sm] = slot.split(':').map(Number);
+    return sh * 60 + sm <= nowMinsCO;
+  };
+
   // Mutación para crear la booking
   const createBookingMutation = useMutation({
     mutationFn: (values: FormValues) => bookingsApi.create({
@@ -311,7 +325,8 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
                     {timeSlots.map((slot, idx) => {
                       const isBooked   = bookedTimes.includes(slot);
                       const isBlocked  = blockedTimes.includes(slot);
-                      const isUnavailable = isBooked || isBlocked;
+                      const isPast     = isSlotPast(slot);
+                      const isUnavailable = isBooked || isBlocked || isPast;
                       const isSelected = selectedSlots.includes(slot);
                       const canSelect   = !isUnavailable && (selectedSlots.length === 0 || selectedSlots[selectedSlots.length - 1] === timeSlots[idx - 1]);
                       const slot12h    = format(parse(slot, 'HH:mm', new Date()), 'hh:mm a');
@@ -324,16 +339,18 @@ const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string
                             if (selectedSlots.length === 0 || canSelect) setSelectedSlots([...selectedSlots, slot]);
                           }}
                           className={`flex flex-col items-center py-2.5 rounded-xl border-2 text-xs transition-all ${
-                            isBlocked ? 'border-orange-400 bg-orange-50 text-orange-600 cursor-not-allowed font-bold'
+                            isPast ? 'border-yellow-400 bg-yellow-50 text-yellow-700 cursor-not-allowed font-bold'
+                            : isBlocked ? 'border-orange-400 bg-orange-50 text-orange-600 cursor-not-allowed font-bold'
                             : isBooked ? 'border-red-500 bg-red-100 text-red-700 cursor-not-allowed font-bold'
                             : isSelected ? 'border-green-500 bg-green-50 text-green-700 font-bold'
                             : canSelect ? 'border-gray-200 hover:border-green-300 text-gray-700'
                             : 'border-gray-100 text-gray-300 cursor-not-allowed opacity-50'
                           }`}>
-                          <span className="font-bold">{slot12h}</span>
+                          <span className={`font-bold ${isPast ? 'line-through opacity-70' : ''}`}>{slot12h}</span>
                           <span className="text-[10px] opacity-60">→ {slotEnd}</span>
-                          {isBlocked && <span className="text-[9px] text-orange-600 mt-0.5 font-bold">Bloqueado</span>}
-                          {isBooked && !isBlocked && <span className="text-[9px] text-red-700 mt-0.5 font-bold">Ocupado</span>}
+                          {isPast && <span className="text-[9px] text-yellow-700 mt-0.5 font-bold">Horario no disponible</span>}
+                          {isBlocked && !isPast && <span className="text-[9px] text-orange-600 mt-0.5 font-bold">Bloqueado</span>}
+                          {isBooked && !isBlocked && !isPast && <span className="text-[9px] text-red-700 mt-0.5 font-bold">Ocupado</span>}
                         </button>
                       );
                     })}
