@@ -48,8 +48,8 @@ export class AnalyticsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Ingresos mensuales globales' })
+  @ApiOperation({ summary: 'Nuevos propietarios por mes (SaaS)' })
   getAdminMonthly() {
-    return this.analyticsService.getMonthlyRevenue();
+    return this.analyticsService.getMonthlyNewOwners();
   }
 }

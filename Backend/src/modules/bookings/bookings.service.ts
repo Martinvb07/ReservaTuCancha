@@ -335,6 +335,15 @@ export class BookingsService {
       .lean();
   }
 
+  async findByBookingCode(code: string): Promise<Booking[]> {
+    const normalized = code.trim().replace(/#/g, '').toUpperCase();
+    if (!normalized) return [];
+    return this.bookingModel
+      .find({ bookingCode: normalized })
+      .populate('courtId', 'name sport location')
+      .lean();
+  }
+
   async findByCourtAndDate(courtId: string, date: string): Promise<any[]> {
     const courtObjectId = new Types.ObjectId(courtId);
     const [year, month, day] = date.split('-').map(Number);

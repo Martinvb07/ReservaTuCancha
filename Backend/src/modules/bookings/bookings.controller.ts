@@ -16,9 +16,14 @@ export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
 
   @Get('public')
-  @ApiOperation({ summary: 'Reservas por email (público)' })
-  getByEmailPublic(@Query('guestEmail') guestEmail: string) {
-    return this.bookingsService.findByGuestEmail(guestEmail);
+  @ApiOperation({ summary: 'Reservas por email o código de reserva (público)' })
+  getByEmailPublic(
+    @Query('guestEmail') guestEmail?: string,
+    @Query('code') code?: string,
+  ) {
+    if (code?.trim()) return this.bookingsService.findByBookingCode(code);
+    if (guestEmail?.trim()) return this.bookingsService.findByGuestEmail(guestEmail);
+    return [];
   }
 
   @Post()

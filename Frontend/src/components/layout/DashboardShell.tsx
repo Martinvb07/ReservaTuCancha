@@ -25,7 +25,7 @@ export default function DashboardShell({ children, sidebarRole, sidebarUserName 
         <div className="fixed inset-0 z-40 md:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
           <div className="absolute left-0 top-0 bottom-0 w-64">
-            <DashboardSidebar role={sidebarRole} userName={sidebarUserName} />
+            <DashboardSidebar role={sidebarRole} userName={sidebarUserName} variant="mobile" />
           </div>
         </div>
       )}

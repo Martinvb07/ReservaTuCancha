@@ -27,9 +27,15 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Users, Mail, Phone, Calendar, Edit,
-  Trash2, Power, Plus, Search, Shield, User,
+  Trash2, Power, Plus, Search, Shield, User, UserPlus,
 } from 'lucide-react';
 import api from '@/lib/api/axios';
+
+// ─── Estilos de campos con el tema de la empresa (slate + foco verde) ─────────
+const FIELD =
+  'h-11 rounded-xl border-slate-200 bg-slate-50/60 px-3.5 text-sm text-slate-900 placeholder:text-slate-400 transition-all focus-visible:bg-white focus-visible:border-green-500 focus-visible:ring-4 focus-visible:ring-green-500/15';
+const LABEL = 'text-xs font-bold uppercase tracking-wide text-slate-500';
+const SELECT_TRIGGER = `${FIELD} w-full !h-11 justify-between`;
 
 interface UserData {
   _id: string;
@@ -287,41 +293,52 @@ export default function AdminUsuariosPage() {
 
       {/* ── Modal Crear usuario ──────────────────────────── */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
+        <DialogContent className="sm:max-w-md rounded-3xl p-6">
           <DialogHeader>
-            <DialogTitle>Crear nuevo usuario</DialogTitle>
-            <DialogDescription>
-              Completa los datos para registrar un propietario o administrador.
-            </DialogDescription>
+            <div className="flex items-center gap-3 text-left">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-green-50">
+                <UserPlus className="h-5 w-5 text-green-600" />
+              </span>
+              <div className="space-y-0.5">
+                <DialogTitle className="text-base font-black text-slate-900">Crear nuevo usuario</DialogTitle>
+                <DialogDescription className="text-xs text-slate-500">
+                  Completa los datos para registrar un propietario o administrador.
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="space-y-3 py-2">
+          <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label>Nombre completo</Label>
-              <Input placeholder="Juan Pérez" value={formData.name}
+              <Label className={LABEL}>Nombre completo</Label>
+              <Input className={FIELD} placeholder="Juan Pérez" value={formData.name}
                 onChange={e => setFormData({ ...formData, name: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Email</Label>
-              <Input type="email" placeholder="juan@email.com" value={formData.email}
+              <Label className={LABEL}>Email</Label>
+              <Input className={FIELD} type="email" placeholder="juan@email.com" value={formData.email}
                 onChange={e => setFormData({ ...formData, email: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Teléfono (opcional)</Label>
-              <Input type="tel" placeholder="+57 300 123 4567" value={formData.phone}
+              <Label className={LABEL}>Teléfono <span className="font-medium normal-case text-slate-400">(opcional)</span></Label>
+              <Input className={FIELD} type="tel" placeholder="+57 300 123 4567" value={formData.phone}
                 onChange={e => setFormData({ ...formData, phone: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Contraseña</Label>
-              <Input type="password" placeholder="Mínimo 6 caracteres" value={formData.password}
+              <Label className={LABEL}>Contraseña</Label>
+              <Input className={FIELD} type="password" placeholder="Mínimo 6 caracteres" value={formData.password}
                 onChange={e => setFormData({ ...formData, password: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Rol</Label>
+              <Label className={LABEL}>Rol</Label>
               <Select value={formData.role} onValueChange={(v) => setFormData({ ...formData, role: v as any })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="owner">🏟️ Propietario</SelectItem>
-                  <SelectItem value="admin">🛡️ Administrador</SelectItem>
+                <SelectTrigger className={SELECT_TRIGGER}><SelectValue /></SelectTrigger>
+                <SelectContent position="popper" align="start" sideOffset={6} className="w-[var(--radix-select-trigger-width)] rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-300/40">
+                  <SelectItem value="owner">
+                    <span className="flex items-center gap-2"><User className="h-4 w-4 text-green-600" /> Propietario</span>
+                  </SelectItem>
+                  <SelectItem value="admin">
+                    <span className="flex items-center gap-2"><Shield className="h-4 w-4 text-purple-600" /> Administrador</span>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -331,7 +348,7 @@ export default function AdminUsuariosPage() {
               Cancelar
             </Button>
             <Button
-              className="bg-green-600 hover:bg-green-700 text-white rounded-full"
+              className="bg-green-600 hover:bg-green-700 text-white rounded-full px-5"
               onClick={() => createMutation.mutate(formData)}
               disabled={createMutation.isPending || !formData.name || !formData.email || !formData.password}
             >
@@ -343,37 +360,48 @@ export default function AdminUsuariosPage() {
 
       {/* ── Modal Editar usuario ─────────────────────────── */}
       <Dialog open={!!editUser} onOpenChange={(open) => !open && setEditUser(null)}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
+        <DialogContent className="sm:max-w-md rounded-3xl p-6">
           <DialogHeader>
-            <DialogTitle>Editar usuario</DialogTitle>
-            <DialogDescription>
-              Modifica los datos de <strong>{editUser?.name}</strong>
-            </DialogDescription>
+            <div className="flex items-center gap-3 text-left">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-green-50">
+                <Edit className="h-[18px] w-[18px] text-green-600" />
+              </span>
+              <div className="space-y-0.5">
+                <DialogTitle className="text-base font-black text-slate-900">Editar usuario</DialogTitle>
+                <DialogDescription className="text-xs text-slate-500">
+                  Modifica los datos de <strong className="text-slate-700">{editUser?.name}</strong>
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="space-y-3 py-2">
+          <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label>Nombre completo</Label>
-              <Input value={formData.name}
+              <Label className={LABEL}>Nombre completo</Label>
+              <Input className={FIELD} value={formData.name}
                 onChange={e => setFormData({ ...formData, name: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Teléfono</Label>
-              <Input type="tel" value={formData.phone}
+              <Label className={LABEL}>Teléfono</Label>
+              <Input className={FIELD} type="tel" value={formData.phone}
                 onChange={e => setFormData({ ...formData, phone: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Rol</Label>
+              <Label className={LABEL}>Rol</Label>
               <Select value={formData.role} onValueChange={(v) => setFormData({ ...formData, role: v as any })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="owner">🏟️ Propietario</SelectItem>
-                  <SelectItem value="admin">🛡️ Administrador</SelectItem>
+                <SelectTrigger className={SELECT_TRIGGER}><SelectValue /></SelectTrigger>
+                <SelectContent position="popper" align="start" sideOffset={6} className="w-[var(--radix-select-trigger-width)] rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-300/40">
+                  <SelectItem value="owner">
+                    <span className="flex items-center gap-2"><User className="h-4 w-4 text-green-600" /> Propietario</span>
+                  </SelectItem>
+                  <SelectItem value="admin">
+                    <span className="flex items-center gap-2"><Shield className="h-4 w-4 text-purple-600" /> Administrador</span>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Nueva contraseña <span className="text-muted-foreground text-xs">(dejar vacío para no cambiar)</span></Label>
-              <Input type="password" placeholder="••••••••" value={formData.password}
+              <Label className={LABEL}>Nueva contraseña <span className="font-medium normal-case text-slate-400">(dejar vacío para no cambiar)</span></Label>
+              <Input className={FIELD} type="password" placeholder="••••••••" value={formData.password}
                 onChange={e => setFormData({ ...formData, password: e.target.value })} />
             </div>
           </div>
@@ -382,7 +410,7 @@ export default function AdminUsuariosPage() {
               Cancelar
             </Button>
             <Button
-              className="bg-green-600 hover:bg-green-700 text-white rounded-full"
+              className="bg-green-600 hover:bg-green-700 text-white rounded-full px-5"
               onClick={() => {
                 if (!editUser) return;
                 const payload: any = { name: formData.name, phone: formData.phone, role: formData.role };

@@ -47,6 +47,8 @@ export interface CourtsResponse {
 }
 
 // ─── CourtFilters extendido para SaaS multi-club ───────────────
+export type CourtSort = 'rating' | 'price_asc' | 'price_desc';
+
 export interface CourtFilters {
   sport?: string;
   city?: string;
@@ -55,6 +57,8 @@ export interface CourtFilters {
   page?: number;
   limit?: number;
   ownerId?: string;
+  /** orden aplicado en cliente (el backend ordena por rating) */
+  sort?: CourtSort;
 }
 
 // ─── Booking ──────────────────────────────────────────────────────────────────
@@ -151,12 +155,3 @@ export interface MonthlyRevenue {
   count: number;
 }
 
-// ─── Filters ──────────────────────────────────────────────────────────────────
-export interface CourtFilters {
-  sport?: string;
-  city?: string;
-  minPrice?: string;
-  maxPrice?: string;
-  page?: number;
-  limit?: number;
-}

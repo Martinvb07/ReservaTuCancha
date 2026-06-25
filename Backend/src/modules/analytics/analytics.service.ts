@@ -136,65 +136,26 @@ export class AnalyticsService {
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
 
+    // Solo métricas de la plataforma (SaaS): propietarios/clientes, solicitudes
+    // y suscripciones. NO se exponen datos privados de los clubes (reservas,
+    // canchas ni ingresos de los owners).
     const [
-      totalBookings,
-      totalRevenue,
-      bookingsByStatus,
-      bookingsBySport,
-      recentBookings,
-      // Users & owners
       totalOwners,
       activeOwners,
       newOwnersThisMonth,
-      // Courts
-      totalCourts,
-      activeCourts,
-      // Solicitudes
+      newOwnersLastMonth,
       pendingSolicitudes,
       totalSolicitudes,
-      // Subscriptions
       subsByPlan,
       subsByEstado,
-      // This month vs last month bookings
-      bookingsThisMonth,
-      bookingsLastMonth,
-      revenueThisMonth,
-      revenueLastMonth,
-      // Recent solicitudes
       recentSolicitudes,
     ] = await Promise.all([
-      this.bookingModel.countDocuments(),
-      this.bookingModel.aggregate([
-        { $match: { status: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] } } },
-        { $group: { _id: null, total: { $sum: '$totalPrice' } } },
-      ]),
-      this.bookingModel.aggregate([
-        { $group: { _id: '$status', count: { $sum: 1 } } },
-      ]),
-      this.bookingModel.aggregate([
-        { $lookup: { from: 'courts', localField: 'courtId', foreignField: '_id', as: 'court' } },
-        { $unwind: '$court' },
-        { $group: { _id: '$court.sport', count: { $sum: 1 }, revenue: { $sum: '$totalPrice' } } },
-        { $sort: { count: -1 } },
-      ]),
-      this.bookingModel
-        .find()
-        .sort({ createdAt: -1 })
-        .limit(10)
-        .populate('courtId', 'name sport')
-        .select('guestName guestEmail date startTime endTime status totalPrice paymentMethod createdAt')
-        .lean(),
-      // Users
       this.userModel.countDocuments({ role: UserRole.OWNER }),
       this.userModel.countDocuments({ role: UserRole.OWNER, isActive: true }),
       this.userModel.countDocuments({ role: UserRole.OWNER, createdAt: { $gte: startOfMonth } }),
-      // Courts
-      this.courtModel.countDocuments(),
-      this.courtModel.countDocuments({ isActive: true }),
-      // Solicitudes
+      this.userModel.countDocuments({ role: UserRole.OWNER, createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth } }),
       this.solicitudModel.countDocuments({ estado: 'pendiente' }),
       this.solicitudModel.countDocuments(),
-      // Subscriptions by plan
       this.userModel.aggregate([
         { $match: { role: UserRole.OWNER } },
         { $group: { _id: '$plan', count: { $sum: 1 } } },
@@ -203,21 +164,6 @@ export class AnalyticsService {
         { $match: { role: UserRole.OWNER } },
         { $group: { _id: '$subscriptionEstado', count: { $sum: 1 } } },
       ]),
-      // Bookings this month
-      this.bookingModel.countDocuments({ createdAt: { $gte: startOfMonth } }),
-      // Bookings last month
-      this.bookingModel.countDocuments({ createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth } }),
-      // Revenue this month
-      this.bookingModel.aggregate([
-        { $match: { status: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] }, createdAt: { $gte: startOfMonth } } },
-        { $group: { _id: null, total: { $sum: '$totalPrice' } } },
-      ]),
-      // Revenue last month
-      this.bookingModel.aggregate([
-        { $match: { status: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] }, createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth } } },
-        { $group: { _id: null, total: { $sum: '$totalPrice' } } },
-      ]),
-      // Recent solicitudes
       this.solicitudModel
         .find()
         .sort({ createdAt: -1 })
@@ -226,61 +172,47 @@ export class AnalyticsService {
         .lean(),
     ]);
 
-    // Calculate growth percentages
-    const bookingsGrowth = bookingsLastMonth > 0
-      ? Math.round(((bookingsThisMonth - bookingsLastMonth) / bookingsLastMonth) * 100)
-      : bookingsThisMonth > 0 ? 100 : 0;
+    const ownersGrowth = newOwnersLastMonth > 0
+      ? Math.round(((newOwnersThisMonth - newOwnersLastMonth) / newOwnersLastMonth) * 100)
+      : newOwnersThisMonth > 0 ? 100 : 0;
 
-    const revThisMonth = revenueThisMonth[0]?.total ?? 0;
-    const revLastMonth = revenueLastMonth[0]?.total ?? 0;
-    const revenueGrowth = revLastMonth > 0
-      ? Math.round(((revThisMonth - revLastMonth) / revLastMonth) * 100)
-      : revThisMonth > 0 ? 100 : 0;
-
-    // Map subscription aggregations to objects
     const planCounts: Record<string, number> = {};
     subsByPlan.forEach((s: any) => { planCounts[s._id] = s.count; });
     const estadoCounts: Record<string, number> = {};
     subsByEstado.forEach((s: any) => { estadoCounts[s._id] = s.count; });
 
-    // Build status counts map
-    const statusCounts: Record<string, number> = {};
-    bookingsByStatus.forEach((s: any) => { statusCounts[s._id] = s.count; });
-
     return {
-      totalBookings,
-      totalRevenue: totalRevenue[0]?.total ?? 0,
-      confirmedBookings: statusCounts[BookingStatus.CONFIRMED] ?? 0,
-      pendingBookings: statusCounts[BookingStatus.PENDING] ?? 0,
-      cancelledBookings: statusCounts[BookingStatus.CANCELLED] ?? 0,
-      completedBookings: statusCounts[BookingStatus.COMPLETED] ?? 0,
-      bookingsByStatus,
-      bookingsBySport,
-      recentBookings,
-      // Owners
       totalOwners,
       activeOwners,
       newOwnersThisMonth,
-      // Courts
-      totalCourts,
-      activeCourts,
-      // Solicitudes
+      newOwnersLastMonth,
+      ownersGrowth,
       pendingSolicitudes,
       totalSolicitudes,
       recentSolicitudes,
-      // Subscriptions
       planCounts,
       estadoCounts,
       activeSubs: estadoCounts['activa'] ?? 0,
       trialSubs: estadoCounts['trial'] ?? 0,
-      // Growth
-      bookingsThisMonth,
-      bookingsLastMonth,
-      bookingsGrowth,
-      revenueThisMonth: revThisMonth,
-      revenueLastMonth: revLastMonth,
-      revenueGrowth,
     };
+  }
+
+  async getMonthlyNewOwners() {
+    const raw = await this.userModel.aggregate([
+      { $match: { role: UserRole.OWNER } },
+      { $group: {
+        _id:    { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+        owners: { $sum: 1 },
+      }},
+      { $sort: { '_id.year': 1, '_id.month': 1 } },
+      { $limit: 12 },
+    ]);
+
+    return raw.map(r => ({
+      month:      `${MONTH_NAMES[r._id.month - 1]} ${r._id.year}`,
+      monthShort: MONTH_NAMES[r._id.month - 1],
+      owners:     r.owners,
+    }));
   }
 
   async getPublicStats() {

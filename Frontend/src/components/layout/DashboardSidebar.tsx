@@ -4,50 +4,135 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect, useId } from 'react';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
   LayoutDashboard, CalendarDays, Building2, BarChart3,
-  Users, LogOut, Home, FileText, Plus, UserCheck, PenLine,
-  CreditCard, Image, MessageSquare, Zap, Ban,
+  Users, LogOut, Home, FileText, PenLine,
+  CreditCard, Image as ImageIcon, MessageSquare, Zap, Ban,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import api from '@/lib/api/axios';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import { LOGO_URL } from '@/lib/logo';
 
-const OWNER_LINKS = [
-  { href: '/dashboard',                            label: 'Inicio',        icon: LayoutDashboard },
-  { href: '/dashboard/propetario/canchas',         label: 'Mis canchas',   icon: Building2       },
-  { href: '/dashboard/propetario/reservas',        label: 'Reservas',      icon: CalendarDays    },
-  { href: '/dashboard/propetario/analytics',       label: 'Analytics',     icon: BarChart3       },
-  { href: '/dashboard/propetario/pagos',           label: 'Pagos',         icon: CreditCard      },
-  { href: '/dashboard/propetario/bloqueos',        label: 'Bloqueos',      icon: Ban             },
-  { href: '/dashboard/propetario/fotos',           label: 'Fotos',         icon: Image           },
-  { href: '/dashboard/propetario/mi-club',         label: 'Mi Club',       icon: Building2       },
-  { href: '/dashboard/propetario/suscripcion',     label: 'Mi Plan',       icon: Zap             },
-  { href: '/dashboard/propetario/soporte',         label: 'Soporte',       icon: MessageSquare   },
+type NavItem = { href: string; label: string; icon: any };
+type NavSection = { label: string | null; items: NavItem[] };
+
+const ADMIN_SECTIONS: NavSection[] = [
+  { label: null, items: [
+    { href: '/dashboard', label: 'Inicio', icon: LayoutDashboard },
+  ]},
+  { label: 'Gestión', items: [
+    { href: '/dashboard/admin/usuarios',      label: 'Usuarios',      icon: Users      },
+    { href: '/dashboard/admin/suscripciones', label: 'Suscripciones', icon: CreditCard },
+    { href: '/dashboard/admin/solicitudes',   label: 'Solicitudes',   icon: FileText   },
+  ]},
+  { label: 'Sistema', items: [
+    { href: '/dashboard/admin/cambios',  label: 'Cambios',  icon: PenLine   },
+    { href: '/dashboard/admin/reportes', label: 'Reportes', icon: BarChart3 },
+  ]},
 ];
 
-const ADMIN_LINKS = [
-  { href: '/dashboard',                    label: 'Inicio',      icon: LayoutDashboard },
-  { href: '/dashboard/admin/usuarios',     label: 'Usuarios',    icon: Users           },
-  { href: '/dashboard/admin/suscripciones', label: 'Suscripciones',     icon: UserCheck},
-  { href: '/dashboard/admin/solicitudes',  label: 'Solicitudes', icon: FileText        },
-  { href: '/dashboard/admin/cambios',      label: 'Cambios', icon: PenLine         },
-  { href: '/dashboard/admin/reportes',     label: 'Reportes',    icon: BarChart3       },
+const OWNER_SECTIONS: NavSection[] = [
+  { label: null, items: [
+    { href: '/dashboard',                     label: 'Inicio',      icon: LayoutDashboard },
+    { href: '/dashboard/propetario/canchas',  label: 'Mis canchas', icon: Building2       },
+    { href: '/dashboard/propetario/reservas', label: 'Reservas',    icon: CalendarDays    },
+  ]},
+  { label: 'Operación', items: [
+    { href: '/dashboard/propetario/analytics', label: 'Analytics', icon: BarChart3  },
+    { href: '/dashboard/propetario/pagos',     label: 'Pagos',     icon: CreditCard },
+    { href: '/dashboard/propetario/bloqueos',  label: 'Bloqueos',  icon: Ban        },
+    { href: '/dashboard/propetario/fotos',     label: 'Fotos',     icon: ImageIcon  },
+  ]},
+  { label: 'Cuenta', items: [
+    { href: '/dashboard/propetario/mi-club',     label: 'Mi Club', icon: Building2     },
+    { href: '/dashboard/propetario/suscripcion', label: 'Mi Plan', icon: Zap          },
+    { href: '/dashboard/propetario/soporte',     label: 'Soporte', icon: MessageSquare },
+  ]},
 ];
 
 const PLAN_CHIP: Record<string, { label: string; color: string }> = {
-  basico:      { label: 'Básico',      color: 'bg-gray-700 text-gray-300'    },
-  pro:         { label: 'Pro',         color: 'bg-blue-600 text-white'        },
-  empresarial: { label: 'Empresarial', color: 'bg-purple-600 text-white'      },
+  basico:      { label: 'Básico',      color: 'bg-slate-200 text-slate-600'   },
+  pro:         { label: 'Pro',         color: 'bg-blue-100 text-blue-700'      },
+  empresarial: { label: 'Empresarial', color: 'bg-purple-100 text-purple-700' },
 };
 
-interface Props { role: string; userName: string; }
+/* Variantes para la entrada con stagger */
+const navContainer: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.04, delayChildren: 0.06 } },
+};
+const navItem: Variants = {
+  hidden: { opacity: 0, x: -10 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.25, ease: 'easeOut' } },
+};
 
-export default function DashboardSidebar({ role, userName }: Props) {
-  const pathname = usePathname();
-  const links    = role === 'admin' ? ADMIN_LINKS : OWNER_LINKS;
+/* ─── Encabezado de sección ─── */
+function SectionLabel({ children, collapsed }: { children: React.ReactNode; collapsed: boolean }) {
+  if (collapsed) return <div className="my-2 mx-auto h-px w-6 bg-slate-200" />;
+  return (
+    <p className="mb-1 mt-4 px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+      {children}
+    </p>
+  );
+}
+
+/* ─── Link de navegación ─── */
+function SidebarLink({ item, active, collapsed, uid }: { item: NavItem; active: boolean; collapsed: boolean; uid: string }) {
+  const Icon = item.icon;
+  return (
+    <Link
+      href={item.href}
+      title={collapsed ? item.label : undefined}
+      className={`group relative flex items-center gap-3 rounded-xl text-sm font-semibold transition-colors ${
+        collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
+      } ${
+        active ? 'bg-green-50 text-green-700' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+      }`}
+    >
+      {active && (
+        <motion.span
+          layoutId={`${uid}-active`}
+          className="absolute inset-y-1 left-0 w-1 rounded-r-full bg-gradient-to-b from-green-500 to-green-600"
+          transition={{ type: 'spring', stiffness: 500, damping: 38 }}
+        />
+      )}
+      <Icon className={`h-5 w-5 shrink-0 transition-transform duration-200 ${active ? 'text-green-600' : 'group-hover:scale-110'}`} />
+      {!collapsed && <span className="truncate">{item.label}</span>}
+    </Link>
+  );
+}
+
+interface Props {
+  role: string;
+  userName: string;
+  variant?: 'desktop' | 'mobile';
+}
+
+export default function DashboardSidebar({ role, userName, variant = 'desktop' }: Props) {
+  const pathname = usePathname() || '';
+  const sections = role === 'admin' ? ADMIN_SECTIONS : OWNER_SECTIONS;
   const session  = useApiAuth();
   const token    = (session as any)?.accessToken;
+  const uid      = useId();
+
+  // El colapso solo aplica en desktop; en el drawer móvil siempre va expandido.
+  const [collapsedPref, setCollapsedPref] = useState(false);
+  const collapsed = variant === 'mobile' ? false : collapsedPref;
+
+  useEffect(() => {
+    if (variant === 'mobile') return;
+    if (localStorage.getItem('dash-sidebar-collapsed') === '1') setCollapsedPref(true);
+  }, [variant]);
+
+  const toggleCollapse = () =>
+    setCollapsedPref(v => {
+      const next = !v;
+      try { localStorage.setItem('dash-sidebar-collapsed', next ? '1' : '0'); } catch {}
+      return next;
+    });
 
   const { data: planInfo } = useQuery<any>({
     queryKey: ['my-plan'],
@@ -57,80 +142,128 @@ export default function DashboardSidebar({ role, userName }: Props) {
   });
 
   const chip = planInfo ? (PLAN_CHIP[planInfo.plan] ?? PLAN_CHIP.basico) : null;
+  const isActive = (href: string) => pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
 
   return (
-    <aside className="w-48 sm:w-64 bg-gray-900 flex flex-col h-screen overflow-hidden">
-
+    <motion.aside
+      initial={{ x: -16, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      className={`relative flex flex-col h-screen overflow-hidden border-r border-slate-100 bg-white shadow-sm shadow-slate-200/40 transition-[width] duration-200 ${
+        collapsed ? 'w-20' : 'w-64'
+      }`}
+    >
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-white/10">
-        <Link href="/" className="flex items-center gap-3">
-          <img src={LOGO_URL} alt="ReservaTuCancha" className="h-8 w-8 object-contain" />
-          <span className="font-black text-sm text-white tracking-tight">
-            Reserva<span className="text-lime-400">TuCancha</span>
-          </span>
+      <div className={`flex h-16 shrink-0 items-center border-b border-slate-100 ${collapsed ? 'justify-center px-0' : 'px-4'}`}>
+        <Link href="/" className="flex items-center gap-2.5 min-w-0">
+          <motion.img
+            src={LOGO_URL}
+            alt="ReservaTuCancha"
+            className="h-8 w-8 shrink-0 object-contain"
+            whileHover={{ scale: 1.08, rotate: -4 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+          />
+          <AnimatePresence initial={false}>
+            {!collapsed && (
+              <motion.span
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: 'auto' }}
+                exit={{ opacity: 0, width: 0 }}
+                transition={{ duration: 0.18 }}
+                className="overflow-hidden whitespace-nowrap font-black text-sm tracking-tight text-slate-900"
+              >
+                Reserva<span className="text-green-600">TuCancha</span>
+              </motion.span>
+            )}
+          </AnimatePresence>
         </Link>
       </div>
 
-      {/* User info */}
-      <div className="px-5 py-4 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-lime-400 flex items-center justify-center text-gray-900 font-black text-sm shrink-0">
+      {/* Perfil */}
+      <div className={`shrink-0 border-b border-slate-100 ${collapsed ? 'flex justify-center py-3' : 'px-4 py-4'}`}>
+        {collapsed ? (
+          <div title={userName} className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-green-500 to-green-600 text-sm font-black text-white">
             {userName.charAt(0).toUpperCase()}
           </div>
-          <div className="min-w-0">
-            <p className="text-xs font-bold text-white truncate">{userName}</p>
-            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-              <span className="text-[9px] font-bold uppercase tracking-widest text-lime-400">
-                {role === 'admin' ? 'Administrador' : 'Propietario'}
-              </span>
-              {chip && (
-                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${chip.color}`}>
-                  {chip.label}
+        ) : (
+          <div className="flex items-center gap-3">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-green-500 to-green-600 text-sm font-black text-white">
+              {userName.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold text-slate-900">{userName}</p>
+              <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-green-600">
+                  {role === 'admin' ? 'Administrador' : 'Propietario'}
                 </span>
-              )}
+                {chip && (
+                  <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-black ${chip.color}`}>
+                    {chip.label}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {links.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-1.5 sm:gap-3 px-1.5 sm:px-3 py-1.5 sm:py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                active
-                  ? 'bg-lime-400 text-gray-900'
-                  : 'text-gray-400 hover:bg-white/10 hover:text-white'
-              }`}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              <span className="truncate">{label}</span>
-            </Link>
-          );
-        })}
-      </nav>
+      <motion.nav
+        variants={navContainer}
+        initial="hidden"
+        animate="visible"
+        className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3"
+      >
+        {sections.map((section, si) => (
+          <div key={si}>
+            {section.label && <SectionLabel collapsed={collapsed}>{section.label}</SectionLabel>}
+            <div className="flex flex-col gap-0.5">
+              {section.items.map(item => (
+                <motion.div key={item.href} variants={navItem}>
+                  <SidebarLink item={item} active={isActive(item.href)} collapsed={collapsed} uid={uid} />
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </motion.nav>
 
       {/* Footer */}
-    <div className="px-3 py-3 sm:py-4 border-t border-white/10 space-y-1 shrink-0">
-      <Link
-        href="/"
-        className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-gray-400 hover:bg-white/10 hover:text-white transition-all"
-      >
-        <Home className="h-4 w-4 shrink-0" />
-        <span className="truncate">Ver sitio</span>
-      </Link>
-      <button
-        onClick={() => signOut({ callbackUrl: '/' })}
-        className="w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-gray-400 hover:bg-red-500/20 hover:text-red-400 transition-all"
-      >
-        <LogOut className="h-4 w-4 shrink-0" />
-        <span className="truncate">Cerrar sesión</span>
-      </button>
-    </div>
-    </aside>
+      <div className="shrink-0 space-y-1 border-t border-slate-100 p-3">
+        <Link
+          href="/"
+          title={collapsed ? 'Ver sitio' : undefined}
+          className={`group flex items-center gap-3 rounded-xl text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 ${
+            collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
+          }`}
+        >
+          <Home className="h-[18px] w-[18px] shrink-0" />
+          {!collapsed && 'Ver sitio'}
+        </Link>
+        <button
+          onClick={() => signOut({ callbackUrl: '/' })}
+          title={collapsed ? 'Cerrar sesión' : undefined}
+          className={`group flex w-full items-center gap-3 rounded-xl text-sm font-semibold text-red-500 transition-colors hover:bg-red-50 ${
+            collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
+          }`}
+        >
+          <LogOut className="h-[18px] w-[18px] shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
+          {!collapsed && 'Cerrar sesión'}
+        </button>
+        {variant === 'desktop' && (
+          <button
+            onClick={toggleCollapse}
+            title={collapsed ? 'Expandir' : 'Contraer'}
+            className={`group hidden w-full items-center gap-3 rounded-xl text-sm font-semibold text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 md:flex ${
+              collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
+            }`}
+          >
+            {collapsed
+              ? <ChevronRight className="h-[18px] w-[18px] shrink-0" />
+              : <><ChevronLeft className="h-[18px] w-[18px] shrink-0 transition-transform duration-200 group-hover:-translate-x-0.5" /> Contraer</>}
+          </button>
+        )}
+      </div>
+    </motion.aside>
   );
 }

@@ -88,7 +88,7 @@ export default async function DashboardPage() {
       <div className="space-y-8 max-w-6xl mx-auto">
         <div>
           <p className="text-lime-600 font-semibold text-sm uppercase tracking-widest flex items-center gap-2 mb-1"><span>✦</span> Panel Propietario</p>
-          <h1 className="text-3xl font-black text-gray-900 uppercase">Hola, {name} 👋</h1>
+          <h1 className="text-3xl font-black text-gray-900 uppercase">Hola, {name}</h1>
           <p className="text-gray-500 text-sm mt-1">Resumen de tus canchas y reservas</p>
         </div>
 
@@ -97,7 +97,7 @@ export default async function DashboardPage() {
             <div className="flex items-start gap-4">
               <AlertTriangle className="h-6 w-6 text-amber-600 mt-0.5 shrink-0" />
               <div className="flex-1">
-                <h3 className="font-bold text-amber-900 mb-1">⚠️ No se pudieron cargar los datos</h3>
+                <h3 className="font-bold text-amber-900 mb-1">No se pudieron cargar los datos</h3>
                 <p className="text-amber-700 text-sm">Verifica que el servidor backend esté corriendo en {process.env.NEXT_PUBLIC_API_URL}</p>
               </div>
             </div>
@@ -142,8 +142,8 @@ export default async function DashboardPage() {
         <p className="text-lime-600 font-semibold text-xs sm:text-sm uppercase tracking-widest flex items-center gap-2 mb-1">
           <span>✦</span> Panel Administrador
         </p>
-        <h1 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase">Hola, {name} 👋</h1>
-        <p className="text-gray-500 text-xs sm:text-sm mt-1">
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 uppercase tracking-tight">Hola, {name}</h1>
+        <p className="text-slate-500 text-xs sm:text-sm mt-1">
           Vista completa de ReservaTuCancha — {new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
       </div>

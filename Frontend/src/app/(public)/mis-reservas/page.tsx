@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Search, CalendarDays, Clock, MapPin, Mail, ChevronRight, X, Loader2 } from 'lucide-react';
+import { Search, CalendarDays, Clock, MapPin, ChevronRight, X, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api/axios';
 
@@ -17,15 +17,17 @@ const STATUS_STYLES: Record<string, { pill: string; dot: string; label: string }
 };
 
 export default function MisReservasPage() {
-  const [email, setEmail]     = useState('');
-  const [query, setQuery]     = useState('');
+  const [input, setInput]       = useState('');
+  const [query, setQuery]       = useState('');
   const [searched, setSearched] = useState(false);
 
   const { data: bookings = [], isLoading, refetch } = useQuery({
     queryKey: ['mis-reservas', query],
     queryFn: async () => {
       if (!query) return [];
-      const { data } = await api.get('/bookings/public', { params: { guestEmail: query } });
+      // Si contiene "@" buscamos por email; si no, por código de reserva.
+      const params = query.includes('@') ? { guestEmail: query } : { code: query };
+      const { data } = await api.get('/bookings/public', { params });
       return data;
     },
     enabled: false,
@@ -33,8 +35,9 @@ export default function MisReservasPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
-    setQuery(email.trim());
+    const value = input.trim();
+    if (!value) return;
+    setQuery(value);
     setSearched(true);
     setTimeout(() => refetch(), 50);
   };
@@ -52,18 +55,17 @@ export default function MisReservasPage() {
             <span>✦</span> Sin necesidad de cuenta
           </p>
           <h1 className="text-4xl font-black text-white uppercase">Mis reservas</h1>
-          <p className="text-gray-400">Ingresa el email con el que hiciste tu reserva para verla</p>
+          <p className="text-gray-400">Ingresa tu email o el código de reserva para verla</p>
 
           {/* Buscador */}
           <form onSubmit={handleSearch} className="flex gap-2 mt-6 max-w-lg mx-auto">
             <div className="relative flex-1">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
-                type="email"
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="tu@email.com"
+                type="text"
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                placeholder="tu@email.com o código #XXXXXXXX"
                 className="w-full bg-white/10 border border-white/20 text-white placeholder-gray-500 rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400 transition"
               />
             </div>
@@ -83,7 +85,7 @@ export default function MisReservasPage() {
         {!searched && (
           <div className="text-center py-16 space-y-3">
             <CalendarDays className="h-14 w-14 text-gray-200 mx-auto" />
-            <p className="font-black text-gray-300 uppercase text-sm tracking-widest">Ingresa tu email para ver tus reservas</p>
+            <p className="font-black text-gray-300 uppercase text-sm tracking-widest">Ingresa tu email o código para ver tus reservas</p>
           </div>
         )}
 
