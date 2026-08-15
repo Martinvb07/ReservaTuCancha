@@ -58,7 +58,8 @@ export default function ChangelogFloatingButton() {
         aria-label="Ver novedades"
         onClick={() => setOpen((v) => !v)}
         className="
-          fixed bottom-24 right-6 z-50 
+          fab-float
+          fixed bottom-24 right-6 z-50
           bg-white shadow-xl hover:shadow-2xl 
           border border-green-200 text-green-600 
           rounded-full transition-all group
@@ -87,7 +88,8 @@ export default function ChangelogFloatingButton() {
         <div
           ref={ref}
           className="
-            fixed bottom-40 right-6 z-50 
+            fab-float
+            fixed bottom-40 right-6 z-50
             bg-white border border-green-200 
             rounded-2xl shadow-2xl p-5 w-80 
             animate-in fade-in slide-in-from-bottom-4 duration-300

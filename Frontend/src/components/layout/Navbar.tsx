@@ -23,27 +23,40 @@ const BIZ_LINKS = [
 ];
 
 // ── Switch animado con framer-motion (layoutId) ──────────────────
-function ModeToggle({ isBiz, id, className = '' }: { isBiz: boolean; id: string; className?: string }) {
+// La píldora se mueve apenas se toca (estado optimista), sin esperar a que
+// termine la navegación: en móvil eso es lo que hace que el cambio se vea fluido.
+function ModeToggle({ isBiz, id, className = '', onSelect }: {
+  isBiz: boolean; id: string; className?: string; onSelect?: () => void;
+}) {
+  const [pending, setPending] = useState<boolean | null>(null);
+  useEffect(() => { setPending(null); }, [isBiz]);
+  const current = pending ?? isBiz;
+
   const options = [
-    { href: '/', label: 'Reservar', active: !isBiz },
-    { href: '/para-clubes', label: 'Para clubes', active: isBiz },
+    { href: '/', label: 'Reservar', biz: false },
+    { href: '/para-clubes', label: 'Para clubes', biz: true },
   ];
   return (
     <div className={`relative inline-flex items-center bg-gray-100 rounded-full p-1 ${className}`}>
-      {options.map((o) => (
-        <Link key={o.href} href={o.href} className="relative whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-semibold">
-          {o.active && (
-            <motion.span
-              layoutId={`${id}-mode-pill`}
-              className="absolute inset-0 rounded-full bg-white shadow-sm"
-              transition={{ type: 'tween', duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-            />
-          )}
-          <span className={`relative z-10 transition-colors ${o.active ? 'text-gray-900' : 'text-gray-500 hover:text-gray-800'}`}>
-            {o.label}
-          </span>
-        </Link>
-      ))}
+      {options.map((o) => {
+        const active = current === o.biz;
+        return (
+          <Link key={o.href} href={o.href}
+            onClick={() => { setPending(o.biz); onSelect?.(); }}
+            className="relative whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-semibold">
+            {active && (
+              <motion.span
+                layoutId={`${id}-mode-pill`}
+                className="absolute inset-0 rounded-full bg-white shadow-sm"
+                transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+              />
+            )}
+            <span className={`relative z-10 transition-colors duration-200 ${active ? 'text-gray-900' : 'text-gray-500 hover:text-gray-800'}`}>
+              {o.label}
+            </span>
+          </Link>
+        );
+      })}
     </div>
   );
 }
@@ -66,7 +79,13 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => { setMobileOpen(false); }, [pathname]);
+  /* El menú móvil se cierra al navegar, salvo cuando el cambio vino del switch
+     Reservar / Para clubes: ahí se queda abierto para ver la transición. */
+  const keepOpenRef = useRef(false);
+  useEffect(() => {
+    if (keepOpenRef.current) { keepOpenRef.current = false; return; }
+    setMobileOpen(false);
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
@@ -192,25 +211,67 @@ export default function Navbar() {
           )}
           </div>
 
-          {/* Mobile hamburger */}
-          <button className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors" onClick={() => setMobileOpen((v) => !v)}>
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          {/* Mobile hamburger — el icono gira y se funde al alternar */}
+          <button
+            className="lg:hidden relative p-2 h-9 w-9 grid place-items-center rounded-lg hover:bg-gray-100 active:scale-95 transition-all"
+            onClick={() => setMobileOpen((v) => !v)}
+            aria-label={mobileOpen ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={mobileOpen}
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={mobileOpen ? 'close' : 'open'}
+                initial={{ opacity: 0, rotate: mobileOpen ? -90 : 90, scale: 0.7 }}
+                animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                exit={{ opacity: 0, rotate: mobileOpen ? 90 : -90, scale: 0.7 }}
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                className="absolute inset-0 grid place-items-center"
+              >
+                {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </motion.span>
+            </AnimatePresence>
           </button>
         </div>
       </div>
 
-      {/* Mobile menu */}
-      {mobileOpen && (
-        <div className="lg:hidden border-t border-gray-100 bg-white px-4 py-4 space-y-3">
-          <ModeToggle isBiz={isBiz} id="mobile" className="w-full justify-center flex" />
+      {/* Mobile menu — despliegue suave (alto + fade) y contenido escalonado */}
+      <AnimatePresence initial={false}>
+        {mobileOpen && (
+          <motion.div
+            key="mobile-menu"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ height: { duration: 0.32, ease: [0.22, 1, 0.36, 1] }, opacity: { duration: 0.2 } }}
+            className="lg:hidden border-t border-gray-100 bg-white overflow-hidden"
+          >
+        <div className="px-4 py-4 space-y-3">
+          <ModeToggle isBiz={isBiz} id="mobile" className="w-full justify-center flex"
+            onSelect={() => { keepOpenRef.current = true; }} />
 
-          <div className="space-y-1">
-            {links.map((l) => (
-              <Link key={l.href} href={l.href} className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50">
-                {l.label}
-              </Link>
-            ))}
-          </div>
+          {/* Los enlaces cambian con el modo: se cruzan con un fade corto */}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={isBiz ? 'biz' : 'user'}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+              className="space-y-1"
+            >
+              {links.map((l, i) => (
+                <motion.div key={l.href}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.04 + i * 0.045, duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <Link href={l.href} className="block px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                    {l.label}
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+          </AnimatePresence>
 
           <div className="h-px bg-gray-100" />
 
@@ -239,7 +300,9 @@ export default function Navbar() {
             </div>
           )}
         </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

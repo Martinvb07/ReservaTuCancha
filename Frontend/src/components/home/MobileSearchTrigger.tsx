@@ -31,12 +31,14 @@ export default function MobileSearchTrigger(props: Props) {
     timer.current = setTimeout(() => { setOpen(false); setClosing(false); timer.current = null; }, 200);
   };
 
-  /* Bloquea el scroll del body mientras el sheet está abierto */
+  /* Bloquea el scroll del body y esconde los FAB (WhatsApp, campana) mientras
+     el sheet está abierto */
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
+    document.body.classList.add('sheet-open');
+    return () => { document.body.style.overflow = prev; document.body.classList.remove('sheet-open'); };
   }, [open]);
 
   /* Cerrar con Escape */

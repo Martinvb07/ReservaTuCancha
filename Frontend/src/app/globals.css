@@ -167,6 +167,17 @@
   box-shadow: 0 2px 8px rgba(22,163,74,.4);
 }
 
+/* Botones flotantes (WhatsApp, campana): se esconden mientras hay un sheet a
+   pantalla completa abierto, para no tapar sus controles. */
+.fab-float {
+  transition: opacity .22s ease, transform .3s cubic-bezier(.16,1,.3,1);
+}
+body.sheet-open .fab-float {
+  opacity: 0;
+  transform: translateY(18px) scale(.85);
+  pointer-events: none;
+}
+
 /* Sheet de búsqueda móvil — el fondo hace fade y las tarjetas entran escalonadas */
 @keyframes rtc-fade    { from { opacity: 0; } to { opacity: 1; } }
 @keyframes rtc-fadeOut { from { opacity: 1; } to { opacity: 0; } }
