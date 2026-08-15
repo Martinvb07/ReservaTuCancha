@@ -7,7 +7,7 @@
 module.exports = {
   apps: [
     {
-      name: 'rtc-backend',
+      name: 'ReservaTuCancha-api',
       cwd: './Backend',
       script: 'dist/main.js',
       env: { NODE_ENV: 'production', PORT: 4000 },
@@ -15,7 +15,7 @@ module.exports = {
       time: true, // timestamps en los logs de pm2
     },
     {
-      name: 'rtc-frontend',
+      name: 'ReservaTuCancha-web',
       cwd: './Frontend',
       script: 'node_modules/next/dist/bin/next',
       args: 'start -p 3000',
