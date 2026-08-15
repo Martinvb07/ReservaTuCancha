@@ -6,6 +6,7 @@ import { Search, ChevronRight, CheckCircle, Calendar, CreditCard, Smile, Users, 
 import CourtCard from '@/components/courts/CourtCard';
 import FadeIn from '@/components/ui/FadeIn';
 import HeroSearch from '@/components/home/HeroSearch';
+import MobileSearchTrigger from '@/components/home/MobileSearchTrigger';
 import type { Court } from '@/types';
 
 const SPORT_GALLERY = [
@@ -59,16 +60,22 @@ export default function HomeClient({ stats }: Props) {
           <div className="absolute inset-0 bg-black/55" />
         </div>
 
-        <div className="relative z-10 w-full max-w-3xl mx-auto px-4 text-center text-white space-y-4 md:space-y-6">
-          <p className="text-lime-400 font-semibold tracking-wide text-xs md:text-sm uppercase">Partido hoy?</p>
-          <h1 className="text-2xl md:text-4xl lg:text-6xl font-black uppercase leading-tight">
-            Reserva canchas deportivas o{' '}
-            <span className="text-lime-400">unete a emocionantes eventos</span>
-          </h1>
+        <div className="relative z-10 w-full max-w-5xl mx-auto px-4 text-center text-white space-y-4 md:space-y-6">
+          <div className="max-w-3xl mx-auto space-y-4 md:space-y-6">
+            <p className="text-lime-400 font-semibold tracking-wide text-xs md:text-sm uppercase">Partido hoy?</p>
+            <h1 className="text-2xl md:text-4xl lg:text-6xl font-black uppercase leading-tight">
+              Reserva canchas deportivas o{' '}
+              <span className="text-lime-400">unete a emocionantes eventos</span>
+            </h1>
+          </div>
 
-          {/* Buscador propio (deporte / ciudad / fecha / hora) */}
-          <div className="mt-4 md:mt-6">
+          {/* Buscador propio (deporte / ciudad / fecha / hora).
+              En móvil se reemplaza por la píldora que abre el sheet. */}
+          <div className="mt-4 md:mt-6 hidden md:block">
             <HeroSearch />
+          </div>
+          <div className="mt-4">
+            <MobileSearchTrigger />
           </div>
         </div>
       </section>

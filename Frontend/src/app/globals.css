@@ -130,7 +130,59 @@
   .rtc-card:hover { box-shadow: 0 22px 50px rgba(0,0,0,.13); transform: translateY(-4px); }
 }
 
+/* Slider de rango de precio — dos <input range> superpuestos; solo el thumb
+   recibe eventos (la pista se pinta aparte en el componente) */
+.price-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: none;
+  background: transparent;
+  position: absolute;
+  width: 100%;
+  height: 6px;
+  outline: none;
+}
+.price-thumb::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #16a34a;
+  cursor: pointer;
+  pointer-events: all;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(22,163,74,.4);
+  transition: transform .15s, box-shadow .15s;
+}
+.price-thumb::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 4px 14px rgba(22,163,74,.55);
+}
+.price-thumb::-moz-range-thumb {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #16a34a;
+  cursor: pointer;
+  pointer-events: all;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(22,163,74,.4);
+}
+
+/* Sheet de búsqueda móvil — el fondo hace fade y las tarjetas entran escalonadas */
+@keyframes rtc-fade    { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rtc-fadeOut { from { opacity: 1; } to { opacity: 0; } }
+.mobile-sheet-in  { animation: rtc-fade .2s ease both; }
+.mobile-sheet-out { animation: rtc-fadeOut .18s ease both; }
+@keyframes rtc-sheetUp { from { opacity: 0; transform: translateY(48px); } to { opacity: 1; transform: none; } }
+.rtc-sheet-up { animation: rtc-sheetUp .32s cubic-bezier(.16,1,.3,1) both; }
+@keyframes rtc-mobileFieldIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.mobile-search-stack > * { animation: rtc-mobileFieldIn .42s cubic-bezier(.16,1,.3,1) both; }
+.mobile-search-stack > *:nth-child(1) { animation-delay: .05s; }
+.mobile-search-stack > *:nth-child(2) { animation-delay: .11s; }
+.mobile-search-stack > *:nth-child(3) { animation-delay: .17s; }
+.mobile-search-stack > *:nth-child(4) { animation-delay: .23s; }
+
 @media (prefers-reduced-motion: reduce) {
   .rtc-fade, .rtc-drop, .rtc-item, .rtc-pick,
-  .rtc-ready, .rtc-live, .rtc-card { animation: none !important; transition: none !important; transform: none !important; }
+  .rtc-ready, .rtc-live, .rtc-card,
+  .mobile-sheet-in, .mobile-sheet-out, .rtc-sheet-up, .mobile-search-stack > * { animation: none !important; transition: none !important; transform: none !important; }
 }
