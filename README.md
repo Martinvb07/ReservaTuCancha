@@ -1,4 +1,10 @@
-🏟️ ReservaTuCancha
+<div align="center">
+    <img src="Frontend/public/Logos/ReservaTuCanchaLOGO.png" alt="ReservaTuCancha" width="180" />
+</div>
+
+<h1 align="center">ReservaTuCancha</h1>
+
+<p align="center">Reserva canchas deportivas de forma rápida, sencilla y sin complicaciones.</p>
 
 <div align="center">
     <img src="https://img.shields.io/badge/Frontend-Next.js_14-black?logo=next.js" />
