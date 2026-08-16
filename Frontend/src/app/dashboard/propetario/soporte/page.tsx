@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { MessageSquare, Mail, Phone, Clock, ChevronRight, CheckCircle, Send, Loader2 } from 'lucide-react';
+import FaqAccordion from '@/components/ui/FaqAccordion';
 
 const FAQ = [
   { q: '¿Cómo activo o desactivo una cancha?', a: 'Ve a Mis Canchas → selecciona la cancha → usa el interruptor de "Estado" para activarla o desactivarla. Los clientes no podrán reservar canchas inactivas.' },
@@ -15,7 +16,6 @@ const inp = 'w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm
 const lbl = 'block text-xs font-black text-gray-500 uppercase tracking-widest mb-2';
 
 export default function OwnerSoportePage() {
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [form, setForm]       = useState({ asunto: '', mensaje: '' });
   const [sent, setSent]       = useState(false);
   const [loading, setLoading] = useState(false);
@@ -72,23 +72,11 @@ export default function OwnerSoportePage() {
       {/* FAQ */}
       <div className="space-y-4">
         <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest">Preguntas frecuentes</h2>
-        <div className="space-y-3">
-          {FAQ.map((item, i) => (
-            <button
-              key={i}
-              onClick={() => setOpenFaq(openFaq === i ? null : i)}
-              className="w-full text-left bg-white border border-gray-100 rounded-2xl p-5 hover:border-green-200 transition-all"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <span className="font-bold text-gray-800 text-sm">{item.q}</span>
-                <ChevronRight className={`h-4 w-4 text-gray-400 shrink-0 mt-0.5 transition-transform duration-200 ${openFaq === i ? 'rotate-90 text-green-500' : ''}`} />
-              </div>
-              {openFaq === i && (
-                <p className="text-sm text-gray-500 mt-3 leading-relaxed">{item.a}</p>
-              )}
-            </button>
-          ))}
-        </div>
+        <FaqAccordion
+          items={FAQ}
+          questionClassName="font-bold text-gray-800 text-sm"
+          iconClassName="h-4 w-4"
+        />
       </div>
 
       {/* Formulario */}

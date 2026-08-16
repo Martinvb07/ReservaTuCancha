@@ -60,12 +60,13 @@ export default function ChangelogFloatingButton() {
         className="
           fab-float
           fixed bottom-24 right-6 z-50
-          bg-white shadow-xl hover:shadow-2xl 
-          border border-green-200 text-green-600 
+          bg-white shadow-xl hover:shadow-2xl
+          border border-green-200 text-green-600
           rounded-full transition-all group
           /* TAMAÑO FIJO E IGUAL AL DE WHATSAPP (56px) */
-          h-14 w-14 
-          flex items-center justify-center
+          h-14 w-14
+          /* En móvil estorba sobre los botones de acción: solo desde md */
+          hidden md:flex items-center justify-center
         "
         style={{ boxShadow: "0 4px 24px 0 #00e67622" }}
       >

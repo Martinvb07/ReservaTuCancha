@@ -159,7 +159,7 @@ export default function DashboardSidebar({ role, userName, variant = 'desktop' }
           <motion.img
             src={LOGO_URL}
             alt="ReservaTuCancha"
-            className="h-8 w-8 shrink-0 object-contain"
+            className="h-10 w-10 shrink-0 object-contain"
             whileHover={{ scale: 1.08, rotate: -4 }}
             transition={{ type: 'spring', stiffness: 400, damping: 15 }}
           />

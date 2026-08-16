@@ -6,6 +6,8 @@ import {
   Mail, Phone, MessageSquare, Clock, ChevronRight,
   CheckCircle, HelpCircle, BookOpen, Zap, Users,
 } from 'lucide-react';
+import FaqAccordion from '@/components/ui/FaqAccordion';
+import PillTabs from '@/components/ui/PillTabs';
 
 const CANALES = [
   {
@@ -82,7 +84,6 @@ const FAQ_SOPORTE = [
 
 export default function SoportePage() {
   const [openCat, setOpenCat]   = useState<string>('Reservas');
-  const [openFaq, setOpenFaq]   = useState<number | null>(null);
   const [form, setForm]         = useState({ nombre: '', email: '', asunto: '', mensaje: '' });
   const [sent, setSent]         = useState(false);
 
@@ -171,40 +172,16 @@ export default function SoportePage() {
           </div>
 
           {/* Tabs de categorías */}
-          <div className="flex flex-wrap gap-2 justify-center mb-8">
-            {FAQ_SOPORTE.map((cat) => (
-              <button
-                key={cat.cat}
-                onClick={() => { setOpenCat(cat.cat); setOpenFaq(null); }}
-                className={`px-5 py-2 rounded-full text-sm font-bold border-2 transition-all ${
-                  openCat === cat.cat
-                    ? 'border-green-600 bg-green-600 text-white'
-                    : 'border-gray-200 text-gray-500 hover:border-green-300 bg-white'
-                }`}
-              >
-                {cat.cat}
-              </button>
-            ))}
-          </div>
+          <PillTabs
+            id="soporte-faq"
+            tabs={FAQ_SOPORTE.map(c => c.cat)}
+            active={openCat}
+            onChange={setOpenCat}
+            className="mb-8"
+          />
 
           {/* FAQs */}
-          <div className="space-y-3">
-            {activeFaqs.map((item, i) => (
-              <button
-                key={i}
-                onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                className="w-full text-left bg-white border border-gray-100 rounded-2xl p-5 hover:border-green-200 transition-all"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <span className="font-bold text-gray-800">{item.q}</span>
-                  <ChevronRight className={`h-5 w-5 text-gray-400 shrink-0 mt-0.5 transition-transform duration-200 ${openFaq === i ? 'rotate-90 text-green-500' : ''}`} />
-                </div>
-                {openFaq === i && (
-                  <p className="text-sm text-gray-500 mt-3 leading-relaxed">{item.a}</p>
-                )}
-              </button>
-            ))}
-          </div>
+          <FaqAccordion items={activeFaqs} resetKey={openCat} />
         </div>
       </section>
 

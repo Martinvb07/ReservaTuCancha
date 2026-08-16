@@ -2,11 +2,12 @@
 
 import { MapPin, Building2, ChevronRight } from 'lucide-react';
 import type { Club } from '@/types/club.types';
+import { getSportIcon } from '@/components/ui/SportIcons';
 
-const SPORT_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
-  futbol:      { label: 'Fútbol',      emoji: '⚽', color: 'bg-green-100 text-green-700'  },
-  padel:       { label: 'Pádel',       emoji: '🎾', color: 'bg-blue-100 text-blue-700'    },
-  voley_playa: { label: 'Voley Playa', emoji: '🏐', color: 'bg-orange-100 text-orange-700'},
+const SPORT_LABELS: Record<string, { label: string; color: string }> = {
+  futbol:      { label: 'Fútbol',      color: 'bg-green-100 text-green-700'  },
+  padel:       { label: 'Pádel',       color: 'bg-blue-100 text-blue-700'    },
+  voley_playa: { label: 'Voley Playa', color: 'bg-orange-100 text-orange-700'},
 };
 
 interface Props { club: Club; onClick?: () => void; }
@@ -66,10 +67,11 @@ export default function ClubCard({ club, onClick }: Props) {
         {club.sports && club.sports.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {club.sports.map((sport) => {
-              const s = SPORT_LABELS[sport] ?? { label: sport, emoji: '🏟️', color: 'bg-gray-100 text-gray-600' };
+              const s = SPORT_LABELS[sport] ?? { label: sport, color: 'bg-gray-100 text-gray-600' };
+              const Icon = getSportIcon(sport);
               return (
                 <span key={sport} className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full ${s.color}`}>
-                  {s.emoji} {s.label}
+                  <Icon className="h-3 w-3" /> {s.label}
                 </span>
               );
             })}

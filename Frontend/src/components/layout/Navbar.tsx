@@ -92,7 +92,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-2 lg:grid lg:grid-cols-[1fr_auto_1fr]">
         {/* Logo */}
         <Link href="/" className="shrink-0 flex items-center gap-3 lg:justify-self-start">
-          <img src={LOGO_URL} alt="ReservaTuCancha" className="h-9 w-9 object-contain" />
+          <img src={LOGO_URL} alt="ReservaTuCancha" className="h-11 w-11 object-contain" />
           <span className="font-black text-xl text-gray-900 tracking-tight hidden sm:block">
             Reserva<span className="text-green-600">TuCancha</span>
           </span>
@@ -167,46 +167,69 @@ export default function Navbar() {
                 <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${userMenuOpen ? 'rotate-180' : ''}`} />
               </button>
 
-              {userMenuOpen && (
-                <div
-                  className="absolute right-0 mt-2 w-60 rounded-2xl border border-gray-100 bg-white overflow-hidden"
-                  style={{ zIndex: 9999, boxShadow: '0 20px 60px rgba(0,0,0,0.12)' }}
-                >
-                  <div className="px-4 py-4 bg-gray-50 border-b border-gray-100">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                        {session.user?.name?.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-gray-900 truncate">{session.user?.name}</p>
-                        <p className="text-xs text-gray-500 truncate">{session.user?.email}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-2">
-                    <Link
-                      href="/dashboard"
-                      onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              {/* Menú: crece desde la esquina del avatar y las filas entran escalonadas */}
+              <AnimatePresence>
+                {userMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.94, y: -10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.97, y: -6, transition: { duration: 0.13, ease: 'easeIn' } }}
+                    transition={{ type: 'spring', stiffness: 460, damping: 32, mass: 0.7 }}
+                    className="absolute right-0 mt-2 w-60 rounded-2xl border border-gray-100 bg-white overflow-hidden origin-top-right"
+                    style={{ zIndex: 9999, boxShadow: '0 20px 60px rgba(0,0,0,0.12)' }}
+                  >
+                    <motion.div
+                      initial="hidden"
+                      animate="show"
+                      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.045, delayChildren: 0.04 } } }}
                     >
-                      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-                        <LayoutDashboard className="h-4 w-4 text-blue-600" />
+                      <motion.div
+                        variants={{ hidden: { opacity: 0, y: -6 }, show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] } } }}
+                        className="px-4 py-4 bg-gray-50 border-b border-gray-100"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                            {session.user?.name?.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-gray-900 truncate">{session.user?.name}</p>
+                            <p className="text-xs text-gray-500 truncate">{session.user?.email}</p>
+                          </div>
+                        </div>
+                      </motion.div>
+
+                      <div className="p-2">
+                        <motion.div variants={{ hidden: { opacity: 0, x: -8 }, show: { opacity: 1, x: 0, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] } } }}>
+                          <Link
+                            href="/dashboard"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                              <LayoutDashboard className="h-4 w-4 text-blue-600" />
+                            </div>
+                            Dashboard
+                          </Link>
+                        </motion.div>
+
+                        <div className="h-px bg-gray-100 my-2" />
+
+                        <motion.div variants={{ hidden: { opacity: 0, x: -8 }, show: { opacity: 1, x: 0, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] } } }}>
+                          <button
+                            onClick={() => { setUserMenuOpen(false); signOut({ callbackUrl: '/' }); }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+                              <LogOut className="h-4 w-4 text-red-600" />
+                            </div>
+                            Cerrar sesión
+                          </button>
+                        </motion.div>
                       </div>
-                      Dashboard
-                    </Link>
-                    <div className="h-px bg-gray-100 my-2" />
-                    <button
-                      onClick={() => { setUserMenuOpen(false); signOut({ callbackUrl: '/' }); }}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
-                        <LogOut className="h-4 w-4 text-red-600" />
-                      </div>
-                      Cerrar sesión
-                    </button>
-                  </div>
-                </div>
-              )}
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
           </div>
@@ -246,8 +269,11 @@ export default function Navbar() {
             className="lg:hidden border-t border-gray-100 bg-white overflow-hidden"
           >
         <div className="px-4 py-4 space-y-3">
-          <ModeToggle isBiz={isBiz} id="mobile" className="w-full justify-center flex"
-            onSelect={() => { keepOpenRef.current = true; }} />
+          {/* El contenedor centra; la píldora gris solo envuelve las dos opciones */}
+          <div className="flex justify-center">
+            <ModeToggle isBiz={isBiz} id="mobile"
+              onSelect={() => { keepOpenRef.current = true; }} />
+          </div>
 
           {/* Los enlaces cambian con el modo: se cruzan con un fade corto */}
           <AnimatePresence mode="wait" initial={false}>

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { MapPin, Phone, Star, Users, Trophy, Camera, Clock } from 'lucide-react';
+import { getSportIcon } from '@/components/ui/SportIcons';
 
 const API = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ?? 'http://localhost:4000';
 
@@ -30,15 +31,16 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 function SportBadge({ sport }: { sport: string }) {
-  const map: Record<string, { label: string; icon: string; color: string }> = {
-    futbol:     { label: 'Fútbol',      icon: '⚽', color: 'bg-green-100 text-green-800' },
-    padel:      { label: 'Pádel',       icon: '🎾', color: 'bg-blue-100 text-blue-800'  },
-    voley_playa:{ label: 'Vóley Playa', icon: '🏐', color: 'bg-yellow-100 text-yellow-800' },
+  const map: Record<string, { label: string; color: string }> = {
+    futbol:     { label: 'Fútbol',      color: 'bg-green-100 text-green-800' },
+    padel:      { label: 'Pádel',       color: 'bg-blue-100 text-blue-800'  },
+    voley_playa:{ label: 'Vóley Playa', color: 'bg-yellow-100 text-yellow-800' },
   };
-  const s = map[sport] ?? { label: sport, icon: '🏟️', color: 'bg-gray-100 text-gray-700' };
+  const s = map[sport] ?? { label: sport, color: 'bg-gray-100 text-gray-700' };
+  const Icon = getSportIcon(sport);
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${s.color}`}>
-      {s.icon} {s.label}
+    <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full ${s.color}`}>
+      <Icon className="h-3.5 w-3.5" /> {s.label}
     </span>
   );
 }
@@ -177,8 +179,8 @@ export default async function ClubPublicPage({ params }: { params: { slug: strin
                     {court.photos?.[0] ? (
                       <img src={court.photos[0]} alt={court.name} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-5xl">
-                        {court.sport === 'futbol' ? '⚽' : court.sport === 'padel' ? '🎾' : '🏐'}
+                      <div className="w-full h-full flex items-center justify-center">
+                        {(() => { const Icon = getSportIcon(court.sport); return <Icon className="h-14 w-14 text-gray-300" />; })()}
                       </div>
                     )}
                     {court.photos?.length > 1 && (

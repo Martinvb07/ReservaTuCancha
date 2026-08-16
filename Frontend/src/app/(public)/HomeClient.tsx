@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
 import { Search, ChevronRight, CheckCircle, Calendar, CreditCard, Smile, Users, TrendingUp, Shield } from 'lucide-react';
 import CourtCard from '@/components/courts/CourtCard';
 import FadeIn from '@/components/ui/FadeIn';
+import FaqAccordion from '@/components/ui/FaqAccordion';
 import HeroSearch from '@/components/home/HeroSearch';
 import MobileSearchTrigger from '@/components/home/MobileSearchTrigger';
 import type { Court } from '@/types';
@@ -42,8 +42,6 @@ interface Props {
 }
 
 export default function HomeClient({ stats }: Props) {
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
-
   const featured = stats.featuredCourts.length > 0 ? stats.featuredCourts : [];
 
   return (
@@ -192,18 +190,15 @@ export default function HomeClient({ stats }: Props) {
           <h2 className="text-2xl md:text-4xl font-black text-gray-900 uppercase">Preguntas frecuentes</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-          {FAQ.map((item, i) => (
-            <button key={i} onClick={() => setOpenFaq(openFaq === i ? null : i)}
-              className="text-left border border-gray-200 rounded-xl p-3 md:p-5 hover:border-lime-400 transition-all">
-              <div className="flex items-start justify-between gap-3">
-                <span className="font-semibold text-gray-800 text-xs md:text-sm">{item.q}</span>
-                <ChevronRight className={`h-4 w-4 text-gray-400 shrink-0 mt-0.5 transition-transform ${openFaq === i ? 'rotate-90' : ''}`} />
-              </div>
-              {openFaq === i && <p className="text-xs md:text-sm text-gray-500 mt-3 leading-relaxed">{item.a}</p>}
-            </button>
-          ))}
-        </div>
+        <FaqAccordion
+          items={FAQ}
+          className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 items-start"
+          itemClassName="w-full text-left bg-white border border-gray-200 rounded-xl p-3 md:p-5 hover:border-lime-400"
+          openItemClassName="border-lime-400 shadow-[0_14px_40px_-20px_rgba(132,204,22,0.7)]"
+          questionClassName="font-semibold text-gray-800 text-xs md:text-sm"
+          answerClassName="text-xs md:text-sm text-gray-500 leading-relaxed"
+          iconClassName="h-4 w-4"
+        />
 
         <div className="flex flex-col md:flex-row justify-center gap-4 md:gap-8 pt-4">
           {['Sin registro requerido', 'Pago seguro', 'Cancelacion gratis'].map(t => (

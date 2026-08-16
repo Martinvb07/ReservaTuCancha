@@ -3,28 +3,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Image, Upload, Trash2, Star, Plus, CheckCircle, Loader2 } from 'lucide-react';
+import { getSportIcon } from '@/components/ui/SportIcons';
 import { toast } from 'sonner';
 import api from '@/lib/api/axios';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 import { useApiAuth } from '@/hooks/useApiAuth';
-
-const CLOUD_NAME   = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!;
-const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!;
-
-async function uploadToCloudinary(file: File): Promise<string> {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', UPLOAD_PRESET);
-  formData.append('folder', 'courts');
-
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-    method: 'POST',
-    body: formData,
-  });
-
-  if (!res.ok) throw new Error('Error subiendo imagen a Cloudinary');
-  const data = await res.json();
-  return data.secure_url as string;
-}
 
 export default function OwnerFotosPage() {
   useApiAuth();
@@ -113,12 +96,6 @@ export default function OwnerFotosPage() {
     handleFiles(e.dataTransfer.files);
   }, [handleFiles]);
 
-  function sportIcon(sport: string) {
-    if (sport?.includes('futbol')) return '⚽';
-    if (sport?.includes('padel')) return '🎾';
-    if (sport?.includes('voley')) return '🏐';
-    return '🏟️';
-  }
 
   if (loadingCourts) {
     return (
@@ -155,7 +132,9 @@ export default function OwnerFotosPage() {
       <div className="bg-white rounded-2xl border border-gray-100 p-5">
         <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-3">Selecciona una cancha</p>
         <div className="flex flex-wrap gap-3">
-          {courts.map(c => (
+          {courts.map(c => {
+            const SportIcon = getSportIcon(c.sport);
+            return (
             <button
               key={c._id}
               onClick={() => setSelectedCourtId(c._id)}
@@ -165,11 +144,12 @@ export default function OwnerFotosPage() {
                   : 'border-gray-200 text-gray-600 hover:border-green-300'
               }`}
             >
-              {sportIcon(c.sport)} {c.name}
+              <SportIcon className="h-4 w-4" /> {c.name}
               <span className="text-xs font-normal text-gray-400">({c.photos?.length ?? 0})</span>
               {selectedCourtId === c._id && <CheckCircle className="h-4 w-4" />}
             </button>
-          ))}
+            );
+          })}
         </div>
       </div>
 

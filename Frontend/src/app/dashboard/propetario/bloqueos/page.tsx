@@ -5,8 +5,10 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
-import { Ban, Plus, Trash2, Clock, CalendarDays, AlertTriangle } from 'lucide-react';
+import { Ban, Plus, X, Trash2, Clock, CalendarDays, AlertTriangle, Loader2 } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import api from '@/lib/api/axios';
+import SelectField from '@/components/ui/SelectField';
 import { useApiAuth } from '@/hooks/useApiAuth';
 
 function formatTime12h(time24h: string): string {
@@ -16,7 +18,10 @@ function formatTime12h(time24h: string): string {
   return `${hours12}:${String(minutes).padStart(2, '0')} ${period}`;
 }
 
+const EASE = [0.22, 1, 0.36, 1] as const;
+
 export default function BloqueosPage() {
+  const reduce = useReducedMotion();
   const session = useApiAuth();
   const token = (session as any)?.accessToken;
   const queryClient = useQueryClient();
@@ -69,12 +74,22 @@ export default function BloqueosPage() {
   });
 
   const inp = 'w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-400 transition';
+  const lbl = 'block text-xs font-black text-gray-500 uppercase tracking-widest mb-2';
 
-  // Generar opciones de hora (cada hora de 00:00 a 23:00)
-  const hours = Array.from({ length: 24 }, (_, i) => {
-    const h = String(i).padStart(2, '0');
-    return `${h}:00`;
-  });
+  // Opciones de hora (cada hora de 00:00 a 23:00)
+  const hours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
+  const courtOptions = courts.map((c: any) => ({ value: c._id, label: c.name }));
+  const startOptions = hours.map(h => ({ value: h, label: formatTime12h(h) }));
+  const endOptions   = hours.filter(h => !startTime || h > startTime).map(h => ({ value: h, label: formatTime12h(h) }));
+
+  /* Al mover la hora de inicio, la de fin puede quedar inválida */
+  const pickStart = (v: string) => {
+    setStartTime(v);
+    if (endTime && endTime <= v) setEndTime('');
+  };
+
+  const horas = startTime && endTime ? Number(endTime.split(':')[0]) - Number(startTime.split(':')[0]) : 0;
+  const listo = !!courtId && !!date && !!startTime && !!endTime;
 
   return (
     <div className="space-y-6">
@@ -88,77 +103,135 @@ export default function BloqueosPage() {
             Bloquea horarios para mantenimiento, torneos privados o cualquier motivo.
           </p>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2.5 rounded-xl transition-colors text-sm"
+        <motion.button
+          onClick={() => setShowForm(v => !v)}
+          whileTap={reduce ? undefined : { scale: 0.97 }}
+          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2.5 rounded-xl transition-colors text-sm shadow-lg shadow-orange-500/20 shrink-0"
         >
-          <Plus className="h-4 w-4" /> Nuevo bloqueo
-        </button>
+          <motion.span animate={{ rotate: showForm ? 45 : 0 }} transition={{ type: 'spring', stiffness: 400, damping: 22 }}>
+            <Plus className="h-4 w-4" />
+          </motion.span>
+          {showForm ? 'Cerrar' : 'Nuevo bloqueo'}
+        </motion.button>
       </div>
 
       {/* Formulario */}
-      {showForm && (
-        <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5 space-y-4">
-          <h3 className="font-bold text-orange-900 flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4" /> Bloquear horario
-          </h3>
+      <AnimatePresence initial={false}>
+        {showForm && (
+          <motion.div
+            key="form"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ height: { duration: 0.32, ease: EASE }, opacity: { duration: 0.2 } }}
+            className="overflow-hidden"
+          >
+            <div className="bg-orange-50/70 border border-orange-200 rounded-2xl p-5 md:p-6 space-y-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center shrink-0">
+                    <AlertTriangle className="h-4 w-4 text-orange-600" />
+                  </span>
+                  <div>
+                    <h3 className="font-black text-orange-900 leading-tight">Bloquear horario</h3>
+                    <p className="text-xs text-orange-700/70">Ese rango dejará de aparecer como disponible</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowForm(false)}
+                  aria-label="Cerrar formulario"
+                  className="p-1.5 rounded-lg text-orange-400 hover:text-orange-700 hover:bg-orange-100 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Cancha</label>
-              <select value={courtId} onChange={e => setCourtId(e.target.value)} className={inp}>
-                <option value="">Seleccionar cancha</option>
-                {courts.map((c: any) => (
-                  <option key={c._id} value={c._id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Fecha</label>
-              <input type="date" value={date} onChange={e => setDate(e.target.value)} className={inp}
-                min={format(new Date(), 'yyyy-MM-dd')} />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Hora inicio</label>
-              <select value={startTime} onChange={e => setStartTime(e.target.value)} className={inp}>
-                <option value="">Seleccionar</option>
-                {hours.map(h => (
-                  <option key={h} value={h}>{formatTime12h(h)}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Hora fin</label>
-              <select value={endTime} onChange={e => setEndTime(e.target.value)} className={inp}>
-                <option value="">Seleccionar</option>
-                {hours.filter(h => h > startTime).map(h => (
-                  <option key={h} value={h}>{formatTime12h(h)}</option>
-                ))}
-              </select>
-            </div>
-          </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={lbl}>Cancha</label>
+                  <SelectField
+                    accent="orange"
+                    aria-label="Cancha"
+                    value={courtId || undefined}
+                    onChange={setCourtId}
+                    options={courtOptions}
+                    placeholder={courtOptions.length ? 'Seleccionar cancha' : 'No tienes canchas'}
+                    disabled={courtOptions.length === 0}
+                  />
+                </div>
+                <div>
+                  <label className={lbl}>Fecha</label>
+                  <input type="date" value={date} onChange={e => setDate(e.target.value)} className={inp}
+                    min={format(new Date(), 'yyyy-MM-dd')} />
+                </div>
+                <div>
+                  <label className={lbl}>Hora inicio</label>
+                  <SelectField
+                    accent="orange"
+                    aria-label="Hora de inicio"
+                    value={startTime || undefined}
+                    onChange={pickStart}
+                    options={startOptions}
+                    placeholder="Seleccionar"
+                  />
+                </div>
+                <div>
+                  <label className={lbl}>Hora fin</label>
+                  <SelectField
+                    accent="orange"
+                    aria-label="Hora de fin"
+                    value={endTime || undefined}
+                    onChange={setEndTime}
+                    options={endOptions}
+                    placeholder={startTime ? 'Seleccionar' : 'Elige primero la hora de inicio'}
+                    disabled={!startTime}
+                  />
+                </div>
+              </div>
 
-          <div>
-            <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Motivo (opcional)</label>
-            <input type="text" value={reason} onChange={e => setReason(e.target.value)} className={inp}
-              placeholder="Ej: Mantenimiento, Torneo privado..." />
-          </div>
+              <div>
+                <label className={lbl}>Motivo <span className="text-gray-400 font-medium normal-case">(opcional)</span></label>
+                <input type="text" value={reason} onChange={e => setReason(e.target.value)} className={inp}
+                  placeholder="Ej: Mantenimiento, Torneo privado..." />
+              </div>
 
-          <div className="flex gap-3">
-            <button
-              onClick={() => createMutation.mutate()}
-              disabled={!courtId || !date || !startTime || !endTime || createMutation.isPending}
-              className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white font-bold px-6 py-2.5 rounded-xl transition-colors text-sm"
-            >
-              {createMutation.isPending ? 'Bloqueando...' : 'Confirmar bloqueo'}
-            </button>
-            <button onClick={() => setShowForm(false)}
-              className="px-4 py-2.5 border border-gray-200 text-gray-600 font-semibold text-sm rounded-xl hover:bg-gray-50">
-              Cancelar
-            </button>
-          </div>
-        </div>
-      )}
+              {/* Resumen en vivo de lo que se va a bloquear */}
+              <AnimatePresence initial={false}>
+                {listo && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-center gap-2 text-sm text-orange-800 bg-orange-100/70 rounded-xl px-4 py-3"
+                  >
+                    <Clock className="h-4 w-4 shrink-0" />
+                    Se bloquearán <strong>{horas} hora{horas === 1 ? '' : 's'}</strong> el{' '}
+                    <strong>{format(new Date(`${date}T00:00:00`), "EEEE d 'de' MMMM", { locale: es })}</strong>
+                  </motion.p>
+                )}
+              </AnimatePresence>
+
+              <div className="flex flex-col-reverse sm:flex-row gap-3">
+                <button onClick={() => setShowForm(false)}
+                  className="px-5 py-3 bg-white border border-gray-200 text-gray-600 font-bold text-sm rounded-xl hover:border-gray-300 transition-colors">
+                  Cancelar
+                </button>
+                <motion.button
+                  onClick={() => createMutation.mutate()}
+                  disabled={!listo || createMutation.isPending}
+                  whileTap={reduce || !listo ? undefined : { scale: 0.98 }}
+                  className="flex-1 sm:flex-none sm:px-8 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black py-3 rounded-xl transition-colors text-sm shadow-lg shadow-orange-500/20"
+                >
+                  {createMutation.isPending
+                    ? <><Loader2 className="h-4 w-4 animate-spin" /> Bloqueando...</>
+                    : <><Ban className="h-4 w-4" /> Confirmar bloqueo</>}
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Lista de bloqueos */}
       {isLoading ? (
@@ -175,12 +248,17 @@ export default function BloqueosPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {blocks.map((block: any) => {
+          <AnimatePresence initial={false}>
+          {blocks.map((block: any, i: number) => {
             const blockDate = new Date(block.date);
             const isPast = blockDate < new Date(new Date().setHours(0, 0, 0, 0));
             return (
-              <div key={block._id}
-                className={`flex items-center justify-between gap-4 p-4 rounded-xl border ${isPast ? 'border-gray-100 bg-gray-50 opacity-60' : 'border-orange-100 bg-white'}`}>
+              <motion.div key={block._id}
+                layout={!reduce}
+                initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12 }}
+                animate={{ opacity: isPast ? 0.6 : 1, y: 0, transition: { duration: 0.3, ease: EASE, delay: Math.min(i * 0.04, 0.2) } }}
+                exit={reduce ? { opacity: 0 } : { opacity: 0, x: 24, transition: { duration: 0.18 } }}
+                className={`flex items-center justify-between gap-4 p-4 rounded-xl border transition-colors ${isPast ? 'border-gray-100 bg-gray-50' : 'border-orange-100 bg-white hover:border-orange-200'}`}>
                 <div className="flex items-center gap-4 flex-1 min-w-0">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isPast ? 'bg-gray-200' : 'bg-orange-100'}`}>
                     <Ban className={`h-5 w-5 ${isPast ? 'text-gray-400' : 'text-orange-500'}`} />
@@ -214,9 +292,10 @@ export default function BloqueosPage() {
                     <Trash2 className="h-4 w-4" />
                   </button>
                 )}
-              </div>
+              </motion.div>
             );
           })}
+          </AnimatePresence>
         </div>
       )}
     </div>

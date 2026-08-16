@@ -2,11 +2,14 @@
 // Antes estaban duplicados (y desincronizados) en HomeClient, CourtFilters,
 // EmpresasPageClient, Navbar y las páginas de detalle.
 
+import { getSportIcon, type SportIcon } from '@/components/ui/SportIcons';
+
 export interface SportMeta {
   /** valor que viaja al backend (court.sport) */
   key: string;
   label: string;
-  emoji: string;
+  /** icono SVG del deporte */
+  Icon: SportIcon;
   /** clases tailwind para el chip de deporte */
   chip: string;
   /** imagen de fallback cuando una cancha no tiene fotos */
@@ -17,21 +20,21 @@ export const SPORTS: SportMeta[] = [
   {
     key: 'futbol',
     label: 'Fútbol',
-    emoji: '⚽',
+    Icon: getSportIcon('futbol'),
     chip: 'bg-emerald-100 text-emerald-700',
     img: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=1200&q=80',
   },
   {
     key: 'padel',
     label: 'Pádel',
-    emoji: '🎾',
+    Icon: getSportIcon('padel'),
     chip: 'bg-sky-100 text-sky-700',
     img: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=1200&q=80',
   },
   {
     key: 'voley_playa',
     label: 'Voley Playa',
-    emoji: '🏐',
+    Icon: getSportIcon('voley_playa'),
     chip: 'bg-amber-100 text-amber-700',
     img: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=1200&q=80',
   },
@@ -43,7 +46,7 @@ export function getSport(key?: string): SportMeta {
     SPORTS.find((s) => s.key === key) ?? {
       key: key ?? 'otro',
       label: key ?? 'Otro',
-      emoji: '🏟️',
+      Icon: getSportIcon(key),
       chip: 'bg-gray-100 text-gray-600',
       img: 'https://images.unsplash.com/photo-1459865264687-595d652de67e?w=1200&q=80',
     }

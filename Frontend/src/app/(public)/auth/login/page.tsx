@@ -8,7 +8,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Loader2, ChevronRight, Shield, BarChart3, CalendarDays, ArrowLeft } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { Eye, EyeOff, Loader2, ChevronRight, Shield, BarChart3, CalendarDays, ArrowLeft, AlertCircle } from 'lucide-react';
 import { LOGO_URL } from '@/lib/logo';
 
 const schema = z.object({
@@ -17,8 +18,10 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-const inputClass =
-  'w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 transition';
+const inputBase =
+  'w-full bg-white border rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition disabled:opacity-60';
+const inputOk  = `${inputBase} border-gray-200 focus:ring-green-400`;
+const inputBad = `${inputBase} border-red-300 bg-red-50/40 focus:ring-red-300`;
 
 const FEATURES = [
   { icon: CalendarDays, label: 'Gestiona tus reservas en tiempo real' },
@@ -26,17 +29,27 @@ const FEATURES = [
   { icon: Shield,       label: 'Panel seguro con acceso exclusivo'     },
 ];
 
+/* Foto de respaldo por si la principal deja de responder */
+const HERO_IMG = 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=1600&q=80';
+
+const EASE = [0.22, 1, 0.36, 1] as const;
+
 export default function LoginPage() {
   const router = useRouter();
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading]   = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [imgOk, setImgOk]       = useState(true);
+  const reduce = useReducedMotion();
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
+    mode: 'onTouched',
   });
 
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
+    setAuthError(null);
     const result = await signIn('credentials', {
       email:    values.email,
       password: values.password,
@@ -45,7 +58,8 @@ export default function LoginPage() {
     setLoading(false);
 
     if (result?.error) {
-      toast.error('Credenciales inválidas. Verifica tu email y contraseña.');
+      setAuthError('Email o contraseña incorrectos. Verifica tus datos e intenta de nuevo.');
+      toast.error('Credenciales inválidas.');
       return;
     }
     toast.success('¡Bienvenido de vuelta!');
@@ -53,22 +67,36 @@ export default function LoginPage() {
     router.refresh();
   };
 
+  /* Entrada escalonada del formulario */
+  const fade = (delay: number) => ({
+    initial: reduce ? { opacity: 0 } : { opacity: 0, y: 12 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.45, ease: EASE, delay: reduce ? 0 : delay },
+  });
+
   return (
     <div className="fixed inset-0 z-50 grid grid-cols-1 lg:grid-cols-2 bg-white">
 
       {/* ── LEFT ──────────────────────────────────────────────────── */}
       <div className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-gray-900 px-12 py-10">
-        <img
-          src="https://images.unsplash.com/photo-1551958219-acbc595b8cc8?w=1200&q=80"
-          alt="cancha"
-          className="absolute inset-0 w-full h-full object-cover opacity-30"
-        />
+        {/* Fondo: si la foto falla, queda el degradado (nunca se ve rota) */}
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-900 to-green-950" />
+        {imgOk && (
+          <img
+            src={HERO_IMG}
+            alt=""
+            aria-hidden
+            onError={() => setImgOk(false)}
+            className="absolute inset-0 w-full h-full object-cover opacity-30"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent" />
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-lime-400/10 blur-3xl" />
 
         {/* Logo top */}
         <div className="relative z-10 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <img src={LOGO_URL} alt="ReservaTuCancha" className="h-9 w-9 object-contain" />
+          <Link href="/" className="flex items-center gap-3 group">
+            <img src={LOGO_URL} alt="" className="h-11 w-11 object-contain" />
             <span className="font-black text-xl text-white tracking-tight">
               Reserva<span className="text-lime-400">TuCancha</span>
             </span>
@@ -76,8 +104,19 @@ export default function LoginPage() {
         </div>
 
         {/* Content center */}
-        <div className="relative z-10 space-y-6">
-          <div className="space-y-3">
+        <motion.div
+          className="relative z-10 space-y-6"
+          initial="hidden"
+          animate="show"
+          variants={{ hidden: {}, show: { transition: { staggerChildren: reduce ? 0 : 0.1 } } }}
+        >
+          <motion.div
+            className="space-y-3"
+            variants={{
+              hidden: reduce ? { opacity: 0 } : { opacity: 0, y: 16 },
+              show:   { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } },
+            }}
+          >
             <p className="text-lime-400 font-semibold text-sm uppercase tracking-widest flex items-center gap-2">
               <span>✦</span> Panel de propietarios
             </p>
@@ -88,20 +127,33 @@ export default function LoginPage() {
             <p className="text-gray-400 text-base">
               Reservas, pagos, analytics y más. Todo en tiempo real.
             </p>
-          </div>
+          </motion.div>
 
           <div className="space-y-3">
             {FEATURES.map((f) => (
-              <div key={f.label} className="flex items-center gap-3">
+              <motion.div
+                key={f.label}
+                className="flex items-center gap-3"
+                variants={{
+                  hidden: reduce ? { opacity: 0 } : { opacity: 0, x: -14 },
+                  show:   { opacity: 1, x: 0, transition: { duration: 0.45, ease: EASE } },
+                }}
+              >
                 <div className="w-8 h-8 rounded-lg bg-lime-400/20 flex items-center justify-center shrink-0">
                   <f.icon className="h-4 w-4 text-lime-400" />
                 </div>
                 <span className="text-sm text-gray-300 font-medium">{f.label}</span>
-              </div>
+              </motion.div>
             ))}
           </div>
 
-          <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
+          <motion.div
+            className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10"
+            variants={{
+              hidden: { opacity: 0 },
+              show:   { opacity: 1, transition: { duration: 0.5, ease: EASE } },
+            }}
+          >
             {[
               { n: '+500', label: 'Canchas'      },
               { n: '+12K', label: 'Reservas'     },
@@ -109,14 +161,14 @@ export default function LoginPage() {
             ].map((s) => (
               <div key={s.label}>
                 <div className="text-2xl font-black text-lime-400">{s.n}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
+                <div className="text-xs text-gray-400 mt-0.5">{s.label}</div>
               </div>
             ))}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Bottom */}
-        <div className="relative z-10 text-xs text-gray-600">
+        <div className="relative z-10 text-xs text-gray-500">
           © {new Date().getFullYear()} ReservaTuCancha · Colombia 🇨🇴
         </div>
       </div>
@@ -125,21 +177,21 @@ export default function LoginPage() {
       <div className="flex flex-col bg-white overflow-y-auto">
 
         {/* Top bar con flecha volver */}
-        <div className="flex items-center justify-between px-8 py-5 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 md:px-8 py-5 border-b border-gray-100">
           <Link
             href="/"
             className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors group"
           >
-            <div className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center group-hover:border-gray-400 group-hover:bg-gray-50 transition-all">
-              <ArrowLeft className="h-4 w-4" />
-            </div>
+            <span className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center group-hover:border-gray-400 group-hover:bg-gray-50 transition-all">
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+            </span>
             Volver al inicio
           </Link>
 
           {/* Logo mobile */}
           <div className="lg:hidden">
             <Link href="/" className="flex items-center gap-2">
-              <img src={LOGO_URL} alt="ReservaTuCancha" className="h-7 w-7 object-contain" />
+              <img src={LOGO_URL} alt="" className="h-9 w-9 object-contain" />
               <span className="font-black text-base text-gray-900 tracking-tight">
                 Reserva<span className="text-green-600">TuCancha</span>
               </span>
@@ -150,82 +202,140 @@ export default function LoginPage() {
         </div>
 
         {/* Form content */}
-        <div className="flex-1 flex items-center justify-center px-8 md:px-16 py-8">
+        <div className="flex-1 flex items-center justify-center px-6 md:px-16 py-10">
           <div className="w-full max-w-md space-y-7">
 
-            <div className="space-y-1">
+            <motion.div className="space-y-1" {...fade(0.05)}>
               <h1 className="text-3xl font-black text-gray-900 uppercase">Iniciar sesión</h1>
               <p className="text-gray-500 text-sm">
                 Accede a tu dashboard para gestionar tus canchas deportivas.
               </p>
-            </div>
+            </motion.div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            {/* Error de credenciales: persiste hasta el siguiente intento */}
+            <AnimatePresence initial={false}>
+              {authError && (
+                <motion.div
+                  className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25, ease: EASE }}
+                  role="alert"
+                >
+                  <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-700">{authError}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <motion.form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate {...fade(0.12)}>
               <div className="space-y-1.5">
-                <label className="block text-xs font-black text-gray-700 uppercase tracking-widest">
+                <label htmlFor="email" className="block text-xs font-black text-gray-700 uppercase tracking-widest">
                   Email
                 </label>
                 <input
+                  id="email"
                   type="email"
-                  className={inputClass}
+                  className={errors.email ? inputBad : inputOk}
                   placeholder="propietario@email.com"
                   autoComplete="email"
+                  autoFocus
+                  disabled={loading}
+                  aria-invalid={!!errors.email}
                   {...register('email')}
                 />
-                {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
+                <AnimatePresence initial={false}>
+                  {errors.email && (
+                    <motion.p
+                      className="text-xs text-red-500"
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.18 }}
+                    >
+                      {errors.email.message}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-black text-gray-700 uppercase tracking-widest">
-                  Contraseña
-                </label>
+                <div className="flex items-center justify-between">
+                  <label htmlFor="password" className="block text-xs font-black text-gray-700 uppercase tracking-widest">
+                    Contraseña
+                  </label>
+                  <Link
+                    href="/soporte"
+                    className="text-xs font-semibold text-gray-400 hover:text-green-600 transition-colors"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
                 <div className="relative">
                   <input
+                    id="password"
                     type={showPass ? 'text' : 'password'}
-                    className={inputClass}
+                    className={`${errors.password ? inputBad : inputOk} pr-11`}
                     placeholder="••••••••"
                     autoComplete="current-password"
+                    disabled={loading}
+                    aria-invalid={!!errors.password}
                     {...register('password')}
                   />
                   <button
                     type="button"
                     tabIndex={-1}
                     onClick={() => setShowPass(!showPass)}
+                    aria-label={showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                   >
                     {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>}
+                <AnimatePresence initial={false}>
+                  {errors.password && (
+                    <motion.p
+                      className="text-xs text-red-500"
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.18 }}
+                    >
+                      {errors.password.message}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
               </div>
 
-              <button
+              <motion.button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-black text-base py-4 rounded-2xl transition-colors shadow-lg"
+                whileTap={reduce ? undefined : { scale: 0.98 }}
+                className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-black text-base py-4 rounded-2xl transition-colors shadow-lg shadow-green-600/20"
               >
                 {loading ? (
                   <><Loader2 className="h-5 w-5 animate-spin" /> Ingresando...</>
                 ) : (
                   <>Ingresar al dashboard <ChevronRight className="h-5 w-5" /></>
                 )}
-              </button>
-            </form>
+              </motion.button>
+            </motion.form>
 
-            <div className="space-y-2 pt-2 border-t border-gray-100">
-              <p className="text-sm text-gray-500 text-center">
+            <motion.div className="pt-5 border-t border-gray-100 space-y-2 text-center" {...fade(0.2)}>
+              <p className="text-sm text-gray-500">
                 ¿Aún no tienes acceso?{' '}
                 <Link href="/solicitar-acceso" className="text-green-600 hover:text-green-700 font-bold hover:underline transition-colors">
                   Solicitar acceso →
                 </Link>
               </p>
-              <p className="text-sm text-gray-500 text-center">
-                ¿Quieres reservar una cancha?{' '}
-                <Link href="/empresas" className="text-green-600 hover:text-green-700 font-bold hover:underline transition-colors">
-                  Buscar canchas →
+              <p className="text-xs text-gray-400">
+                ¿Solo quieres reservar?{' '}
+                <Link href="/empresas" className="font-semibold text-gray-500 hover:text-green-600 hover:underline transition-colors">
+                  Buscar canchas
                 </Link>
               </p>
-            </div>
+            </motion.div>
 
           </div>
         </div>

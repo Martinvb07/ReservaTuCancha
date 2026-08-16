@@ -40,6 +40,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       sidebarUserName={session.user?.name ?? ''}
     >
       {children}
+      {/* Solo en escritorio: el propio componente se oculta en móvil */}
       {role === 'owner' && <ChangelogFloatingButton />}
       <RealtimeNotifications />
     </DashboardShell>

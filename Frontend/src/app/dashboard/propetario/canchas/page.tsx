@@ -2,18 +2,28 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MapPin, Star, Eye, Building2, Search, Filter, Plus, Edit, Power, Trash2 } from 'lucide-react';
+import { MapPin, Star, Eye, Building2, Search, Plus, Edit, Power, Trash2 } from 'lucide-react';
+import { getSportIcon } from '@/components/ui/SportIcons';
+import SelectField from '@/components/ui/SelectField';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import api from '@/lib/api/axios';
 
-const SPORT_LABELS: Record<string, { label: string; emoji: string }> = {
-  futbol:      { label: 'Fútbol',      emoji: '⚽' },
-  padel:       { label: 'Pádel',       emoji: '🎾' },
-  voley_playa: { label: 'Voley Playa', emoji: '🏐' },
+const SPORT_LABELS: Record<string, { label: string }> = {
+  futbol:      { label: 'Fútbol'      },
+  padel:       { label: 'Pádel'       },
+  voley_playa: { label: 'Voley Playa' },
 };
+
+/* Radix Select no admite value="" (lo reserva para limpiar), de ahí el 'all' */
+const SPORT_FILTERS = [
+  { value: 'all',         label: 'Todos los deportes' },
+  { value: 'futbol',      label: 'Fútbol'             },
+  { value: 'padel',       label: 'Pádel'              },
+  { value: 'voley_playa', label: 'Voley Playa'        },
+];
 
 export default function OwnerCanchasPage() {
   const queryClient = useQueryClient();
@@ -76,16 +86,13 @@ export default function OwnerCanchasPage() {
             value={search} onChange={e => setSearch(e.target.value)}
             className="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 transition" />
         </div>
-        <div className="relative">
-          <select value={sport} onChange={e => setSport(e.target.value)}
-            className="bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-400 transition appearance-none pr-10 cursor-pointer">
-            <option value="">Todos los deportes</option>
-            <option value="futbol">⚽ Fútbol</option>
-            <option value="padel">🎾 Pádel</option>
-            <option value="voley_playa">🏐 Voley Playa</option>
-          </select>
-          <Filter className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-        </div>
+        <SelectField
+          aria-label="Filtrar por deporte"
+          value={sport || 'all'}
+          onChange={v => setSport(v === 'all' ? '' : v)}
+          options={SPORT_FILTERS}
+          className="sm:w-56"
+        />
       </div>
 
       {/* Skeletons */}
@@ -107,11 +114,14 @@ export default function OwnerCanchasPage() {
       {/* Lista */}
       <div className="space-y-3">
         {filtered.map((court: any) => {
-          const s = SPORT_LABELS[court.sport] ?? { label: court.sport, emoji: '🏟️' };
+          const s = SPORT_LABELS[court.sport] ?? { label: court.sport };
+          const SportIcon = getSportIcon(court.sport);
           return (
             <div key={court._id} className="bg-white rounded-2xl border border-gray-100 hover:border-green-200 hover:shadow-sm transition-all p-4">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-2xl shrink-0">{s.emoji}</div>
+                <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center shrink-0">
+                  <SportIcon className="h-6 w-6 text-gray-500" />
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-black text-gray-900">{court.name}</span>

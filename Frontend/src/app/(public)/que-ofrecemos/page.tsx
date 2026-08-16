@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
 import {
   CalendarDays, CreditCard, Bell, BarChart3, Shield, Smartphone,
   CheckCircle, ChevronRight, Star, Users, Building2, Clock,
 } from 'lucide-react';
+import FaqAccordion from '@/components/ui/FaqAccordion';
 
 const PLANES = [
   {
@@ -129,8 +129,6 @@ const FAQ_QO = [
 ];
 
 export default function QueOfrecemosPage() {
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
-
   return (
     <main className="min-h-screen bg-white">
 
@@ -301,23 +299,10 @@ export default function QueOfrecemosPage() {
             <h2 className="text-4xl font-black text-gray-900 uppercase">Preguntas frecuentes</h2>
           </div>
 
-          <div className="space-y-3">
-            {FAQ_QO.map((item, i) => (
-              <button
-                key={i}
-                onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                className="w-full text-left border border-gray-200 bg-white rounded-2xl p-5 hover:border-green-300 transition-all"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <span className="font-bold text-gray-800">{item.q}</span>
-                  <ChevronRight className={`h-5 w-5 text-gray-400 shrink-0 mt-0.5 transition-transform duration-200 ${openFaq === i ? 'rotate-90 text-green-500' : ''}`} />
-                </div>
-                {openFaq === i && (
-                  <p className="text-sm text-gray-500 mt-3 leading-relaxed">{item.a}</p>
-                )}
-              </button>
-            ))}
-          </div>
+          <FaqAccordion
+            items={FAQ_QO}
+            itemClassName="w-full text-left border border-gray-200 bg-white rounded-2xl p-5 hover:border-green-300"
+          />
         </div>
       </section>
 

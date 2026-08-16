@@ -5,13 +5,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { solicitudesApi } from '@/lib/api/solicitudes.api';
 import Link from 'next/link';
 import {
-  CheckCircle2, Loader2, Building2, MapPin,
-  User, Mail, Phone, MessageSquare, ChevronRight,
-  CalendarDays, CreditCard, BarChart3, Bell, Star, Shield,
+  CheckCircle2, Loader2, ChevronRight, ChevronLeft, Pencil,
 } from 'lucide-react';
+import StepWizard, { WIZARD_EASE, type WizardStep } from '@/components/ui/StepWizard';
 
 const schema = z.object({
   firstName:    z.string().min(2, 'Mínimo 2 caracteres'),
@@ -27,13 +27,20 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+/* `fields` = lo que se valida antes de dejar avanzar */
+const STEPS: (WizardStep & { fields: (keyof FormValues)[] })[] = [
+  { title: 'Tus datos',  hint: 'Para poder contactarte',       fields: ['firstName', 'lastName', 'email', 'phone'] },
+  { title: 'Tu negocio', hint: 'Datos del complejo deportivo', fields: ['businessName', 'nit', 'city', 'department'] },
+  { title: 'Confirmar',  hint: 'Revisa y envía tu solicitud',  fields: [] },
+];
+
+const LAST = STEPS.length - 1;
+
 const BENEFITS = [
-  { icon: CalendarDays, label: 'Reservas automáticas 24/7'       },
-  { icon: CreditCard,   label: 'Pagos en línea integrados'        },
-  { icon: BarChart3,    label: 'Analytics e informes detallados'  },
-  { icon: Bell,         label: 'Notificaciones automáticas'       },
-  { icon: Star,         label: 'Reseñas verificadas de clientes'  },
-  { icon: Shield,       label: 'Sin comisión por reserva'         },
+  'Reservas automáticas 24/7',
+  'Pagos en línea integrados',
+  'Analytics e informes de tus canchas',
+  'Notificaciones automáticas a tus clientes',
 ];
 
 const inputClass =
@@ -41,18 +48,65 @@ const inputClass =
 
 const labelClass = 'block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5';
 
+
+/* Campo con mensaje de error animado */
+function Field({ label, error, optional, children }: {
+  label: string; error?: string; optional?: boolean; children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className={labelClass}>
+        {label} {optional
+          ? <span className="text-gray-400 font-medium normal-case">(opcional)</span>
+          : <span className="text-red-500">*</span>}
+      </label>
+      {children}
+      <AnimatePresence initial={false}>
+        {error && (
+          <motion.p
+            className="text-xs text-red-500 mt-1"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.18 }}
+          >
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export default function SolicitarAccesoPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading]     = useState(false);
+  const [step, setStep]           = useState(0);
+  /* Dirección del último movimiento: define hacia dónde se desliza el paso */
+  const [dir, setDir]             = useState(1);
+  const reduce = useReducedMotion();
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, trigger, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
+    mode: 'onTouched',
   });
 
-  const onSubmit = async (values: FormValues) => {
+  const values = watch();
+
+  const goTo = (target: number) => {
+    setDir(target > step ? 1 : -1);
+    setStep(target);
+  };
+
+  const next = async () => {
+    const ok = await trigger(STEPS[step].fields, { shouldFocus: true });
+    if (ok) goTo(Math.min(step + 1, LAST));
+  };
+
+  const onSubmit = async (data: FormValues) => {
     setLoading(true);
     try {
-      await solicitudesApi.create(values);
+      await solicitudesApi.create(data);
       setSubmitted(true);
     } catch {
       toast.error('Error al enviar la solicitud. Intenta de nuevo.');
@@ -61,14 +115,52 @@ export default function SolicitarAccesoPage() {
     }
   };
 
+  /* Si el envío final falla, volvemos al primer paso que tenga el error */
+  const onInvalid = (errs: typeof errors) => {
+    const bad = STEPS.findIndex(s => s.fields.some(f => errs[f]));
+    if (bad >= 0) {
+      goTo(bad);
+      toast.error('Revisa los campos marcados en rojo.');
+    }
+  };
+
+  /* Enter y el botón principal avanzan de paso; solo el último envía */
+  const handleFormSubmit = (e: React.FormEvent) => {
+    if (step < LAST) {
+      e.preventDefault();
+      void next();
+      return;
+    }
+    void handleSubmit(onSubmit, onInvalid)(e);
+  };
+
+  const RESUMEN = [
+    { label: 'Nombre',        value: `${values.firstName ?? ''} ${values.lastName ?? ''}`.trim(), step: 0 },
+    { label: 'Email',         value: values.email,        step: 0 },
+    { label: 'Teléfono',      value: values.phone,        step: 0 },
+    { label: 'Negocio',       value: values.businessName, step: 1 },
+    { label: 'NIT / Cédula',  value: values.nit,          step: 1 },
+    { label: 'Ubicación',     value: [values.city, values.department].filter(Boolean).join(', '), step: 1 },
+  ];
+
   // ─── SUCCESS ──────────────────────────────────────────────────────────
   if (submitted) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
-        <div className="w-full max-w-md text-center space-y-6">
-          <div className="w-20 h-20 rounded-full bg-lime-400 flex items-center justify-center mx-auto shadow-lg">
+        <motion.div
+          className="w-full max-w-md text-center space-y-6"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: WIZARD_EASE }}
+        >
+          <motion.div
+            className="w-20 h-20 rounded-full bg-lime-400 flex items-center justify-center mx-auto shadow-lg"
+            initial={{ scale: 0.6, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 18, delay: 0.1 }}
+          >
             <CheckCircle2 className="h-10 w-10 text-gray-900" />
-          </div>
+          </motion.div>
           <div className="text-white space-y-2">
             <h2 className="text-3xl font-black uppercase">¡Solicitud enviada!</h2>
             <p className="text-gray-400 text-base">
@@ -87,7 +179,7 @@ export default function SolicitarAccesoPage() {
           >
             Volver al inicio <ChevronRight className="h-5 w-5" />
           </Link>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -97,7 +189,7 @@ export default function SolicitarAccesoPage() {
     <main className="min-h-screen bg-white">
 
       {/* ── HERO compacto ─────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-green-900 py-16">
+      <section className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-green-900 py-14">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-96 h-96 bg-lime-400 rounded-full translate-x-1/2 -translate-y-1/2" />
         </div>
@@ -110,7 +202,7 @@ export default function SolicitarAccesoPage() {
             <span className="block text-lime-400">recibir reservas hoy</span>
           </h1>
           <p className="text-gray-300 max-w-xl mx-auto">
-            Completa el formulario y nuestro equipo validará tu información en menos de 48 horas.
+            Son 3 pasos rápidos. Validamos tu información en menos de 48 horas.
           </p>
         </div>
       </section>
@@ -119,43 +211,139 @@ export default function SolicitarAccesoPage() {
       <section className="max-w-6xl mx-auto px-4 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
 
-          {/* ── LEFT: beneficios ────────────────────────────────────── */}
-          <div className="lg:col-span-2 space-y-8">
+          {/* ── FORMULARIO POR PASOS ────────────────────────────────── */}
+          <div className="lg:col-span-3 order-1 lg:order-2">
+            <div className="bg-gray-50 rounded-3xl border border-gray-100 p-6 md:p-8 shadow-sm">
 
-            {/* Título */}
-            <div className="space-y-3">
-              <h2 className="text-2xl font-black text-gray-900 uppercase">Lo que obtienes</h2>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                Una plataforma completa para gestionar tu cancha deportiva sin complicaciones.
-              </p>
-            </div>
+              <form onSubmit={handleFormSubmit}>
+                <StepWizard steps={STEPS} step={step} dir={dir} onGoTo={goTo}>
+                      {/* ── PASO 1: datos personales ───────────────── */}
+                      {step === 0 && (
+                        <>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <Field label="Nombre" error={errors.firstName?.message}>
+                              <input className={inputClass} placeholder="Juan" {...register('firstName')} />
+                            </Field>
+                            <Field label="Apellido" error={errors.lastName?.message}>
+                              <input className={inputClass} placeholder="Pérez" {...register('lastName')} />
+                            </Field>
+                          </div>
+                          <Field label="Email" error={errors.email?.message}>
+                            <input type="email" className={inputClass} placeholder="juan@email.com" {...register('email')} />
+                          </Field>
+                          <Field label="Teléfono" error={errors.phone?.message}>
+                            <input type="tel" className={inputClass} placeholder="+57 300 123 4567" {...register('phone')} />
+                          </Field>
+                        </>
+                      )}
 
-            {/* Benefits list */}
-            <div className="space-y-3">
-              {BENEFITS.map((b) => (
-                <div key={b.label} className="flex items-center gap-3 p-3.5 rounded-xl border border-gray-100 hover:border-green-200 hover:bg-green-50/50 transition-all group">
-                  <div className="w-9 h-9 rounded-lg bg-green-100 flex items-center justify-center shrink-0 group-hover:bg-green-200 transition-colors">
-                    <b.icon className="h-4 w-4 text-green-700" />
-                  </div>
-                  <span className="text-sm font-semibold text-gray-700">{b.label}</span>
-                  <CheckCircle2 className="ml-auto h-4 w-4 text-green-500 shrink-0" />
+                      {/* ── PASO 2: negocio ─────────────────────────── */}
+                      {step === 1 && (
+                        <>
+                          <Field label="Nombre del complejo / negocio" error={errors.businessName?.message}>
+                            <input className={inputClass} placeholder="Ej: Complejo Deportivo Los Campeones" {...register('businessName')} />
+                          </Field>
+                          <Field label="NIT / Cédula" error={errors.nit?.message}>
+                            <input className={inputClass} placeholder="900.123.456-7" {...register('nit')} />
+                          </Field>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <Field label="Ciudad" error={errors.city?.message}>
+                              <input className={inputClass} placeholder="Ej: Villavicencio" {...register('city')} />
+                            </Field>
+                            <Field label="Departamento" error={errors.department?.message}>
+                              <input className={inputClass} placeholder="Ej: Meta" {...register('department')} />
+                            </Field>
+                          </div>
+                        </>
+                      )}
+
+                      {/* ── PASO 3: mensaje + resumen ───────────────── */}
+                      {step === 2 && (
+                        <>
+                          <Field label="Mensaje adicional" optional>
+                            <textarea
+                              rows={3}
+                              className={inputClass}
+                              style={{ resize: 'none' }}
+                              placeholder="Más info sobre tu negocio, redes sociales, cantidad de canchas..."
+                              {...register('message')}
+                            />
+                          </Field>
+
+                          <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100 overflow-hidden">
+                            <p className="px-4 py-3 text-xs font-black text-gray-900 uppercase tracking-widest bg-gray-50">
+                              Resumen de tu solicitud
+                            </p>
+                            {RESUMEN.map((r) => (
+                              <div key={r.label} className="flex items-center gap-3 px-4 py-2.5">
+                                <span className="text-xs text-gray-400 w-28 shrink-0">{r.label}</span>
+                                <span className="text-sm font-semibold text-gray-800 truncate">{r.value || '—'}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => goTo(r.step)}
+                                  className="ml-auto text-gray-300 hover:text-green-600 transition-colors shrink-0"
+                                  aria-label={`Editar ${r.label}`}
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                </StepWizard>
+
+                {/* ── Navegación ───────────────────────────────────── */}
+                <div className="flex items-center gap-3 pt-6">
+                  {step > 0 && (
+                    <motion.button
+                      type="button"
+                      onClick={() => goTo(step - 1)}
+                      initial={reduce ? { opacity: 0 } : { opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.25, ease: WIZARD_EASE }}
+                      whileTap={reduce ? undefined : { scale: 0.97 }}
+                      className="flex items-center gap-1.5 shrink-0 whitespace-nowrap bg-white border border-gray-200 hover:border-gray-300 text-gray-600 font-bold text-sm px-5 py-4 rounded-2xl transition-colors"
+                    >
+                      <ChevronLeft className="h-4 w-4" /> Atrás
+                    </motion.button>
+                  )}
+
+                  <motion.button
+                    type="submit"
+                    disabled={loading}
+                    whileTap={reduce ? undefined : { scale: 0.98 }}
+                    className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-black text-base py-4 rounded-2xl transition-colors shadow-lg shadow-green-600/20"
+                  >
+                    {loading ? (
+                      <><Loader2 className="h-5 w-5 animate-spin" /> Enviando solicitud...</>
+                    ) : step < LAST ? (
+                      <>Continuar <ChevronRight className="h-5 w-5" /></>
+                    ) : (
+                      <>Enviar solicitud <ChevronRight className="h-5 w-5" /></>
+                    )}
+                  </motion.button>
                 </div>
-              ))}
+
+                <AnimatePresence initial={false}>
+                  {step === LAST && (
+                    <motion.p
+                      className="text-center text-xs text-gray-400 pt-4"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      Al enviar aceptas nuestros{' '}
+                      <Link href="/terminos" className="underline hover:text-green-600 transition-colors">términos de uso</Link>
+                      {' '}y{' '}
+                      <Link href="/privacidad" className="underline hover:text-green-600 transition-colors">política de privacidad</Link>.
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </form>
             </div>
 
-            {/* Badge gratis */}
-            <div className="relative overflow-hidden bg-gray-900 text-white rounded-2xl p-6 space-y-2">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-lime-400 opacity-10 rounded-full translate-x-8 -translate-y-8" />
-              <div className="relative">
-                <p className="text-lime-400 text-xs font-bold uppercase tracking-widest mb-1">✦ Sin costo</p>
-                <p className="font-black text-2xl">100% gratis</p>
-                <p className="text-gray-400 text-sm mt-1">
-                  Sin cobros de suscripción ni comisiones. Solo publicas y ganas.
-                </p>
-              </div>
-            </div>
-
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 mt-6 text-center lg:hidden">
               ¿Ya tienes acceso?{' '}
               <Link href="/auth/login" className="text-green-600 hover:text-green-700 font-bold hover:underline">
                 Inicia sesión aquí →
@@ -163,135 +351,38 @@ export default function SolicitarAccesoPage() {
             </p>
           </div>
 
-          {/* ── RIGHT: formulario ───────────────────────────────────── */}
-          <div className="lg:col-span-3">
-            <div className="bg-gray-50 rounded-3xl border border-gray-100 p-8 shadow-sm">
-
-              <div className="mb-8">
-                <h3 className="text-2xl font-black text-gray-900">Solicitar acceso</h3>
-                <p className="text-gray-500 text-sm mt-1">
-                  Completa todos los campos marcados con <span className="text-red-500">*</span>
-                </p>
-              </div>
-
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-
-                {/* ── Datos personales ─────────────────────────────── */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-                    <div className="w-6 h-6 rounded-full bg-gray-900 flex items-center justify-center shrink-0">
-                      <User className="h-3 w-3 text-white" />
-                    </div>
-                    <span className="text-xs font-black text-gray-900 uppercase tracking-widest">Datos personales</span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className={labelClass}>Nombre <span className="text-red-500">*</span></label>
-                      <input className={inputClass} placeholder="Juan" {...register('firstName')} />
-                      {errors.firstName && <p className="text-xs text-red-500 mt-1">{errors.firstName.message}</p>}
-                    </div>
-                    <div>
-                      <label className={labelClass}>Apellido <span className="text-red-500">*</span></label>
-                      <input className={inputClass} placeholder="Pérez" {...register('lastName')} />
-                      {errors.lastName && <p className="text-xs text-red-500 mt-1">{errors.lastName.message}</p>}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className={labelClass}>Email <span className="text-red-500">*</span></label>
-                      <input type="email" className={inputClass} placeholder="juan@email.com" {...register('email')} />
-                      {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
-                    </div>
-                    <div>
-                      <label className={labelClass}>Teléfono <span className="text-red-500">*</span></label>
-                      <input type="tel" className={inputClass} placeholder="+57 300 123 4567" {...register('phone')} />
-                      {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone.message}</p>}
-                    </div>
-                  </div>
-                </div>
-
-                {/* ── Info del negocio ─────────────────────────────── */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-                    <div className="w-6 h-6 rounded-full bg-gray-900 flex items-center justify-center shrink-0">
-                      <Building2 className="h-3 w-3 text-white" />
-                    </div>
-                    <span className="text-xs font-black text-gray-900 uppercase tracking-widest">Información del negocio</span>
-                  </div>
-
-                  <div>
-                    <label className={labelClass}>Nombre del complejo / negocio <span className="text-red-500">*</span></label>
-                    <input className={inputClass} placeholder="Ej: Complejo Deportivo Los Campeones" {...register('businessName')} />
-                    {errors.businessName && <p className="text-xs text-red-500 mt-1">{errors.businessName.message}</p>}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className={labelClass}>NIT / Cédula <span className="text-red-500">*</span></label>
-                      <input className={inputClass} placeholder="900.123.456-7" {...register('nit')} />
-                      {errors.nit && <p className="text-xs text-red-500 mt-1">{errors.nit.message}</p>}
-                    </div>
-                    <div>
-                      <label className={labelClass}>Ciudad <span className="text-red-500">*</span></label>
-                      <input className={inputClass} placeholder="Ej: Villavicencio" {...register('city')} />
-                      {errors.city && <p className="text-xs text-red-500 mt-1">{errors.city.message}</p>}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className={labelClass}>Departamento <span className="text-red-500">*</span></label>
-                    <input className={inputClass} placeholder="Ej: Meta" {...register('department')} />
-                    {errors.department && <p className="text-xs text-red-500 mt-1">{errors.department.message}</p>}
-                  </div>
-                </div>
-
-                {/* ── Mensaje adicional ────────────────────────────── */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-                    <div className="w-6 h-6 rounded-full bg-gray-900 flex items-center justify-center shrink-0">
-                      <MessageSquare className="h-3 w-3 text-white" />
-                    </div>
-                    <span className="text-xs font-black text-gray-900 uppercase tracking-widest">
-                      Mensaje adicional <span className="text-gray-400 font-medium normal-case">(opcional)</span>
-                    </span>
-                  </div>
-
-                  <div>
-                    <textarea
-                      rows={3}
-                      className={inputClass}
-                      style={{ resize: 'none' }}
-                      placeholder="Más info sobre tu negocio, redes sociales, cantidad de canchas..."
-                      {...register('message')}
-                    />
-                  </div>
-                </div>
-
-                {/* ── Submit ───────────────────────────────────────── */}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-black text-base py-4 rounded-2xl transition-colors shadow-lg"
-                >
-                  {loading ? (
-                    <><Loader2 className="h-5 w-5 animate-spin" /> Enviando solicitud...</>
-                  ) : (
-                    <>Enviar solicitud <ChevronRight className="h-5 w-5" /></>
-                  )}
-                </button>
-
-                <p className="text-center text-xs text-gray-400">
-                  Al enviar aceptas nuestros{' '}
-                  <Link href="/terminos" className="underline hover:text-green-600 transition-colors">términos de uso</Link>
-                  {' '}y{' '}
-                  <Link href="/privacidad" className="underline hover:text-green-600 transition-colors">política de privacidad</Link>.
-                </p>
-
-              </form>
+          {/* ── BENEFICIOS (resumen corto, no compite con el formulario) ── */}
+          <aside className="lg:col-span-2 order-2 lg:order-1 lg:sticky lg:top-24 lg:self-start space-y-6">
+            <div className="space-y-2">
+              <h2 className="text-xl font-black text-gray-900 uppercase">Lo que obtienes</h2>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                Todo lo necesario para gestionar tu cancha, sin cuotas ni comisiones.
+              </p>
             </div>
-          </div>
+
+            <ul className="space-y-2.5">
+              {BENEFITS.map((b) => (
+                <li key={b} className="flex items-center gap-2.5 text-sm text-gray-600">
+                  <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                  {b}
+                </li>
+              ))}
+            </ul>
+
+            <div className="flex items-center gap-3 rounded-2xl bg-green-50 border border-green-100 px-4 py-3">
+              <span className="text-lg font-black text-green-700 shrink-0">100%</span>
+              <p className="text-xs text-green-800 leading-snug">
+                <span className="font-bold">Gratis para empezar.</span> Sin suscripción ni comisión por reserva.
+              </p>
+            </div>
+
+            <p className="hidden lg:block text-sm text-gray-500">
+              ¿Ya tienes acceso?{' '}
+              <Link href="/auth/login" className="text-green-600 hover:text-green-700 font-bold hover:underline">
+                Inicia sesión aquí →
+              </Link>
+            </p>
+          </aside>
         </div>
       </section>
 

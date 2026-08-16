@@ -44,7 +44,7 @@ export default function DashboardShell({ children, sidebarRole, sidebarUserName 
               <Menu className="h-5 w-5 text-gray-600" />
             )}
           </button>
-          <img src={LOGO_URL} alt="ReservaTuCancha" className="h-6 w-6 object-contain" />
+          <img src={LOGO_URL} alt="ReservaTuCancha" className="h-9 w-9 object-contain" />
           <div className="w-9" /> {/* Spacer */}
         </div>
 
