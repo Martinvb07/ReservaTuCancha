@@ -8,6 +8,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { LayoutDashboard, LogOut, ChevronDown, Menu, X } from 'lucide-react';
 import { LOGO_URL } from '@/lib/logo';
+import { useSearchDock } from '@/hooks/useSearchDock';
+import { useAnimatedDisclosure } from '@/hooks/useAnimatedDisclosure';
+import { NavSearchPill, NavSearchPillCompact } from './NavSearchPill';
+import NavSearchOverlay, { NAV_SEARCH_EXIT_MS } from './NavSearchOverlay';
+import MobileSearchSheet, { SHEET_EXIT_MS } from '@/components/home/MobileSearchSheet';
 
 const USER_LINKS = [
   { href: '/', label: 'Inicio' },
@@ -71,6 +76,18 @@ export default function Navbar() {
   const isBiz = pathname.startsWith('/para-clubes') || pathname.startsWith('/solicitar-acceso');
   const links = isBiz ? BIZ_LINKS : USER_LINKS;
 
+  /* Buscador acoplado: cuando el buscador grande de la página se va con el
+     scroll, el navbar cambia sus links por una píldora compacta. */
+  const docked    = useSearchDock();
+  const navSearch = useAnimatedDisclosure(NAV_SEARCH_EXIT_MS); // panel desktop
+  const navSheet  = useAnimatedDisclosure(SHEET_EXIT_MS);      // sheet móvil
+
+  /* Si el buscador grande vuelve a estar visible, cerramos el panel de golpe:
+     dejarlo flotando sobre la página con su propio buscador arriba se ve raro. */
+  useEffect(() => {
+    if (!docked) navSearch.reset();
+  }, [docked, navSearch.reset]);
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false);
@@ -87,6 +104,12 @@ export default function Navbar() {
     setMobileOpen(false);
   }, [pathname]);
 
+  /* Al navegar, el buscador del navbar se cierra sin animación */
+  useEffect(() => {
+    navSearch.reset();
+    navSheet.reset();
+  }, [pathname, navSearch.reset, navSheet.reset]);
+
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-2 lg:grid lg:grid-cols-[1fr_auto_1fr]">
@@ -98,10 +121,23 @@ export default function Navbar() {
           </span>
         </Link>
 
+        {/* Buscador acoplado (móvil/tablet): ocupa el hueco entre el logo y el
+            menú. Al ser lg:hidden desaparece del grid en desktop, así que las
+            tres columnas siguen intactas allí. */}
+        {docked && !mobileOpen && (
+          <NavSearchPillCompact onClick={navSheet.show} />
+        )}
+
         {/* Nav: columna central del grid → queda centrada en la mitad real de
             la página (las columnas 1fr laterales son simétricas). "Ingresar"
             vive acá para acompañar el ritmo del menú. */}
-        <div className={`hidden lg:flex items-center gap-1 lg:justify-self-center ${isBiz ? 'lg:-translate-x-10' : ''}`}>
+        <div className={`hidden lg:flex items-center gap-1 min-w-0 lg:justify-self-center ${isBiz && !docked ? 'lg:-translate-x-10' : ''}`}>
+          {docked ? (
+            <NavSearchPill
+              active={navSearch.open && !navSearch.closing}
+              onClick={() => (navSearch.open && !navSearch.closing ? navSearch.hide() : navSearch.show())}
+            />
+          ) : (
           <AnimatePresence mode="wait" initial={false}>
             <motion.nav
               key={isBiz ? 'biz' : 'user'}
@@ -136,6 +172,7 @@ export default function Navbar() {
               )}
             </motion.nav>
           </AnimatePresence>
+          )}
         </div>
 
         {/* Acciones (desktop) + botón móvil. justify-self-end en desktop (grid),
@@ -171,12 +208,14 @@ export default function Navbar() {
               <AnimatePresence>
                 {userMenuOpen && (
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.94, y: -10 }}
+                    initial={{ opacity: 0, scale: 0.94, y: -4 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.97, y: -6, transition: { duration: 0.13, ease: 'easeIn' } }}
+                    exit={{ opacity: 0, scale: 0.97, y: -4, transition: { duration: 0.13, ease: 'easeIn' } }}
                     transition={{ type: 'spring', stiffness: 460, damping: 32, mass: 0.7 }}
-                    className="absolute right-0 mt-2 w-60 rounded-2xl border border-gray-100 bg-white overflow-hidden origin-top-right"
-                    style={{ zIndex: 9999, boxShadow: '0 20px 60px rgba(0,0,0,0.12)' }}
+                    /* mt-4: el botón queda 9px sobre el borde de la navbar, así que
+                       hacen falta >9px para que el panel no se monte en la barra. */
+                    className="absolute right-0 top-full mt-4 w-60 rounded-2xl border border-gray-200/80 bg-white overflow-hidden origin-top-right"
+                    style={{ zIndex: 50, boxShadow: '0 16px 40px -12px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.05)' }}
                   >
                     <motion.div
                       initial="hidden"
@@ -329,6 +368,12 @@ export default function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Buscador desplegado desde el navbar. Va dentro del header (que es
+          sticky, no transformado) así que los overlays fixed se posicionan
+          contra el viewport igual. */}
+      {navSearch.open && <NavSearchOverlay closing={navSearch.closing} onClose={navSearch.hide} />}
+      {navSheet.open  && <MobileSearchSheet closing={navSheet.closing}  onClose={navSheet.hide} />}
     </header>
   );
 }

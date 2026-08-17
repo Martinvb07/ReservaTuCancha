@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { MapPin, Mail, Phone, Instagram, Facebook } from 'lucide-react';
+import { MapPin, Mail, Phone, Instagram, Facebook, Sparkles } from 'lucide-react';
 import { LOGO_URL } from '@/lib/logo';
 
 export default function Footer() {
@@ -118,6 +118,11 @@ export default function Footer() {
             © {new Date().getFullYear()} ReservaTuCancha · Hecho en Colombia
           </p>
           <div className="flex items-center gap-4">
+            <Link href="/novedades"
+              className="group inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-lime-400 transition-colors">
+              <Sparkles className="h-3.5 w-3.5 text-lime-400/70 group-hover:text-lime-400 transition-colors" />
+              Novedades
+            </Link>
             <Link href="/terminos" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">Términos</Link>
             <Link href="/privacidad" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">Privacidad</Link>
           </div>

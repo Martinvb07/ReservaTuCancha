@@ -5,7 +5,6 @@ import { useEffect } from 'react';
 import api from '@/lib/api/axios';
 
 import DashboardShell from '@/components/layout/DashboardShell';
-import ChangelogFloatingButton from '@/components/layout/ChangelogFloatingButton';
 import RealtimeNotifications from '@/components/dashboard/RealtimeNotifications';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -40,8 +39,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       sidebarUserName={session.user?.name ?? ''}
     >
       {children}
-      {/* Solo en escritorio: el propio componente se oculta en móvil */}
-      {role === 'owner' && <ChangelogFloatingButton />}
       <RealtimeNotifications />
     </DashboardShell>
   );

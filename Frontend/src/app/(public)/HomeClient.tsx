@@ -7,6 +7,7 @@ import FadeIn from '@/components/ui/FadeIn';
 import FaqAccordion from '@/components/ui/FaqAccordion';
 import HeroSearch from '@/components/home/HeroSearch';
 import MobileSearchTrigger from '@/components/home/MobileSearchTrigger';
+import { SEARCH_ANCHOR_ID } from '@/hooks/useSearchDock';
 import type { Court } from '@/types';
 
 const SPORT_GALLERY = [
@@ -68,12 +69,16 @@ export default function HomeClient({ stats }: Props) {
           </div>
 
           {/* Buscador propio (deporte / ciudad / fecha / hora).
-              En móvil se reemplaza por la píldora que abre el sheet. */}
-          <div className="mt-4 md:mt-6 hidden md:block">
-            <HeroSearch />
-          </div>
-          <div className="mt-4">
-            <MobileSearchTrigger />
+              En móvil se reemplaza por la píldora que abre el sheet.
+              El id lo lee el navbar: cuando este bloque pasa por encima de la
+              barra, el buscador se acopla al navbar (ver useSearchDock). */}
+          <div id={SEARCH_ANCHOR_ID}>
+            <div className="mt-4 lg:mt-6 hidden lg:block">
+              <HeroSearch />
+            </div>
+            <div className="mt-4 lg:hidden">
+              <MobileSearchTrigger />
+            </div>
           </div>
         </div>
       </section>

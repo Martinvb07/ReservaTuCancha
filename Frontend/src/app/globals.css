@@ -192,8 +192,47 @@ body.sheet-open .fab-float {
 .mobile-search-stack > *:nth-child(3) { animation-delay: .17s; }
 .mobile-search-stack > *:nth-child(4) { animation-delay: .23s; }
 
+/* ── Buscador que baja al navbar al hacer scroll (estilo Airbnb) ──────────
+   La píldora compacta aparece cuando el buscador grande ya se fue hacia arriba. */
+@keyframes rtc-navSearchIn {
+  from { opacity: 0; transform: translateY(-8px) scale(.96); }
+  to   { opacity: 1; transform: none; }
+}
+.nav-search-in { animation: rtc-navSearchIn .28s cubic-bezier(.2,.8,.3,1) both; }
+
+/* La tarjeta de búsqueda se DESPLIEGA desde el navbar: nace comprimida y
+   elevada (origen arriba, junto a la píldora) y baja a su sitio con una
+   desaceleración tipo "expo", que da la sensación de trasladarse. */
+@keyframes rtc-searchExpand {
+  0%   { opacity: 0; transform: translateY(-34px) scale(.92); }
+  55%  { opacity: 1; }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.rtc-search-expand {
+  transform-origin: top center;
+  animation: rtc-searchExpand .46s cubic-bezier(.16,1,.3,1) both;
+  will-change: transform, opacity;
+}
+
+/* Salida — la tarjeta se recoge de vuelta hacia arriba */
+@keyframes rtc-searchCollapse {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(-22px) scale(.94); }
+}
+.rtc-search-out {
+  transform-origin: top center;
+  animation: rtc-searchCollapse .26s cubic-bezier(.4,0,.7,.25) both;
+  will-change: transform, opacity;
+}
+
+/* Velo que atenúa la página bajo el navbar mientras la búsqueda está abierta */
+.rtc-scrim-in  { animation: rtc-fade .34s ease both; }
+.rtc-scrim-out { animation: rtc-fadeOut .24s ease both; }
+
 @media (prefers-reduced-motion: reduce) {
   .rtc-fade, .rtc-drop, .rtc-item, .rtc-pick,
   .rtc-ready, .rtc-live, .rtc-card,
+  .nav-search-in, .rtc-search-expand, .rtc-search-out,
+  .rtc-scrim-in, .rtc-scrim-out,
   .mobile-sheet-in, .mobile-sheet-out, .rtc-sheet-up, .mobile-search-stack > * { animation: none !important; transition: none !important; transform: none !important; }
 }

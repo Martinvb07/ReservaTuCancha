@@ -11,9 +11,15 @@ import MobileSearchTrigger from '@/components/home/MobileSearchTrigger';
 import { AMENITIES, getSport } from '@/lib/constants';
 import { AMEN_ICONS } from '@/lib/amenityIcons';
 import { SlidersHorizontal, X, CalendarDays, Search, ChevronDown, Check, Sparkles, Banknote, ArrowUpDown } from 'lucide-react';
+import { useAnimatedDisclosure } from '@/hooks/useAnimatedDisclosure';
+import { SEARCH_ANCHOR_ID } from '@/hooks/useSearchDock';
+import MobileStackSheet, { STACK_SHEET_EXIT_MS } from '@/components/ui/MobileStackSheet';
 import type { Court } from '@/types';
 
 const PAGE_SIZE = 9;
+
+/** Debe coincidir con la duración de `.rtc-search-out` en globals.css */
+const SEARCH_EXIT_MS = 260;
 
 // Filtros desplegables (estilo píldora + dropdown anclado)
 type FilterOpen = 'amenidades' | 'precio' | 'sort' | null;
@@ -92,16 +98,10 @@ export default function EmpresasPageClient() {
   const [sort, setSort] = useState<(typeof SORT_ORDER)[number]>('destacados');
   const [clientPage, setClientPage] = useState(1);
 
-  // Sheet de filtros en móvil (acordeón: una sección abierta a la vez)
-  const [filterSheet, setFilterSheet] = useState(false);
+  /* Sheet de filtros en móvil (una sección abierta a la vez). El bloqueo del
+     scroll del body lo hace MobileStackSheet mientras está montado. */
+  const filterSheet = useAnimatedDisclosure(STACK_SHEET_EXIT_MS);
   const [fSection, setFSection] = useState<'amenidades' | 'precio' | 'sort' | null>('amenidades');
-  useEffect(() => {
-    if (!filterSheet) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    document.body.classList.add('sheet-open');
-    return () => { document.body.style.overflow = prev; document.body.classList.remove('sheet-open'); };
-  }, [filterSheet]);
 
   // Dropdown de filtro abierto (uno a la vez) + cierre al hacer clic fuera.
   const [openFilter, setOpenFilter] = useState<FilterOpen>(null);
@@ -116,7 +116,8 @@ export default function EmpresasPageClient() {
 
   // En desktop el buscador vive colapsado en una píldora resumen; solo se
   // expande a la barra completa cuando el usuario quiere editar la búsqueda.
-  const [searchOpen, setSearchOpen] = useState(false);
+  // El disclosure animado deja que la barra se recoja antes de desmontarse.
+  const search = useAnimatedDisclosure(SEARCH_EXIT_MS);
 
   // Una búsqueda nueva (cambia la URL) o un filtro nuevo vuelve a la página 1.
   useEffect(() => { setClientPage(1); }, [sport, city, dateParam, startParam, minPrice, maxPrice, sort]);
@@ -248,13 +249,19 @@ export default function EmpresasPageClient() {
   return (
     <main className="min-h-screen bg-white">
       {/* ── HERO + BUSCADOR ───────────────────────────────────── */}
-      <section className="relative bg-gray-900 overflow-hidden">
-        <img
-          src="https://images.unsplash.com/photo-1459865264687-595d652de67e?w=1600&q=80"
-          alt="canchas"
-          className="absolute inset-0 w-full h-full object-cover opacity-20"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-900/70 to-gray-900" />
+      {/* El overflow-hidden va solo alrededor del fondo: en la sección recortaba
+          los dropdowns del buscador. Y con el buscador abierto la sección sube
+          por encima de la barra de filtros sticky (z-30) para que no los tape.
+          z-[35] deja el navbar (z-40) por encima. */}
+      <section className={`relative bg-gray-900 ${search.open ? 'z-[35]' : ''}`}>
+        <div className="absolute inset-0 overflow-hidden">
+          <img
+            src="https://images.unsplash.com/photo-1459865264687-595d652de67e?w=1600&q=80"
+            alt="canchas"
+            className="absolute inset-0 w-full h-full object-cover opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-gray-900/70 to-gray-900" />
+        </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 py-12 md:py-14">
           <h1 className="text-3xl md:text-4xl font-bold text-white">Encuentra tu cancha</h1>
@@ -262,42 +269,49 @@ export default function EmpresasPageClient() {
             {isLoading ? 'Buscando…' : `${data?.total ?? 0} canchas disponibles en Colombia`}
           </p>
 
-          {/* Desktop: píldora resumen → clic para expandir la barra completa */}
-          <div className="mt-6 hidden md:block">
-            {searchOpen ? (
-              <div className="max-w-5xl flex items-start gap-3">
-                <div className="flex-1">
-                  <HeroSearch initialSport={sport} initialCity={city} initialDate={dateParam} initialTime={startParam}
-                    onSearch={() => setSearchOpen(false)} />
+          {/* El id lo lee el navbar: cuando este bloque pasa por encima de la
+              barra, el buscador se acopla al navbar (ver useSearchDock). */}
+          <div id={SEARCH_ANCHOR_ID} className="mt-6">
+            {/* Desktop: píldora resumen → clic para expandir la barra completa.
+                min-h reserva el alto de la barra expandida, así el intercambio
+                píldora ⇄ barra no empuja la página hacia abajo. */}
+            <div className="hidden lg:block min-h-[88px]">
+              {search.open ? (
+                <div className={`max-w-5xl flex items-start gap-3 ${search.closing ? 'rtc-search-out' : 'rtc-search-expand'}`}>
+                  <div className="flex-1 min-w-0">
+                    <HeroSearch initialSport={sport} initialCity={city} initialDate={dateParam} initialTime={startParam}
+                      onSearch={search.hide} />
+                  </div>
+                  <button type="button" onClick={search.hide} aria-label="Cerrar buscador"
+                    className="mt-3 w-10 h-10 rounded-full border border-white/25 text-white grid place-items-center hover:bg-white/20 hover:border-white/40 hover:rotate-90 active:scale-90 transition-all duration-200 flex-none">
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
-                <button type="button" onClick={() => setSearchOpen(false)} aria-label="Cerrar buscador"
-                  className="mt-3 w-10 h-10 rounded-full border border-white/25 text-white grid place-items-center hover:bg-white/15 transition-colors flex-none">
-                  <X className="h-4 w-4" />
+              ) : (
+                <button type="button" onClick={search.show}
+                  className="nav-search-in inline-flex items-center gap-2.5 bg-white rounded-full pl-5 pr-2 py-2 text-sm text-left hover:shadow-xl transition-shadow"
+                  style={{ boxShadow: '0 10px 30px rgba(0,0,0,.25)' }}>
+                  <span className={sport ? 'font-semibold text-gray-900' : 'text-gray-500'}>{sport ? getSport(sport).label : 'Deporte'}</span>
+                  <span className="text-gray-300">·</span>
+                  <span className={city ? 'font-semibold text-gray-900' : 'text-gray-500'}>{city || 'Ciudad'}</span>
+                  <span className="text-gray-300">·</span>
+                  <span className={`capitalize ${dateParam ? 'font-semibold text-gray-900' : 'text-gray-500'}`}>
+                    {dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)
+                      ? format(parse(dateParam, 'yyyy-MM-dd', new Date()), "EEE d 'de' MMM", { locale: es })
+                      : 'Fecha'}
+                  </span>
+                  <span className="text-gray-300">·</span>
+                  <span className={startParam ? 'font-semibold text-gray-900' : 'text-gray-500'}>{startParam ? to12h(startParam) : 'Hora'}</span>
+                  <span className="ml-1.5 w-9 h-9 rounded-full bg-green-600 text-white grid place-items-center flex-none">
+                    <Search className="h-4 w-4" />
+                  </span>
                 </button>
-              </div>
-            ) : (
-              <button type="button" onClick={() => setSearchOpen(true)}
-                className="inline-flex items-center gap-2.5 bg-white rounded-full pl-5 pr-2 py-2 text-sm text-left hover:shadow-xl transition-shadow"
-                style={{ boxShadow: '0 10px 30px rgba(0,0,0,.25)' }}>
-                <span className={sport ? 'font-semibold text-gray-900' : 'text-gray-500'}>{sport ? getSport(sport).label : 'Deporte'}</span>
-                <span className="text-gray-300">·</span>
-                <span className={city ? 'font-semibold text-gray-900' : 'text-gray-500'}>{city || 'Ciudad'}</span>
-                <span className="text-gray-300">·</span>
-                <span className={`capitalize ${dateParam ? 'font-semibold text-gray-900' : 'text-gray-500'}`}>
-                  {dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)
-                    ? format(parse(dateParam, 'yyyy-MM-dd', new Date()), "EEE d 'de' MMM", { locale: es })
-                    : 'Fecha'}
-                </span>
-                <span className="text-gray-300">·</span>
-                <span className={startParam ? 'font-semibold text-gray-900' : 'text-gray-500'}>{startParam ? to12h(startParam) : 'Hora'}</span>
-                <span className="ml-1.5 w-9 h-9 rounded-full bg-green-600 text-white grid place-items-center flex-none">
-                  <Search className="h-4 w-4" />
-                </span>
-              </button>
-            )}
-          </div>
-          <div className="mt-6">
-            <MobileSearchTrigger initialSport={sport} initialCity={city} initialDate={dateParam} initialTime={startParam} />
+              )}
+            </div>
+
+            <div className="lg:hidden">
+              <MobileSearchTrigger initialSport={sport} initialCity={city} initialDate={dateParam} initialTime={startParam} />
+            </div>
           </div>
         </div>
       </section>
@@ -398,7 +412,7 @@ export default function EmpresasPageClient() {
           <div className="md:hidden flex items-center justify-between gap-3 py-3">
             <button
               type="button"
-              onClick={() => setFilterSheet(true)}
+              onClick={filterSheet.show}
               className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full border text-[13px] font-semibold whitespace-nowrap transition-all ${
                 activeFilters > 0
                   ? 'bg-green-600 border-green-600 text-white'
@@ -415,61 +429,56 @@ export default function EmpresasPageClient() {
         </div>
       </div>
 
-      {/* ── SHEET DE FILTROS MÓVIL (acordeón + barra Limpiar/Ver) ── */}
-      {filterSheet && (
-        <div className="fixed inset-0 z-[100] md:hidden mobile-sheet-in">
-          <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" onClick={() => setFilterSheet(false)} />
-          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl rtc-sheet-up flex flex-col" style={{ maxHeight: '85vh' }}>
-            {/* Cabecera */}
-            <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100 flex-none">
-              <h3 className="text-lg font-extrabold text-gray-900">Filtros</h3>
-              <button type="button" onClick={() => setFilterSheet(false)} aria-label="Cerrar filtros"
-                className="w-9 h-9 rounded-full bg-gray-100 grid place-items-center text-gray-700">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Secciones (acordeón, una a la vez) */}
-            <div className="overflow-y-auto no-scrollbar px-5 py-2 flex-1">
-              {([
-                { key: 'amenidades' as const, label: 'Amenidades', value: amenities.length > 0 ? `${amenities.length} elegida${amenities.length > 1 ? 's' : ''}` : 'Todas' },
-                { key: 'precio' as const, label: 'Precio por hora', value: priceActive ? `${fmtCOP(minPrice)} – ${maxPrice >= PRICE_MAX ? 'sin tope' : fmtCOP(maxPrice)}` : 'Cualquiera' },
-                { key: 'sort' as const, label: 'Ordenar por', value: SORT_LABELS[sort] },
-              ]).map(({ key, label, value }) => (
-                <div key={key} className="border-b border-gray-100 last:border-0">
-                  <button type="button" onClick={() => setFSection(fSection === key ? null : key)}
-                    className="w-full flex items-center justify-between gap-3 py-4 text-left">
-                    <span className="text-[15px] font-bold text-gray-900">{label}</span>
-                    <span className="flex items-center gap-2 min-w-0">
-                      <span className="text-[13px] font-semibold text-green-700 truncate">{value}</span>
-                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform flex-none ${fSection === key ? 'rotate-180' : ''}`} />
-                    </span>
-                  </button>
-                  {fSection === key && (
-                    <div className="pb-4">
-                      {key === 'amenidades' && amenTiles('grid-cols-3')}
-                      {key === 'precio' && precioInner}
-                      {key === 'sort' && <div className="-mx-3">{sortRows()}</div>}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Barra inferior: limpiar + ver resultados */}
-            <div className="flex items-center justify-between px-5 py-3.5 border-t border-gray-100 flex-none"
-              style={{ boxShadow: '0 -4px 20px rgba(20,14,30,.06)' }}>
+      {/* ── SHEET DE FILTROS MÓVIL — mismas tarjetas apiladas y movimiento que
+             el buscador móvil (ver MobileStackSheet) ── */}
+      {filterSheet.open && (
+        <MobileStackSheet
+          className="md:hidden"
+          closing={filterSheet.closing}
+          onClose={filterSheet.hide}
+          active={fSection}
+          onActivate={setFSection}
+          sections={[
+            {
+              key: 'amenidades',
+              title: '¿Qué necesitas?',
+              label: 'Amenidades',
+              value: amenities.length > 0 ? `${amenities.length} elegida${amenities.length > 1 ? 's' : ''}` : 'Todas',
+              filled: amenities.length > 0,
+              content: amenTiles('grid-cols-3'),
+            },
+            {
+              key: 'precio',
+              title: '¿Cuánto quieres pagar?',
+              label: 'Precio por hora',
+              value: priceActive
+                ? `${fmtCOP(minPrice)} – ${maxPrice >= PRICE_MAX ? 'sin tope' : fmtCOP(maxPrice)}`
+                : 'Cualquiera',
+              filled: priceActive,
+              content: <div className="px-1">{precioInner}</div>,
+            },
+            {
+              key: 'sort',
+              title: '¿Cómo las ordenamos?',
+              label: 'Ordenar por',
+              value: SORT_LABELS[sort],
+              filled: sort !== 'destacados',
+              content: sortRows(),
+            },
+          ]}
+          footer={
+            <>
               <button type="button" onClick={clearFilters} className="text-[15px] font-bold text-gray-900 underline">
                 Limpiar
               </button>
-              <button type="button" onClick={() => setFilterSheet(false)}
-                className="inline-flex items-center gap-2 px-7 py-3 rounded-2xl text-white font-bold text-[15px] bg-green-600 active:scale-[.98] transition-transform"
+              <button type="button" onClick={filterSheet.hide}
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-white font-bold text-[15px] bg-green-600 active:scale-[.98] transition-transform"
                 style={{ boxShadow: '0 8px 22px rgba(22,163,74,.42)' }}>
                 Ver {filtered.length} {filtered.length === 1 ? 'cancha' : 'canchas'}
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        />
       )}
 
       {/* ── CONTENIDO ─────────────────────────────────────────── */}

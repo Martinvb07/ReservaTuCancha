@@ -1,10 +1,13 @@
 // src/modules/notifications/notifications.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { Resend } from 'resend';
 import { Booking } from '../bookings/schemas/booking.schema';
 import { CourtsService } from '../courts/courts.service';
 import { ClubsService } from '../clubs/clubs.service';
+import { User, UserDocument, UserRole } from '../users/schemas/user.schema';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -114,6 +117,171 @@ function buildEmailHtml(opts: EmailTemplateOptions): string {
   `;
 }
 
+// ─── Plantilla de novedades / changelog ─────────────────────────────────────
+
+const LOGO_URL = 'https://res.cloudinary.com/doio3695p/image/upload/e_trim/f_auto,q_auto,w_128/v1786851027/ReservaTuCanchaLOGO_nqvonv.png';
+
+/** El título y la descripción los escribe el admin: se escapan antes de
+ *  interpolarlos para que un `<` no rompa el correo. */
+function escapeHtml(text: string): string {
+  return (text ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+interface ChangelogBlock { heading?: string; body: string }
+
+/**
+ * Parte el texto plano del changelog en bloques. Un renglón corto en MAYÚSCULAS
+ * al inicio de un párrafo se toma como título de sección, así el correo respeta
+ * la estructura que se escribió en el panel (en HTML los saltos de línea se
+ * colapsan y todo quedaría en un solo bloque de texto).
+ */
+function parseChangelogBlocks(descripcion: string): ChangelogBlock[] {
+  return (descripcion ?? '')
+    .split(/\n{2,}/)
+    .map(b => b.trim())
+    .filter(Boolean)
+    .map(block => {
+      const [first, ...rest] = block.split('\n');
+      const isHeading = rest.length > 0 && first.length <= 40 && first === first.toUpperCase();
+      return isHeading
+        ? { heading: first, body: rest.join('\n') }
+        : { body: block };
+    });
+}
+
+const paragraph = (text: string, color = '#4b5563') =>
+  `<p style="margin: 0; color: ${color}; font-size: 15px; line-height: 25px;">${escapeHtml(text).replace(/\n/g, '<br>')}</p>`;
+
+/**
+ * Correo de novedades. Sigue la estructura "boxed" del template de react-email:
+ * un marco exterior con tarjetas redondeadas apiladas dentro — encabezado
+ * oscuro, una tarjeta por sección de la novedad y una tarjeta final de CTA.
+ */
+function buildChangelogHtml(opts: {
+  titulo: string; descripcion: string; version?: string; novedadesUrl: string;
+}): string {
+  const blocks = parseChangelogBlocks(opts.descripcion);
+
+  /* La primera línea suelta (sin título en mayúsculas) hace de entradilla
+     dentro del encabezado oscuro; el resto son tarjetas. */
+  const intro = blocks.length && !blocks[0].heading ? blocks[0] : null;
+  const sections = intro ? blocks.slice(1) : blocks;
+
+  const versionBadge = opts.version ? `
+    <div style="margin-top: 22px;">
+      <span style="display: inline-block; background-color: rgba(163,230,53,.14); border: 1px solid rgba(163,230,53,.32); border-radius: 999px; padding: 7px 15px; color: #a3e635; font-size: 12px; font-weight: 800; letter-spacing: 1px;">
+        VERSIÓN ${escapeHtml(opts.version)}
+      </span>
+    </div>
+  ` : '';
+
+  /* Una tarjeta por sección. Si el texto no traía títulos, cae todo en una. */
+  const sectionCards = sections.map(s => `
+    <tr>
+      <td style="background-color: #f7f8fa; border-radius: 16px; padding: 26px 24px;">
+        ${s.heading ? `
+          <p style="margin: 0 0 10px; color: #16a34a; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.4px;">
+            ${escapeHtml(s.heading)}
+          </p>` : ''}
+        ${paragraph(s.body)}
+      </td>
+    </tr>
+    <tr><td style="height: 10px; line-height: 10px; font-size: 0;">&nbsp;</td></tr>
+  `).join('');
+
+  return `
+    <div style="background-color: #eceef2; padding: 28px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+      <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 620px; border-collapse: separate;">
+        <tr>
+          <!-- Marco exterior: las tarjetas van apiladas dentro -->
+          <td style="background-color: #ffffff; border-radius: 22px; padding: 14px;">
+            <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate;">
+
+              <!-- Barra superior: logo + sección -->
+              <tr>
+                <td style="padding: 10px 12px 16px;">
+                  <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="left" style="vertical-align: middle; width: 40px;">
+                        <img src="${LOGO_URL}" alt="ReservaTuCancha" width="32" style="display: block; border: 0;">
+                      </td>
+                      <td align="right" style="vertical-align: middle; color: #9ca3af; font-size: 13px; font-weight: 600;">
+                        ReservaTuCancha
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Encabezado oscuro -->
+              <tr>
+                <td style="background-color: #111827; border-radius: 16px; padding: 46px 30px; text-align: center;">
+                  <p style="margin: 0 0 14px; color: #a3e635; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">
+                    &#10022; Novedades
+                  </p>
+                  <h1 style="margin: 0 auto; max-width: 430px; color: #ffffff; font-size: 28px; font-weight: 800; line-height: 35px; letter-spacing: -0.5px;">
+                    ${escapeHtml(opts.titulo)}
+                  </h1>
+                  ${intro ? `
+                    <p style="margin: 16px auto 0; max-width: 400px; color: #9ca3af; font-size: 15px; line-height: 23px;">
+                      ${escapeHtml(intro.body).replace(/\n/g, '<br>')}
+                    </p>` : ''}
+                  ${versionBadge}
+                </td>
+              </tr>
+
+              <tr><td style="height: 10px; line-height: 10px; font-size: 0;">&nbsp;</td></tr>
+
+              <!-- Una tarjeta por sección -->
+              ${sectionCards}
+
+              <!-- Tarjeta de cierre con el logo y el botón -->
+              <tr>
+                <td style="background-color: #f7f8fa; border-radius: 16px; padding: 34px 24px; text-align: center;">
+                  <div style="background-color: #111827; border-radius: 14px; width: 56px; height: 56px; margin: 0 auto 18px; display: table;">
+                    <span style="display: table-cell; vertical-align: middle; text-align: center;">
+                      <img src="${LOGO_URL}" alt="" width="30" style="display: inline-block; border: 0;">
+                    </span>
+                  </div>
+                  <p style="margin: 0 auto 20px; max-width: 380px; color: #111827; font-size: 19px; font-weight: 800; line-height: 26px;">
+                    Todo esto ya está activo en tu panel
+                  </p>
+                  <a href="${opts.novedadesUrl}" style="background-color: #16a34a; color: #ffffff; padding: 15px 32px; border-radius: 14px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block;">
+                    Ver todas las novedades
+                  </a>
+                </td>
+              </tr>
+
+              <!-- Pie -->
+              <tr>
+                <td style="padding: 30px 20px 16px; text-align: center;">
+                  <p style="margin: 0 auto 16px; max-width: 300px; color: #9ca3af; font-size: 12px; line-height: 19px;">
+                    La forma más fácil de reservar canchas deportivas en Colombia.
+                  </p>
+                  <p style="margin: 0 0 16px;">
+                    <a href="https://www.instagram.com/reservatucancha.site/" style="color: #6b7280; font-size: 12px; text-decoration: none; padding: 0 9px;">Instagram</a>
+                    <span style="color: #d1d5db;">&middot;</span>
+                    <a href="https://wa.me/573124352786" style="color: #6b7280; font-size: 12px; text-decoration: none; padding: 0 9px;">WhatsApp</a>
+                    <span style="color: #d1d5db;">&middot;</span>
+                    <a href="${opts.novedadesUrl}" style="color: #6b7280; font-size: 12px; text-decoration: none; padding: 0 9px;">Novedades</a>
+                  </p>
+                  <p style="margin: 0; color: #b9bfc9; font-size: 11px; line-height: 17px;">
+                    Recibes este correo porque tienes un club registrado en ReservaTuCancha.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </div>
+  `;
+}
+
 // ─── Service ────────────────────────────────────────────────────────────────
 
 @Injectable()
@@ -128,6 +296,7 @@ export class NotificationsService {
     private readonly configService: ConfigService,
     private readonly courtsService: CourtsService,
     private readonly clubsService: ClubsService,
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
   ) {
     this.frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
     this.fromEmail   = this.configService.get<string>('RESEND_FROM_EMAIL');
@@ -530,13 +699,61 @@ export class NotificationsService {
     });
   }
 
-  async sendChangelogNotification(titulo: string, descripcion: string, version?: string) {
-    await this.send({
-      to: this.fromEmail,
-      from: this.fromEmail,
-      subject: `Nueva actualización: ${titulo}`,
-      html: `<h2>${titulo} ${version || ''}</h2><p>${descripcion}</p>`,
+  /**
+   * Envía la novedad a los propietarios registrados. Usa el endpoint batch de
+   * Resend: una sola llamada por lote, pero un correo independiente para cada
+   * uno, así nadie ve la dirección de los demás.
+   *
+   * @param destinatarios 'todos' o el plan al que se limita ('pro', etc.)
+   * @returns cuántos correos se encolaron, para poder reportarlo en el panel
+   */
+  async sendChangelogNotification(
+    titulo: string,
+    descripcion: string,
+    version?: string,
+    destinatarios: string = 'todos',
+  ): Promise<{ enviados: number; destinatarios: number }> {
+    const filtro: Record<string, any> = { role: UserRole.OWNER, isActive: true };
+    if (destinatarios && destinatarios !== 'todos') filtro.plan = destinatarios;
+
+    const owners = await this.userModel.find(filtro).select('email').lean();
+    const emails = owners.map(o => o.email).filter(Boolean);
+
+    if (emails.length === 0) {
+      this.logger.warn(`Changelog "${titulo}": no hay propietarios que coincidan con "${destinatarios}"`);
+      return { enviados: 0, destinatarios: 0 };
+    }
+
+    const html = buildChangelogHtml({
+      titulo,
+      descripcion,
+      version,
+      novedadesUrl: `${this.frontendUrl}/novedades`,
     });
+    const subject = `Novedades de ReservaTuCancha: ${titulo}`;
+
+    /* Resend acepta hasta 100 mensajes por llamada al batch */
+    const LOTE = 100;
+    let enviados = 0;
+
+    for (let i = 0; i < emails.length; i += LOTE) {
+      const lote = emails.slice(i, i + LOTE);
+      try {
+        const { error } = await this.resend.batch.send(
+          lote.map(to => ({ to, from: this.fromEmail, subject, html })),
+        );
+        if (error) {
+          this.logger.error(`Error enviando lote de changelog: ${error.name} - ${error.message}`);
+          continue;
+        }
+        enviados += lote.length;
+      } catch (error) {
+        this.logger.error(`Error crítico enviando lote de changelog: ${error.message}`);
+      }
+    }
+
+    this.logger.log(`Changelog "${titulo}": ${enviados}/${emails.length} correos enviados (${destinatarios})`);
+    return { enviados, destinatarios: emails.length };
   }
 
   async sendAdminNotification({ subject, html }: { subject: string; html: string }) {

@@ -20,13 +20,15 @@ export class ChangelogService {
     const entry = new this.changelogModel(data);
     const saved = await entry.save();
 
-    // Notificar a propietarios por email
-    await this.notificationsService.sendChangelogNotification(
+    /* Notificar a los propietarios. Si el correo falla, la publicación ya quedó
+       guardada: se informa el conteo real para no decir "enviado" a ciegas. */
+    const envio = await this.notificationsService.sendChangelogNotification(
       data.titulo,
       data.descripcion,
       data.version,
+      data.destinatarios,
     );
 
-    return saved;
+    return { ...saved.toObject(), envio };
   }
 }
