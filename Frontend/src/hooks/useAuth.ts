@@ -1,4 +1,5 @@
-import { useSession, signIn, signOut } from 'next-auth/react';
+import { useSession, signIn } from 'next-auth/react';
+import { logout as doLogout } from '@/lib/logout';
 import { useRouter } from 'next/navigation';
 
 export function useAuth() {
@@ -19,7 +20,7 @@ export function useAuth() {
   };
 
   const logout = async () => {
-    await signOut({ callbackUrl: '/' });
+    await doLogout('/');
   };
 
   return {

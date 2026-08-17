@@ -14,17 +14,19 @@ export default function DashboardShell({ children, sidebarRole, sidebarUserName 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    /* h-dvh y no h-screen: en móvil 100vh ignora la barra del navegador y el
+       panel quedaba más alto que la pantalla, cortando lo de abajo. */
+    <div className="flex h-dvh overflow-hidden bg-gray-50">
       {/* Sidebar — Desktop */}
-      <div className="hidden md:block">
+      <div className="hidden md:block h-full">
         <DashboardSidebar role={sidebarRole} userName={sidebarUserName} />
       </div>
 
       {/* Sidebar — Mobile (overlay) */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
+        <div className="fixed inset-x-0 top-0 h-dvh z-40 md:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
-          <div className="absolute left-0 top-0 bottom-0 w-64">
+          <div className="absolute left-0 top-0 h-full w-64">
             <DashboardSidebar role={sidebarRole} userName={sidebarUserName} variant="mobile" />
           </div>
         </div>

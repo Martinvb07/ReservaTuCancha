@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { signOut } from 'next-auth/react';
+import { logout } from '@/lib/logout';
 import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect, useId } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
@@ -149,7 +149,12 @@ export default function DashboardSidebar({ role, userName, variant = 'desktop' }
       initial={{ x: -16, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      className={`relative flex flex-col h-screen overflow-hidden border-r border-slate-100 bg-white shadow-sm shadow-slate-200/40 transition-[width] duration-200 ${
+      /* h-full, no h-screen: el contenedor ya define el alto (columna flex en
+         escritorio, cajón fijo en móvil). Con h-screen el aside medía 100vh, que
+         en móvil no descuenta la barra del navegador, así que el footer con
+         "Ver sitio" y "Cerrar sesión" quedaba por debajo del área visible y el
+         overflow-hidden lo recortaba. */
+      className={`relative flex flex-col h-full overflow-hidden border-r border-slate-100 bg-white shadow-sm shadow-slate-200/40 transition-[width] duration-200 ${
         collapsed ? 'w-20' : 'w-64'
       }`}
     >
@@ -212,7 +217,9 @@ export default function DashboardSidebar({ role, userName, variant = 'desktop' }
         variants={navContainer}
         initial="hidden"
         animate="visible"
-        className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3"
+        /* min-h-0 deja que el scroll ocurra acá dentro en vez de estirar la
+           columna y empujar el footer fuera de vista */
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 py-3"
       >
         {sections.map((section, si) => (
           <div key={si}>
@@ -241,7 +248,7 @@ export default function DashboardSidebar({ role, userName, variant = 'desktop' }
           {!collapsed && 'Ver sitio'}
         </Link>
         <button
-          onClick={() => signOut({ callbackUrl: '/' })}
+          onClick={() => logout('/')}
           title={collapsed ? 'Cerrar sesión' : undefined}
           className={`group flex w-full items-center gap-3 rounded-xl text-sm font-semibold text-red-500 transition-colors hover:bg-red-50 ${
             collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'

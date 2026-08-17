@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { signOut, getSession } from 'next-auth/react';
+import { getSession } from 'next-auth/react';
+import { logout } from '@/lib/logout';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api',
@@ -49,7 +50,7 @@ api.interceptors.response.use(
 
           isRefreshing = false;
           // Si llegamos aquí, el refresh falló — cerrar sesión
-          signOut({ callbackUrl: '/auth/login' });
+          logout('/auth/login');
         } else {
           // Otra request está haciendo refresh, esperar
           return new Promise((resolve) => {

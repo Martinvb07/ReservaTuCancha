@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
+import { logout } from '@/lib/logout';
 import api from '@/lib/api/axios';
 
 /**
@@ -18,7 +19,7 @@ export function useApiAuth() {
 
     // Si NextAuth reporta error de refresh, cerrar sesión
     if ((session as any)?.error === 'RefreshAccessTokenError') {
-      signOut({ callbackUrl: '/auth/login' });
+      logout('/auth/login');
     }
   }, [session]);
 

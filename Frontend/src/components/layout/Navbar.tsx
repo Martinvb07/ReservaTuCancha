@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
+import { logout } from '@/lib/logout';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -255,7 +256,7 @@ export default function Navbar() {
 
                         <motion.div variants={{ hidden: { opacity: 0, x: -8 }, show: { opacity: 1, x: 0, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] } } }}>
                           <button
-                            onClick={() => { setUserMenuOpen(false); signOut({ callbackUrl: '/' }); }}
+                            onClick={() => { setUserMenuOpen(false); logout('/'); }}
                             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
                           >
                             <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
@@ -357,7 +358,7 @@ export default function Navbar() {
                 <LayoutDashboard className="h-4 w-4" /> Dashboard
               </Link>
               <button
-                onClick={() => signOut({ callbackUrl: '/' })}
+                onClick={() => logout('/')}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
               >
                 <LogOut className="h-4 w-4" /> Cerrar sesión

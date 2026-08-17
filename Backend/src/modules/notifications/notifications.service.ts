@@ -153,13 +153,54 @@ function parseChangelogBlocks(descripcion: string): ChangelogBlock[] {
     });
 }
 
-const paragraph = (text: string, color = '#4b5563') =>
-  `<p style="margin: 0; color: ${color}; font-size: 15px; line-height: 25px;">${escapeHtml(text).replace(/\n/g, '<br>')}</p>`;
+const brText = (text: string) => escapeHtml(text).replace(/\n/g, '<br>');
 
 /**
- * Correo de novedades. Sigue la estructura "boxed" del template de react-email:
- * un marco exterior con tarjetas redondeadas apiladas dentro — encabezado
- * oscuro, una tarjeta por sección de la novedad y una tarjeta final de CTA.
+ * Hoja de estilos del correo. Va en un <style> del <head> porque necesita dos
+ * cosas que no se pueden hacer con estilos en línea:
+ *
+ * - Media queries: en escritorio las secciones van en dos columnas y en móvil
+ *   se apilan. Sin esto el correo era una columna de 620px y en PC se veía
+ *   como una app móvil rodeada de vacío.
+ * - Modo oscuro: se declara `color-scheme` para que el cliente no invierta los
+ *   colores por su cuenta (era lo que dejaba el mensaje en claro dentro de una
+ *   bandeja oscura) y se define una paleta propia.
+ *
+ * Outlook de escritorio ignora las media queries, pero se queda con el diseño
+ * de escritorio, que es justamente el correcto ahí.
+ */
+const CHANGELOG_STYLES = `
+  :root { color-scheme: light dark; supported-color-schemes: light dark; }
+
+  body, table, td, p, a, h1 { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+  img { border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+
+  @media only screen and (max-width: 640px) {
+    .container   { width: 100% !important; }
+    .col         { display: block !important; width: 100% !important; padding: 0 0 10px 0 !important; }
+    .frame       { padding: 10px !important; }
+    .hero        { padding: 34px 22px !important; }
+    .hero-title  { font-size: 24px !important; line-height: 31px !important; }
+    .card        { padding: 22px 20px !important; }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .wrapper     { background-color: #0d1117 !important; }
+    .frame       { background-color: #161b22 !important; }
+    .card        { background-color: #1c2128 !important; }
+    .card-title  { color: #a3e635 !important; }
+    .txt         { color: #c9d1d9 !important; }
+    .txt-strong  { color: #f0f6fc !important; }
+    .muted       { color: #8b949e !important; }
+    .muted-soft  { color: #6e7681 !important; }
+    .brand-name  { color: #8b949e !important; }
+  }
+`;
+
+/**
+ * Correo de novedades. Estructura "boxed": un marco exterior con tarjetas
+ * redondeadas dentro — encabezado oscuro, las secciones de la novedad en dos
+ * columnas y una tarjeta final con el logo y el botón.
  */
 function buildChangelogHtml(opts: {
   titulo: string; descripcion: string; version?: string; novedadesUrl: string;
@@ -179,107 +220,142 @@ function buildChangelogHtml(opts: {
     </div>
   ` : '';
 
-  /* Una tarjeta por sección. Si el texto no traía títulos, cae todo en una. */
-  const sectionCards = sections.map(s => `
-    <tr>
-      <td style="background-color: #f7f8fa; border-radius: 16px; padding: 26px 24px;">
-        ${s.heading ? `
-          <p style="margin: 0 0 10px; color: #16a34a; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.4px;">
-            ${escapeHtml(s.heading)}
-          </p>` : ''}
-        ${paragraph(s.body)}
-      </td>
-    </tr>
-    <tr><td style="height: 10px; line-height: 10px; font-size: 0;">&nbsp;</td></tr>
-  `).join('');
-
-  return `
-    <div style="background-color: #eceef2; padding: 28px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-      <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 620px; border-collapse: separate;">
-        <tr>
-          <!-- Marco exterior: las tarjetas van apiladas dentro -->
-          <td style="background-color: #ffffff; border-radius: 22px; padding: 14px;">
-            <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate;">
-
-              <!-- Barra superior: logo + sección -->
-              <tr>
-                <td style="padding: 10px 12px 16px;">
-                  <table width="100%" border="0" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td align="left" style="vertical-align: middle; width: 40px;">
-                        <img src="${LOGO_URL}" alt="ReservaTuCancha" width="32" style="display: block; border: 0;">
-                      </td>
-                      <td align="right" style="vertical-align: middle; color: #9ca3af; font-size: 13px; font-weight: 600;">
-                        ReservaTuCancha
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-
-              <!-- Encabezado oscuro -->
-              <tr>
-                <td style="background-color: #111827; border-radius: 16px; padding: 46px 30px; text-align: center;">
-                  <p style="margin: 0 0 14px; color: #a3e635; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">
-                    &#10022; Novedades
-                  </p>
-                  <h1 style="margin: 0 auto; max-width: 430px; color: #ffffff; font-size: 28px; font-weight: 800; line-height: 35px; letter-spacing: -0.5px;">
-                    ${escapeHtml(opts.titulo)}
-                  </h1>
-                  ${intro ? `
-                    <p style="margin: 16px auto 0; max-width: 400px; color: #9ca3af; font-size: 15px; line-height: 23px;">
-                      ${escapeHtml(intro.body).replace(/\n/g, '<br>')}
-                    </p>` : ''}
-                  ${versionBadge}
-                </td>
-              </tr>
-
-              <tr><td style="height: 10px; line-height: 10px; font-size: 0;">&nbsp;</td></tr>
-
-              <!-- Una tarjeta por sección -->
-              ${sectionCards}
-
-              <!-- Tarjeta de cierre con el logo y el botón -->
-              <tr>
-                <td style="background-color: #f7f8fa; border-radius: 16px; padding: 34px 24px; text-align: center;">
-                  <div style="background-color: #111827; border-radius: 14px; width: 56px; height: 56px; margin: 0 auto 18px; display: table;">
-                    <span style="display: table-cell; vertical-align: middle; text-align: center;">
-                      <img src="${LOGO_URL}" alt="" width="30" style="display: inline-block; border: 0;">
-                    </span>
-                  </div>
-                  <p style="margin: 0 auto 20px; max-width: 380px; color: #111827; font-size: 19px; font-weight: 800; line-height: 26px;">
-                    Todo esto ya está activo en tu panel
-                  </p>
-                  <a href="${opts.novedadesUrl}" style="background-color: #16a34a; color: #ffffff; padding: 15px 32px; border-radius: 14px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block;">
-                    Ver todas las novedades
-                  </a>
-                </td>
-              </tr>
-
-              <!-- Pie -->
-              <tr>
-                <td style="padding: 30px 20px 16px; text-align: center;">
-                  <p style="margin: 0 auto 16px; max-width: 300px; color: #9ca3af; font-size: 12px; line-height: 19px;">
-                    La forma más fácil de reservar canchas deportivas en Colombia.
-                  </p>
-                  <p style="margin: 0 0 16px;">
-                    <a href="https://www.instagram.com/reservatucancha.site/" style="color: #6b7280; font-size: 12px; text-decoration: none; padding: 0 9px;">Instagram</a>
-                    <span style="color: #d1d5db;">&middot;</span>
-                    <a href="https://wa.me/573124352786" style="color: #6b7280; font-size: 12px; text-decoration: none; padding: 0 9px;">WhatsApp</a>
-                    <span style="color: #d1d5db;">&middot;</span>
-                    <a href="${opts.novedadesUrl}" style="color: #6b7280; font-size: 12px; text-decoration: none; padding: 0 9px;">Novedades</a>
-                  </p>
-                  <p style="margin: 0; color: #b9bfc9; font-size: 11px; line-height: 17px;">
-                    Recibes este correo porque tienes un club registrado en ReservaTuCancha.
-                  </p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </div>
+  const cardHtml = (s: ChangelogBlock) => `
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate;">
+      <tr>
+        <td class="card" style="background-color: #f7f8fa; border-radius: 16px; padding: 26px 24px;">
+          ${s.heading ? `
+            <p class="card-title" style="margin: 0 0 10px; color: #16a34a; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.4px;">
+              ${escapeHtml(s.heading)}
+            </p>` : ''}
+          <p class="txt" style="margin: 0; color: #4b5563; font-size: 15px; line-height: 25px;">${brText(s.body)}</p>
+        </td>
+      </tr>
+    </table>
   `;
+
+  /* Dos tarjetas por fila en escritorio; la clase .col las apila en móvil.
+     Si sobra una, ocupa el ancho completo. */
+  const sectionRows: string[] = [];
+  for (let i = 0; i < sections.length; i += 2) {
+    const left = sections[i];
+    const right = sections[i + 1];
+    sectionRows.push(`
+      <tr>
+        <td style="padding-bottom: 10px;">
+          <table width="100%" border="0" cellpadding="0" cellspacing="0">
+            <tr>
+              <td class="col" width="${right ? '50%' : '100%'}" valign="top" style="padding-right: ${right ? '5px' : '0'};">
+                ${cardHtml(left)}
+              </td>
+              ${right ? `
+              <td class="col" width="50%" valign="top" style="padding-left: 5px;">
+                ${cardHtml(right)}
+              </td>` : ''}
+            </tr>
+          </table>
+        </td>
+      </tr>
+    `);
+  }
+
+  return `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+  <title>${escapeHtml(opts.titulo)}</title>
+  <style>${CHANGELOG_STYLES}</style>
+</head>
+<body class="wrapper" style="margin: 0; padding: 0; background-color: #eceef2;">
+  <div class="wrapper" style="background-color: #eceef2; padding: 28px 12px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+    <table class="container" align="center" border="0" cellpadding="0" cellspacing="0" width="820" style="width: 820px; max-width: 100%; border-collapse: separate; margin: 0 auto;">
+      <tr>
+        <td class="frame" style="background-color: #ffffff; border-radius: 22px; padding: 14px;">
+          <table width="100%" border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate;">
+
+            <!-- Barra superior: logo + marca -->
+            <tr>
+              <td style="padding: 10px 12px 16px;">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td align="left" valign="middle" width="40">
+                      <img src="${LOGO_URL}" alt="ReservaTuCancha" width="32" style="display: block;">
+                    </td>
+                    <td class="brand-name" align="right" valign="middle" style="color: #9ca3af; font-size: 13px; font-weight: 600;">
+                      ReservaTuCancha
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Encabezado -->
+            <tr>
+              <td class="hero" style="background-color: #111827; border-radius: 16px; padding: 50px 34px; text-align: center;">
+                <p style="margin: 0 0 14px; color: #a3e635; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">
+                  &#10022; Novedades
+                </p>
+                <h1 class="hero-title" style="margin: 0 auto; max-width: 520px; color: #ffffff; font-size: 30px; font-weight: 800; line-height: 38px; letter-spacing: -0.5px;">
+                  ${escapeHtml(opts.titulo)}
+                </h1>
+                ${intro ? `
+                  <p style="margin: 16px auto 0; max-width: 440px; color: #9ca3af; font-size: 15px; line-height: 23px;">
+                    ${brText(intro.body)}
+                  </p>` : ''}
+                ${versionBadge}
+              </td>
+            </tr>
+
+            <tr><td style="height: 10px; line-height: 10px; font-size: 0;">&nbsp;</td></tr>
+
+            <!-- Secciones de la novedad -->
+            ${sectionRows.join('')}
+
+            <!-- Cierre -->
+            <tr>
+              <td class="card" style="background-color: #f7f8fa; border-radius: 16px; padding: 36px 24px; text-align: center;">
+                <div style="background-color: #111827; border-radius: 14px; width: 56px; height: 56px; margin: 0 auto 18px; display: table;">
+                  <span style="display: table-cell; vertical-align: middle; text-align: center;">
+                    <img src="${LOGO_URL}" alt="" width="30" style="display: inline-block;">
+                  </span>
+                </div>
+                <p class="txt-strong" style="margin: 0 auto 20px; max-width: 400px; color: #111827; font-size: 19px; font-weight: 800; line-height: 26px;">
+                  Todo esto ya está activo en tu panel
+                </p>
+                <a href="${opts.novedadesUrl}" style="background-color: #16a34a; color: #ffffff; padding: 15px 32px; border-radius: 14px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block;">
+                  Ver todas las novedades
+                </a>
+              </td>
+            </tr>
+
+            <!-- Pie -->
+            <tr>
+              <td style="padding: 30px 20px 16px; text-align: center;">
+                <p class="muted" style="margin: 0 auto 16px; max-width: 320px; color: #9ca3af; font-size: 12px; line-height: 19px;">
+                  La forma más fácil de reservar canchas deportivas en Colombia.
+                </p>
+                <p style="margin: 0 0 16px;">
+                  <a class="muted" href="https://www.instagram.com/reservatucancha.site/" style="color: #6b7280; font-size: 12px; text-decoration: none; padding: 0 9px;">Instagram</a>
+                  <span class="muted-soft" style="color: #d1d5db;">&middot;</span>
+                  <a class="muted" href="https://wa.me/573124352786" style="color: #6b7280; font-size: 12px; text-decoration: none; padding: 0 9px;">WhatsApp</a>
+                  <span class="muted-soft" style="color: #d1d5db;">&middot;</span>
+                  <a class="muted" href="${opts.novedadesUrl}" style="color: #6b7280; font-size: 12px; text-decoration: none; padding: 0 9px;">Novedades</a>
+                </p>
+                <p class="muted-soft" style="margin: 0; color: #b9bfc9; font-size: 11px; line-height: 17px;">
+                  Recibes este correo porque tienes un club registrado en ReservaTuCancha.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>`;
 }
 
 // ─── Service ────────────────────────────────────────────────────────────────
