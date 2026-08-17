@@ -156,21 +156,21 @@ function parseChangelogBlocks(descripcion: string): ChangelogBlock[] {
 const brText = (text: string) => escapeHtml(text).replace(/\n/g, '<br>');
 
 /**
- * Hoja de estilos del correo. Va en un <style> del <head> porque necesita dos
- * cosas que no se pueden hacer con estilos en línea:
+ * Hoja de estilos del correo. Va en un <style> del <head> por las media
+ * queries: en escritorio las secciones van en dos columnas y en móvil se
+ * apilan. Sin esto el correo era una columna de 620px y en PC se veía como una
+ * app móvil rodeada de vacío. Outlook de escritorio las ignora, pero se queda
+ * con el diseño de escritorio, que es el correcto ahí.
  *
- * - Media queries: en escritorio las secciones van en dos columnas y en móvil
- *   se apilan. Sin esto el correo era una columna de 620px y en PC se veía
- *   como una app móvil rodeada de vacío.
- * - Modo oscuro: se declara `color-scheme` para que el cliente no invierta los
- *   colores por su cuenta (era lo que dejaba el mensaje en claro dentro de una
- *   bandeja oscura) y se define una paleta propia.
- *
- * Outlook de escritorio ignora las media queries, pero se queda con el diseño
- * de escritorio, que es justamente el correcto ahí.
+ * El correo se declara SOLO CLARO a propósito, igual que los de Mesoft. Gmail
+ * en móvil no soporta `prefers-color-scheme`: aplica su propio remapeo de
+ * colores. Declarar `light dark` le da permiso para hacerlo y las reglas de
+ * modo oscuro nunca se aplican, así que el resultado era un correo a medio
+ * invertir. Con `light` el cliente deja los colores como están y se ve igual en
+ * bandeja clara u oscura.
  */
 const CHANGELOG_STYLES = `
-  :root { color-scheme: light dark; supported-color-schemes: light dark; }
+  :root { color-scheme: light; supported-color-schemes: light; }
 
   body, table, td, p, a, h1 { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
   img { border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
@@ -182,18 +182,6 @@ const CHANGELOG_STYLES = `
     .hero        { padding: 34px 22px !important; }
     .hero-title  { font-size: 24px !important; line-height: 31px !important; }
     .card        { padding: 22px 20px !important; }
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .wrapper     { background-color: #0d1117 !important; }
-    .frame       { background-color: #161b22 !important; }
-    .card        { background-color: #1c2128 !important; }
-    .card-title  { color: #a3e635 !important; }
-    .txt         { color: #c9d1d9 !important; }
-    .txt-strong  { color: #f0f6fc !important; }
-    .muted       { color: #8b949e !important; }
-    .muted-soft  { color: #6e7681 !important; }
-    .brand-name  { color: #8b949e !important; }
   }
 `;
 
@@ -225,10 +213,10 @@ function buildChangelogHtml(opts: {
       <tr>
         <td class="card" style="background-color: #f7f8fa; border-radius: 16px; padding: 26px 24px;">
           ${s.heading ? `
-            <p class="card-title" style="margin: 0 0 10px; color: #16a34a; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.4px;">
+            <p style="margin: 0 0 10px; color: #16a34a; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.4px;">
               ${escapeHtml(s.heading)}
             </p>` : ''}
-          <p class="txt" style="margin: 0; color: #4b5563; font-size: 15px; line-height: 25px;">${brText(s.body)}</p>
+          <p style="margin: 0; color: #4b5563; font-size: 15px; line-height: 25px;">${brText(s.body)}</p>
         </td>
       </tr>
     </table>
@@ -264,13 +252,14 @@ function buildChangelogHtml(opts: {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light dark">
-  <meta name="supported-color-schemes" content="light dark">
+  <meta name="x-apple-disable-message-reformatting">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>${escapeHtml(opts.titulo)}</title>
   <style>${CHANGELOG_STYLES}</style>
 </head>
-<body class="wrapper" style="margin: 0; padding: 0; background-color: #eceef2;">
-  <div class="wrapper" style="background-color: #eceef2; padding: 28px 12px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+<body style="margin: 0; padding: 0; background-color: #eceef2;">
+  <div style="background-color: #eceef2; padding: 28px 12px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
     <table class="container" align="center" border="0" cellpadding="0" cellspacing="0" width="820" style="width: 820px; max-width: 100%; border-collapse: separate; margin: 0 auto;">
       <tr>
         <td class="frame" style="background-color: #ffffff; border-radius: 22px; padding: 14px;">
@@ -284,7 +273,7 @@ function buildChangelogHtml(opts: {
                     <td align="left" valign="middle" width="40">
                       <img src="${LOGO_URL}" alt="ReservaTuCancha" width="32" style="display: block;">
                     </td>
-                    <td class="brand-name" align="right" valign="middle" style="color: #9ca3af; font-size: 13px; font-weight: 600;">
+                    <td align="right" valign="middle" style="color: #9ca3af; font-size: 13px; font-weight: 600;">
                       ReservaTuCancha
                     </td>
                   </tr>
@@ -322,7 +311,7 @@ function buildChangelogHtml(opts: {
                     <img src="${LOGO_URL}" alt="" width="30" style="display: inline-block;">
                   </span>
                 </div>
-                <p class="txt-strong" style="margin: 0 auto 20px; max-width: 400px; color: #111827; font-size: 19px; font-weight: 800; line-height: 26px;">
+                <p style="margin: 0 auto 20px; max-width: 400px; color: #111827; font-size: 19px; font-weight: 800; line-height: 26px;">
                   Todo esto ya está activo en tu panel
                 </p>
                 <a href="${opts.novedadesUrl}" style="background-color: #16a34a; color: #ffffff; padding: 15px 32px; border-radius: 14px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block;">
@@ -334,17 +323,17 @@ function buildChangelogHtml(opts: {
             <!-- Pie -->
             <tr>
               <td style="padding: 30px 20px 16px; text-align: center;">
-                <p class="muted" style="margin: 0 auto 16px; max-width: 320px; color: #9ca3af; font-size: 12px; line-height: 19px;">
+                <p style="margin: 0 auto 16px; max-width: 320px; color: #9ca3af; font-size: 12px; line-height: 19px;">
                   La forma más fácil de reservar canchas deportivas en Colombia.
                 </p>
                 <p style="margin: 0 0 16px;">
-                  <a class="muted" href="https://www.instagram.com/reservatucancha.site/" style="color: #6b7280; font-size: 12px; text-decoration: none; padding: 0 9px;">Instagram</a>
-                  <span class="muted-soft" style="color: #d1d5db;">&middot;</span>
-                  <a class="muted" href="https://wa.me/573124352786" style="color: #6b7280; font-size: 12px; text-decoration: none; padding: 0 9px;">WhatsApp</a>
-                  <span class="muted-soft" style="color: #d1d5db;">&middot;</span>
-                  <a class="muted" href="${opts.novedadesUrl}" style="color: #6b7280; font-size: 12px; text-decoration: none; padding: 0 9px;">Novedades</a>
+                  <a href="https://www.instagram.com/reservatucancha.site/" style="color: #6b7280; font-size: 12px; text-decoration: none; padding: 0 9px;">Instagram</a>
+                  <span style="color: #d1d5db;">&middot;</span>
+                  <a href="https://wa.me/573124352786" style="color: #6b7280; font-size: 12px; text-decoration: none; padding: 0 9px;">WhatsApp</a>
+                  <span style="color: #d1d5db;">&middot;</span>
+                  <a href="${opts.novedadesUrl}" style="color: #6b7280; font-size: 12px; text-decoration: none; padding: 0 9px;">Novedades</a>
                 </p>
-                <p class="muted-soft" style="margin: 0; color: #b9bfc9; font-size: 11px; line-height: 17px;">
+                <p style="margin: 0; color: #b9bfc9; font-size: 11px; line-height: 17px;">
                   Recibes este correo porque tienes un club registrado en ReservaTuCancha.
                 </p>
               </td>
