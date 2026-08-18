@@ -10,7 +10,7 @@ import FaqAccordion from '@/components/ui/FaqAccordion';
 /* Modelo de cobro: comisión por reserva, no mensualidad. Antes eran tres
    planes con precio fijo al mes; ahora el club solo paga cuando vende. */
 const COMISION = {
-  porcentaje: '6%',
+  porcentaje: '9%',
   desc: 'Solo pagas cuando alguien reserva y paga por la plataforma. Sin mensualidad, sin contrato y sin costo de instalación.',
   incluye: [
     'Reservas y pagos online 24/7',
@@ -28,7 +28,7 @@ const COMISION = {
    su liquidación semanal. */
 const FLUJO_PAGOS = [
   { t: 'Tu cliente paga', d: 'El cobro se hace a nombre de ReservaTuCancha con la pasarela segura de Wompi.' },
-  { t: 'Descontamos el 6%', d: 'Es lo único que cobramos. No hay cuota mensual ni cobros por instalación.' },
+  { t: 'Descontamos el 9%', d: 'Es lo único que cobramos. No hay cuota mensual ni cobros por instalación.' },
   { t: 'Te pagamos cada lunes', d: 'Todos los lunes transferimos a tu cuenta lo recaudado durante la semana anterior.' },
 ];
 
@@ -86,8 +86,8 @@ const STATS = [
 
 const FAQ_QO = [
   { q: '¿Cuánto tiempo tarda el proceso de aprobación?', a: 'Una vez enviada tu solicitud, nuestro equipo la revisa en máximo 24–48 horas hábiles. Recibirás un email con tus credenciales de acceso.' },
-  { q: '¿Cobran comisión por reserva?', a: 'Sí: el 6% de cada reserva pagada por la plataforma. No hay mensualidad, contrato ni costo de instalación, así que si un mes no recibes reservas, no pagas nada.' },
-  { q: '¿Cuándo recibo mi dinero?', a: 'Todos los lunes. Transferimos a la cuenta del club lo recaudado durante la semana anterior, ya con el 6% descontado, y te queda el detalle de cada reserva en el panel.' },
+  { q: '¿Cobran comisión por reserva?', a: 'Sí: el 9% de cada reserva pagada por la plataforma. No hay mensualidad, contrato ni costo de instalación, así que si un mes no recibes reservas, no pagas nada.' },
+  { q: '¿Cuándo recibo mi dinero?', a: 'Todos los lunes. Transferimos a la cuenta del club lo recaudado durante la semana anterior, ya con el 9% descontado, y te queda el detalle de cada reserva en el panel.' },
   { q: '¿A nombre de quién se cobra la reserva?', a: 'El pago se recibe a nombre de ReservaTuCancha a través de Wompi. Tú no tienes que abrir ni configurar ninguna pasarela de pagos.' },
   { q: '¿Necesito conocimientos técnicos?', a: 'Para nada. El panel es 100% intuitivo. Te guiamos paso a paso desde la configuración de tu primera cancha hasta recibir tu primer pago.' },
   { q: '¿Qué métodos de pago puede usar mi cliente?', a: 'Tarjeta de crédito y débito, PSE y Nequi, directamente desde la plataforma.' },
@@ -260,7 +260,7 @@ export default function QueOfrecemosPage() {
 
             <p className="text-xs text-gray-400 mt-6 pt-5 border-t border-gray-200">
               Ejemplo: una cancha de $100.000 la hora. El cliente paga $100.000, nosotros
-              retenemos $6.000 y el lunes recibes $94.000.
+              retenemos $9.000 y el lunes recibes $91.000.
             </p>
           </div>
         </div>

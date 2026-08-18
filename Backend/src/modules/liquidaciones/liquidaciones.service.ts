@@ -42,7 +42,7 @@ export class LiquidacionesService {
   /** Comisión de la plataforma. Vive en el entorno por si cambia la tarifa. */
   get comisionPorcentaje(): number {
     const raw = Number(this.config.get('COMISION_PORCENTAJE'));
-    return Number.isFinite(raw) && raw >= 0 && raw <= 100 ? raw : 6;
+    return Number.isFinite(raw) && raw >= 0 && raw <= 100 ? raw : 9;
   }
 
   private comisionDe(bruto: number): number {

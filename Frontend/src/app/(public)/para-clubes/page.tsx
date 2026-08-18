@@ -35,8 +35,8 @@ const STEPS = [
 ];
 
 const FAQ = [
-  { q: '¿Cuánto cuesta?', a: 'No hay mensualidad ni contrato. Cobramos una comisión del 6% sobre cada reserva pagada por la plataforma: si nadie reserva, no pagas nada.' },
-  { q: '¿Cómo recibo los pagos?', a: 'Tus clientes pagan a ReservaTuCancha con Nequi, Daviplata, PSE o tarjeta. Cada lunes te transferimos lo recaudado de la semana anterior, ya con la comisión del 6% descontada.' },
+  { q: '¿Cuánto cuesta?', a: 'No hay mensualidad ni contrato. Cobramos una comisión del 9% sobre cada reserva pagada por la plataforma: si nadie reserva, no pagas nada.' },
+  { q: '¿Cómo recibo los pagos?', a: 'Tus clientes pagan a ReservaTuCancha con Nequi, Daviplata, PSE o tarjeta. Cada lunes te transferimos lo recaudado de la semana anterior, ya con la comisión del 9% descontada.' },
   { q: '¿Puedo bloquear horarios?', a: 'Sí. Bloqueas horarios por mantenimiento, torneos o eventos privados cuando quieras, desde el panel.' },
   { q: '¿Mis clientes necesitan registrarse?', a: 'No. Reservan con su nombre, email y teléfono. Menos fricción, más reservas para ti.' },
 ];
