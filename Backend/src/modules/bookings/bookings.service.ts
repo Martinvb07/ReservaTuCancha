@@ -115,16 +115,13 @@ export class BookingsService {
       
     if (!booking) throw new NotFoundException('Reserva no encontrada');
 
-    const court = booking.courtId as any;
-    const club = await this.clubModel.findOne({ ownerUserId: court.ownerId });
-
-    if (!club?.wompiPublicKey || !club?.wompiIntegritySecret) {
-      throw new BadRequestException('El club no tiene Wompi configurado');
+    /* El cobro se recibe a nombre de ReservaTuCancha, no del club: al club se
+       le gira su parte en la liquidación semanal, ya sin la comisión. */
+    if (!this.wompiService.configured) {
+      throw new BadRequestException('Los pagos en línea no están disponibles en este momento');
     }
 
     const checkoutUrl = this.wompiService.generateCheckoutUrl(
-      club.wompiPublicKey,
-      club.wompiIntegritySecret,
       booking.totalPrice,
       booking.bookingCode,
       redirectUrl,

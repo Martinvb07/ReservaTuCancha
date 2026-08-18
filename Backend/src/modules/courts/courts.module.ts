@@ -6,6 +6,7 @@ import { Court, CourtSchema } from './schemas/court.schema';
 import { BlockedSlot, BlockedSlotSchema } from './schemas/blocked-slot.schema';
 import { Club, ClubSchema } from '../clubs/schemas/club.schema';
 import { UsersModule } from '../users/users.module';
+import { WompiModule } from '../wompi/wompi.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { UsersModule } from '../users/users.module';
       { name: Club.name,  schema: ClubSchema  },
     ]),
     UsersModule,
+    WompiModule,
   ],
   controllers: [CourtsController],
   providers: [CourtsService],

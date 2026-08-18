@@ -3,7 +3,6 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { PlanLimitsService } from './plan-limits.service';
 import { User, UserSchema } from './schemas/user.schema';
 import { Court, CourtSchema } from '../courts/schemas/court.schema';
 
@@ -15,7 +14,7 @@ import { Court, CourtSchema } from '../courts/schemas/court.schema';
     ]),
   ],
   controllers: [UsersController],
-  providers: [UsersService, PlanLimitsService],
-  exports: [UsersService, PlanLimitsService],
+  providers: [UsersService],
+  exports: [UsersService],
 })
 export class UsersModule {}

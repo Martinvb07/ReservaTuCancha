@@ -6,7 +6,7 @@ import { BlockedSlot, BlockedSlotDocument } from './schemas/blocked-slot.schema'
 import { CreateCourtDto } from './dto/create-court.dto';
 import { BlockSlotDto } from './dto/block-slot.dto';
 import { Club, ClubDocument } from '../clubs/schemas/club.schema';
-import { PlanLimitsService } from '../users/plan-limits.service';
+import { WompiService } from '../wompi/wompi.service';
 
 export interface CourtFilters {
   sport?: SportType;
@@ -24,7 +24,7 @@ export class CourtsService {
     @InjectModel(Court.name) private courtModel: Model<CourtDocument>,
     @InjectModel(Club.name)  private clubModel:  Model<ClubDocument>,
     @InjectModel(BlockedSlot.name) private blockedSlotModel: Model<BlockedSlotDocument>,
-    private readonly planLimits: PlanLimitsService,
+    private readonly wompiService: WompiService,
   ) {}
 
   async findAll(filters: CourtFilters = {}) {
@@ -74,7 +74,6 @@ export class CourtsService {
   }
 
   async create(ownerId: string, dto: CreateCourtDto): Promise<Court> {
-    await this.planLimits.assertCanCreateCourt(ownerId);
     const court = new this.courtModel({ ...dto, ownerId: new Types.ObjectId(ownerId) });
     return court.save();
   }
@@ -122,24 +121,25 @@ export class CourtsService {
     });
   }
 
+  /**
+   * El pago en línea ya no depende del club: se cobra con la cuenta Wompi de
+   * ReservaTuCancha. Se mantiene la ruta porque el formulario de reserva la
+   * consulta para decidir si ofrece pago en línea o solo efectivo.
+   */
   async getWompiConfig(courtId: string) {
     const court = await this.courtModel.findById(courtId).lean();
     if (!court) throw new NotFoundException('Cancha no encontrada');
 
-    const club = await this.clubModel.findOne({ ownerUserId: court.ownerId }).lean();
-    if (!club) throw new NotFoundException('Club no encontrado');
-
-    if (!club.wompiPublicKey || !club.wompiIntegritySecret) {
+    if (!this.wompiService.configured) {
       return {
         configured: false,
-        message: 'El propietario de esta cancha no ha configurado Wompi aún',
+        message: 'Los pagos en línea no están disponibles en este momento',
       };
     }
 
     return {
       configured: true,
-      wompiPublicKey: club.wompiPublicKey,
-      wompiMerchantId: club.wompiMerchantId,
+      wompiPublicKey: this.wompiService.publicKey,
     };
   }
 

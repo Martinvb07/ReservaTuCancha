@@ -3,6 +3,26 @@ import { Document, Types } from 'mongoose';
 
 export type ClubDocument = Club & Document;
 
+@Schema({ _id: false })
+export class DatosBancarios {
+  @Prop({ trim: true })
+  titular?: string;
+
+  /** Cédula o NIT del titular */
+  @Prop({ trim: true })
+  documento?: string;
+
+  /** Bancolombia, Nequi, Daviplata... */
+  @Prop({ trim: true })
+  banco?: string;
+
+  @Prop({ enum: ['ahorros', 'corriente', 'nequi', 'daviplata'], trim: true })
+  tipoCuenta?: string;
+
+  @Prop({ trim: true })
+  numero?: string;
+}
+
 @Schema({ timestamps: true })
 export class Club {
   @Prop({ required: true, trim: true })
@@ -26,24 +46,11 @@ export class Club {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   ownerUserId: Types.ObjectId;
 
-  // --- Configuración de Wompi ---
-  @Prop({ trim: true })
-  wompiMerchantId?: string;
-
-  @Prop({ trim: true })
-  wompiPublicKey?: string;
-
-  @Prop({ trim: true })
-  wompiApiKey?: string;
-
-  @Prop({ trim: true })
-  wompiEventsSecret?: string;
-
-  @Prop({ trim: true })
-  wompiIntegritySecret?: string;
-
-  @Prop({ default: false })
-  wompiConfigured?: boolean;
+  // --- Cuenta donde recibe la liquidación semanal ---
+  // Los cobros entran a la cuenta Wompi de ReservaTuCancha; cada lunes se le
+  // transfiere al club su parte a estos datos.
+  @Prop({ type: DatosBancarios })
+  banco?: DatosBancarios;
 
   @Prop({ trim: true, lowercase: true })
   slug?: string;

@@ -9,6 +9,7 @@ import { BlockedSlot, BlockedSlotSchema } from '../courts/schemas/blocked-slot.s
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { PaymentsModule } from '../payments/payments.module';
+import { WompiModule } from '../wompi/wompi.module';
 
 @Module({
   imports: [
@@ -21,7 +22,8 @@ import { PaymentsModule } from '../payments/payments.module';
     ]),
     NotificationsModule,
     // 2. Usar forwardRef para evitar la referencia circular con Payments
-    forwardRef(() => PaymentsModule), 
+    forwardRef(() => PaymentsModule),
+    WompiModule,
   ],
   controllers: [BookingsController],
   providers: [BookingsService],

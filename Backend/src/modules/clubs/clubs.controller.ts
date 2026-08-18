@@ -73,14 +73,14 @@ export class ClubsController {
     return this.clubsService.removeClubPhoto(req.user.userId, url);
   }
 
-  @Patch(':id/wompi')
+  @Patch(':id/banco')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.OWNER)
-  async updateWompiCredentials(
+  async updateDatosBancarios(
     @Param('id') clubId: string,
-    @Body() wompiData: { wompiPublicKey: string; wompiIntegritySecret?: string; wompiEventsSecret?: string },
-    @Request() req
+    @Body() banco: { titular?: string; documento?: string; banco?: string; tipoCuenta?: string; numero?: string },
+    @Request() req,
   ) {
-    return this.clubsService.updateWompiCredentials(clubId, wompiData, req.user.userId);
+    return this.clubsService.updateDatosBancarios(clubId, banco, req.user.userId);
   }
 }

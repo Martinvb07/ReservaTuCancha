@@ -16,6 +16,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { DatabaseModule } from './database/database.module';
 import { SolicitudesModule } from './modules/solicitudes/solicitudes.module';
 import { ClubsModule } from './modules/clubs/clubs.module';
+import { LiquidacionesModule } from './modules/liquidaciones/liquidaciones.module';
 import { ChangelogModule } from './modules/changelog/changelog.module';
 
 @Module({
@@ -42,6 +43,7 @@ import { ChangelogModule } from './modules/changelog/changelog.module';
     SolicitudesModule,
     ClubsModule,
     ChangelogModule,   // ← nuevo
+    LiquidacionesModule,
   ],
 })
 export class AppModule {}

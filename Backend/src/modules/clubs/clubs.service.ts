@@ -4,7 +4,6 @@ import { Model, Types } from 'mongoose';
 import { Club, ClubDocument } from './schemas/club.schema';
 import { Court, CourtDocument } from '../courts/schemas/court.schema';
 import { Review, ReviewDocument } from '../reviews/schemas/review.schema';
-import { PlanLimitsService } from '../users/plan-limits.service';
 
 function generateSlug(name: string): string {
   return name
@@ -23,7 +22,6 @@ export class ClubsService {
     @InjectModel(Club.name)   private clubModel:   Model<ClubDocument>,
     @InjectModel(Court.name)  private courtModel:  Model<CourtDocument>,
     @InjectModel(Review.name) private reviewModel: Model<ReviewDocument>,
-    private readonly planLimits: PlanLimitsService,
   ) {}
 
   async findMyClub(userId: string) {
@@ -92,7 +90,9 @@ export class ClubsService {
           contactEmail: club.contactEmail,
           contactPhone: club.contactPhone,
           ownerUserId: club.ownerUserId,
-          wompiConfigured: club.wompiConfigured,
+          // El club ya no configura pasarela; lo que importa es si registró
+          // la cuenta a la que se le gira la liquidación semanal.
+          bancoConfigurado: !!club.banco?.numero,
           sports,
           totalCourts: courts.length,
         };
@@ -145,45 +145,38 @@ export class ClubsService {
     return club.toObject();
   }
 
-  async updateWompiCredentials(
+  /**
+   * Cuenta donde el club recibe su liquidación semanal.
+   *
+   * Reemplaza a la configuración de Wompi por club: ahora todos los cobros
+   * entran a la cuenta de ReservaTuCancha y cada lunes se transfiere aquí.
+   */
+  async updateDatosBancarios(
     clubId: string,
-    wompiData: { wompiPublicKey: string; wompiIntegritySecret?: string; wompiEventsSecret?: string },
-    userId: string
+    banco: { titular?: string; documento?: string; banco?: string; tipoCuenta?: string; numero?: string },
+    userId: string,
   ) {
-    // PLAN: Verificar que el plan del usuario permite configurar Wompi
-    await this.planLimits.assertCanConfigureWompi(userId);
-
     // PREVENCIÓN: Validar el ID del club para evitar el crash del server (Error 500)
     if (!Types.ObjectId.isValid(clubId)) {
       throw new NotFoundException('El ID del club no es un formato válido de MongoDB.');
     }
 
     const club = await this.clubModel.findById(clubId);
-    
     if (!club) {
-      throw new NotFoundException('No se encontró el club para actualizar las credenciales.');
+      throw new NotFoundException('No se encontró el club para actualizar la cuenta.');
     }
-    
+
     // SEGURIDAD: Validar que el que pide el cambio es el dueño real
     if (club.ownerUserId.toString() !== userId.toString()) {
       throw new ForbiddenException('No tienes permisos para configurar los pagos de este club.');
     }
 
-    // Actualización de campos
-    club.wompiPublicKey = wompiData.wompiPublicKey;
-    if (wompiData.wompiIntegritySecret?.trim()) {
-      club.wompiIntegritySecret = wompiData.wompiIntegritySecret;
-    }
-    if (wompiData.wompiEventsSecret?.trim()) {
-      club.wompiEventsSecret = wompiData.wompiEventsSecret;
-    }
-    club.wompiConfigured = !!(club.wompiPublicKey && club.wompiIntegritySecret);
-
+    club.banco = { ...(club.banco ?? {}), ...banco };
     await club.save();
 
     return {
-      message: 'Credenciales de Wompi vinculadas correctamente',
-      wompiConfigured: true,
+      message: 'Cuenta de pagos actualizada',
+      banco: club.banco,
     };
   }
 

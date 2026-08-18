@@ -1,7 +1,6 @@
 import { Controller, Post, Body, Headers, BadRequestException, Logger } from '@nestjs/common';
 import { BookingsService } from '../bookings/bookings.service';
 import { WompiService } from '../wompi/wompi.service';
-import { ClubsService } from '../clubs/clubs.service';
 
 @Controller('webhooks/wompi')
 export class WompiWebhookController {
@@ -10,7 +9,6 @@ export class WompiWebhookController {
   constructor(
     private readonly bookingsService: BookingsService,
     private readonly wompiService: WompiService,
-    private readonly clubsService: ClubsService,
   ) {}
 
   @Post()
@@ -28,44 +26,27 @@ export class WompiWebhookController {
       throw new BadRequestException('Reserva no encontrada');
     }
 
-    // 2. Obtener el club para validar la firma con su Secret de Eventos
-    let club: any = null;
-    try {
-      const court = booking.courtId as any;
-      const ownerId = court?.ownerUserId || court?.ownerId;
-      if (ownerId) {
-        club = await this.clubsService.findMyClub(ownerId.toString());
-      }
-    } catch (e) {
-      this.logger.warn('No se pudo obtener el club para validar firma, se omite validación');
-    }
-
-    // Validación de firma (Opcional en desarrollo, Obligatorio en producción)
-    if (club?.wompiEventsSecret) {
-      const isValid = this.wompiService.validateSignature(
-        data,
-        timestamp,
-        checksum,
-        club.wompiEventsSecret
-      );
-      if (!isValid) {
+    /* 2. La firma se valida con el secreto de eventos de la empresa: todos los
+       cobros entran por la misma cuenta Wompi, ya no por la de cada club. */
+    if (this.wompiService.eventsSecret) {
+      if (!this.wompiService.validateSignature(data, timestamp, checksum)) {
         this.logger.error(`Firma inválida para la reserva: ${booking.bookingCode}`);
         throw new BadRequestException('Firma inválida');
       }
+    } else {
+      this.logger.warn('WOMPI_EVENTS_SECRET sin definir: se acepta el webhook sin validar firma');
     }
 
     // 3. Procesar el estado de la transacción
     if (event === 'transaction.updated') {
       if (transaction.status === 'APPROVED') {
         this.logger.log(`✅ Pago aprobado para reserva: ${booking.bookingCode}`);
-        
+
         // Actualizamos la reserva a CONFIRMED y guardamos el ID de Wompi
         await this.bookingsService.updateStatus(booking._id.toString(), {
           status: 'confirmed',
           wompiTransactionId: transaction.id
         });
-
-        // AQUÍ PODRÍAS DISPARAR EL ENVÍO DE EMAIL DE CONFIRMACIÓN
       } else if (transaction.status === 'DECLINED' || transaction.status === 'ERROR') {
         this.logger.warn(`❌ Pago rechazado/error para reserva: ${booking.bookingCode}`);
         await this.bookingsService.updateStatus(booking._id.toString(), {
