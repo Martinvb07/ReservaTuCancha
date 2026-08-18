@@ -178,6 +178,84 @@ body.sheet-open .fab-float {
   pointer-events: none;
 }
 
+/* El FAB solo se estira a píldora donde hay puntero real. En táctil el :hover
+   se queda pegado (p. ej. al volver de WhatsApp) y el botón quedaba estirado
+   ocupando media pantalla del celular. */
+@media (hover: hover) and (pointer: fine) {
+  .fab-expand:hover { width: 14rem; }
+  .fab-expand:hover .fab-expand-label { max-width: 100%; opacity: 1; }
+}
+
+/* ── Chatbot de soporte ───────────────────────────────────────────────────
+   El panel crece desde la esquina del FAB y cada burbuja/opción entra sola:
+   sin esto los mensajes aparecen de golpe y la conversación se siente tosca. */
+@keyframes rtc-chatPanelIn {
+  from { opacity: 0; transform: translateY(28px) scale(.92); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes rtc-chatPanelOut {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: translateY(18px) scale(.94); }
+}
+/* `backwards` (y no `both`) en las entradas: al terminar la animación el
+   elemento vuelve a sus estilos propios y el transform queda libre para los
+   hover/active de Tailwind. */
+.rtc-chat-in  { animation: rtc-chatPanelIn .4s cubic-bezier(.16,1,.3,1) backwards; transform-origin: bottom right; }
+.rtc-chat-out { animation: rtc-chatPanelOut .22s cubic-bezier(.4,0,1,1) both; transform-origin: bottom right; }
+
+@keyframes rtc-chatBubbleIn {
+  from { opacity: 0; transform: translateY(12px) scale(.96); }
+  to   { opacity: 1; transform: none; }
+}
+.rtc-chat-bubble { animation: rtc-chatBubbleIn .34s cubic-bezier(.16,1,.3,1) backwards; }
+
+@keyframes rtc-chatChipIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes rtc-chatChipOut {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: translateY(-6px) scale(.96); }
+}
+.rtc-chat-chip     { animation: rtc-chatChipIn .3s cubic-bezier(.16,1,.3,1) backwards; }
+.rtc-chat-chip-out { animation: rtc-chatChipOut .16s ease-in both; }
+
+/* Scrollbar de la conversación: delgada y discreta en vez de la barra gruesa
+   del sistema, que rompía el borde redondeado del panel. El `background-clip`
+   deja el pulgar de 4px flotando dentro de un canal de 8px. */
+.rtc-chat-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #d4d4d8 transparent;
+}
+.rtc-chat-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.rtc-chat-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.rtc-chat-scroll::-webkit-scrollbar-thumb {
+  background-color: #d4d4d8;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-radius: 9999px;
+  transition: background-color .2s ease;
+}
+.rtc-chat-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: #a1a1aa;
+}
+
+/* Puntitos de "escribiendo": onda suave, no el rebote duro de Tailwind */
+@keyframes rtc-chatTyping {
+  0%, 65%, 100% { opacity: .3; transform: translateY(0); }
+  32%           { opacity: 1;  transform: translateY(-3px); }
+}
+.rtc-chat-typing { animation: rtc-chatTyping 1.15s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rtc-chat-in, .rtc-chat-out, .rtc-chat-bubble,
+  .rtc-chat-chip, .rtc-chat-chip-out, .rtc-chat-typing { animation: none; }
+}
+
 /* Sheet de búsqueda móvil — el fondo hace fade y las tarjetas entran escalonadas */
 @keyframes rtc-fade    { from { opacity: 0; } to { opacity: 1; } }
 @keyframes rtc-fadeOut { from { opacity: 1; } to { opacity: 0; } }

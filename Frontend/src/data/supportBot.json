@@ -1,0 +1,271 @@
+{
+  "meta": {
+    "titulo": "Asistente virtual",
+    "subtitulo": "Respuestas al instante",
+    "saludo": "¡Hola! 👋 Soy el asistente de ReservaTuCancha. Elige un tema y te doy la respuesta al toque.",
+    "nodoInicial": "inicio",
+    "opcionesFinales": [
+      { "texto": "Ver otro tema", "destino": "inicio" },
+      { "texto": "Hablar con un asesor", "destino": "asesor" }
+    ]
+  },
+
+  "nodos": {
+    "inicio": {
+      "mensaje": "¿Con qué necesitas ayuda?",
+      "opciones": [
+        { "texto": "Reservar una cancha", "destino": "jugador" },
+        { "texto": "Pagos y cancelaciones", "destino": "pagos" },
+        { "texto": "Registrar mi club", "destino": "club-nuevo" },
+        { "texto": "Ya administro un club", "destino": "propietario" },
+        { "texto": "Mi cuenta", "destino": "cuenta" },
+        { "texto": "Hablar con un asesor", "destino": "asesor" }
+      ]
+    },
+
+    "jugador": {
+      "mensaje": "Perfecto 👌 ¿Qué necesitas saber sobre tu reserva?",
+      "opciones": [
+        { "texto": "¿Cómo reservo?", "destino": "jugador-como-reservar" },
+        { "texto": "¿Necesito crear una cuenta?", "destino": "jugador-sin-cuenta" },
+        { "texto": "No me llegó la confirmación", "destino": "jugador-sin-confirmacion" },
+        { "texto": "Cancelar o cambiar mi reserva", "destino": "jugador-cambios" },
+        { "texto": "Ver mis reservas", "destino": "jugador-mis-reservas" },
+        { "texto": "← Volver", "destino": "inicio" }
+      ]
+    },
+
+    "jugador-como-reservar": {
+      "esRespuesta": true,
+      "mensaje": "Reservar te toma menos de un minuto:\n\n1. Busca tu cancha por ciudad y deporte.\n2. Elige el día y el horario disponible.\n3. Escribe tu nombre, email y teléfono.\n4. Paga con Nequi, Daviplata, PSE o tarjeta.\n\nApenas se confirma el pago te llega el email con los datos de la cancha y tu código de reserva.",
+      "opciones": [
+        { "texto": "Buscar canchas", "url": "/canchas" }
+      ]
+    },
+
+    "jugador-sin-cuenta": {
+      "esRespuesta": true,
+      "mensaje": "No hace falta 🙌 Reservas solo con tu nombre, email y teléfono. Sin contraseñas ni registro.\n\nLa cuenta solo la necesitan los clubes que administran sus canchas en la plataforma.",
+      "opciones": []
+    },
+
+    "jugador-sin-confirmacion": {
+      "esRespuesta": true,
+      "mensaje": "La confirmación llega al instante al correo que escribiste al reservar. Si no la ves:\n\n• Revisa las carpetas de spam y promociones.\n• Verifica que el correo esté bien escrito.\n• Dale 2 o 3 minutos: a veces el proveedor lo retiene.\n\nSi después de eso no aparece, escríbenos con tu nombre y la fecha de la reserva y la reenviamos.",
+      "opciones": []
+    },
+
+    "jugador-cambios": {
+      "mensaje": "¿Qué quieres hacer con tu reserva?",
+      "opciones": [
+        { "texto": "Cancelarla", "destino": "jugador-cancelar" },
+        { "texto": "Cambiar el día o la hora", "destino": "jugador-cambiar" },
+        { "texto": "← Volver", "destino": "jugador" }
+      ]
+    },
+
+    "jugador-cancelar": {
+      "esRespuesta": true,
+      "mensaje": "En el email de confirmación tienes un enlace de cancelación: lo abres y listo, sin llamadas ni trámites.\n\nPuedes cancelar gratis hasta 2 horas antes de tu turno. Pasado ese límite, la devolución la decide el club dueño de la cancha.",
+      "opciones": []
+    },
+
+    "jugador-cambiar": {
+      "esRespuesta": true,
+      "mensaje": "Por ahora una reserva creada no se puede editar. Lo más rápido es cancelarla desde el enlace del email (hasta 2 horas antes) y volver a reservar el horario que quieres.\n\nSi ya pasó ese límite, escríbenos por WhatsApp y lo miramos con el club caso por caso.",
+      "opciones": [
+        { "texto": "Buscar otro horario", "url": "/canchas" }
+      ]
+    },
+
+    "jugador-mis-reservas": {
+      "esRespuesta": true,
+      "mensaje": "En «Mis reservas» consultas todas tus reservas con el mismo email que usaste al reservar.",
+      "opciones": [
+        { "texto": "Ir a Mis reservas", "url": "/mis-reservas" }
+      ]
+    },
+
+    "pagos": {
+      "mensaje": "Cuéntame qué pasó con el pago:",
+      "opciones": [
+        { "texto": "¿Qué medios de pago aceptan?", "destino": "pagos-medios" },
+        { "texto": "Me cobraron y no llegó la reserva", "destino": "pagos-cobro-sin-reserva" },
+        { "texto": "¿Cómo pido un reembolso?", "destino": "pagos-reembolso" },
+        { "texto": "Necesito una factura", "destino": "pagos-factura" },
+        { "texto": "← Volver", "destino": "inicio" }
+      ]
+    },
+
+    "pagos-medios": {
+      "esRespuesta": true,
+      "mensaje": "Procesamos los pagos con Wompi, una de las pasarelas más usadas en Colombia. Puedes pagar con:\n\n• Tarjeta débito o crédito\n• Nequi\n• Daviplata\n• PSE\n\nNunca guardamos los datos de tu tarjeta: el cobro ocurre dentro de Wompi.",
+      "opciones": []
+    },
+
+    "pagos-cobro-sin-reserva": {
+      "esRespuesta": true,
+      "mensaje": "Tranquilo, eso se resuelve. Suele pasar cuando el banco deja el pago en estado «pendiente» y no alcanza a confirmarse a tiempo.\n\nEscríbenos por WhatsApp con la referencia de Wompi, el valor y la fecha. Verificamos la transacción y, si quedó un cobro sin reserva, se devuelve.",
+      "opciones": [
+        { "texto": "Escribir por WhatsApp", "accion": "whatsapp" }
+      ]
+    },
+
+    "pagos-reembolso": {
+      "esRespuesta": true,
+      "mensaje": "Las devoluciones las autoriza el club dueño de la cancha:\n\n• Si cancelas con más de 2 horas de anticipación, la devolución procede.\n• Wompi acredita el dinero al mismo medio de pago con el que pagaste; el tiempo depende de tu banco.\n\nEscríbenos con los datos de la reserva y hacemos el trámite con el club.",
+      "opciones": [
+        { "texto": "Escribir por WhatsApp", "accion": "whatsapp" }
+      ]
+    },
+
+    "pagos-factura": {
+      "esRespuesta": true,
+      "mensaje": "Escríbenos a soporte@reservatucancha.co con tu código de reserva y los datos de facturación (NIT o cédula, razón social y dirección) y te la enviamos.",
+      "opciones": [
+        { "texto": "Enviar email", "url": "mailto:soporte@reservatucancha.co" }
+      ]
+    },
+
+    "club-nuevo": {
+      "mensaje": "¡Genial 🚀 Estas son las dudas más comunes de los clubes que se están registrando:",
+      "opciones": [
+        { "texto": "¿Cómo registro mi club?", "destino": "club-registro" },
+        { "texto": "¿Cuánto cuesta?", "destino": "club-precios" },
+        { "texto": "¿Cobran comisión por reserva?", "destino": "club-comision" },
+        { "texto": "¿Cuánto tarda la aprobación?", "destino": "club-aprobacion" },
+        { "texto": "¿Cómo recibo el dinero?", "destino": "club-pagos" },
+        { "texto": "← Volver", "destino": "inicio" }
+      ]
+    },
+
+    "club-registro": {
+      "esRespuesta": true,
+      "mensaje": "El acceso es por solicitud, así verificamos cada club antes de publicarlo:\n\n1. Llenas el formulario de «Solicitar acceso» con los datos de tu club.\n2. Nuestro equipo revisa la solicitud.\n3. Recibes tus credenciales por email y ya puedes publicar tus canchas.",
+      "opciones": [
+        { "texto": "Solicitar acceso", "url": "/solicitar-acceso" }
+      ]
+    },
+
+    "club-precios": {
+      "esRespuesta": true,
+      "mensaje": "Manejamos planes según el tamaño del club. En «Qué ofrecemos» está el detalle de qué incluye cada uno y hasta cuántas canchas puedes publicar.\n\nSi quieres que te recomendemos uno según tu número de canchas, escríbenos y lo vemos contigo.",
+      "opciones": [
+        { "texto": "Ver planes", "url": "/que-ofrecemos" }
+      ]
+    },
+
+    "club-comision": {
+      "esRespuesta": true,
+      "mensaje": "No cobramos comisión por reserva. Solo pagas tu plan mensual y los pagos de tus clientes van directo a tu cuenta.",
+      "opciones": []
+    },
+
+    "club-aprobacion": {
+      "esRespuesta": true,
+      "mensaje": "Revisamos cada solicitud en máximo 24 a 48 horas hábiles. Cuando queda aprobada te llega un email con tus credenciales para entrar al panel.",
+      "opciones": []
+    },
+
+    "club-pagos": {
+      "esRespuesta": true,
+      "mensaje": "Conectas tu cuenta de Wompi una sola vez desde el panel y el dinero de las reservas llega directo ahí: nosotros no lo retenemos.\n\nLos tiempos de acreditación los define Wompi junto con tu banco.",
+      "opciones": []
+    },
+
+    "propietario": {
+      "mensaje": "Perfecto, ¿qué quieres hacer en tu panel?",
+      "opciones": [
+        { "texto": "Agregar o editar canchas", "destino": "prop-canchas" },
+        { "texto": "Bloquear horarios", "destino": "prop-bloqueos" },
+        { "texto": "Gestionar reservas", "destino": "prop-reservas" },
+        { "texto": "Cambiar de plan", "destino": "prop-plan" },
+        { "texto": "Agregar otro administrador", "destino": "prop-usuarios" },
+        { "texto": "← Volver", "destino": "inicio" }
+      ]
+    },
+
+    "prop-canchas": {
+      "esRespuesta": true,
+      "mensaje": "Entra a tu panel → Mis Canchas.\n\n• «Agregar cancha» crea una nueva con fotos, deporte, precio y horarios.\n• Toca cualquier cancha existente para editar sus datos.\n\nLa cantidad de canchas que puedes publicar depende de tu plan.",
+      "opciones": []
+    },
+
+    "prop-bloqueos": {
+      "esRespuesta": true,
+      "mensaje": "Panel → Mis Canchas → Disponibilidad.\n\nAhí marcas cualquier horario como no disponible por mantenimiento, torneo o uso privado, y deja de aparecer para los jugadores.",
+      "opciones": []
+    },
+
+    "prop-reservas": {
+      "esRespuesta": true,
+      "mensaje": "Panel → Reservas.\n\nPuedes filtrar por cancha y fecha, confirmar una reserva manualmente (el cliente recibe el email automático) o cancelarla si es necesario.",
+      "opciones": []
+    },
+
+    "prop-plan": {
+      "esRespuesta": true,
+      "mensaje": "Escríbenos indicando a qué plan quieres pasar. Te enviamos los datos de pago (Nequi, Daviplata o transferencia bancaria) y activamos el plan en menos de 24 horas.",
+      "opciones": [
+        { "texto": "Escribir por WhatsApp", "accion": "whatsapp" }
+      ]
+    },
+
+    "prop-usuarios": {
+      "esRespuesta": true,
+      "mensaje": "Los administradores adicionales con permisos propios están disponibles en el plan Empresarial. Escríbenos y te lo dejamos configurado.",
+      "opciones": [
+        { "texto": "Ver planes", "url": "/que-ofrecemos" }
+      ]
+    },
+
+    "cuenta": {
+      "mensaje": "¿Qué necesitas de tu cuenta?",
+      "opciones": [
+        { "texto": "Olvidé mi contraseña", "destino": "cuenta-clave-olvidada" },
+        { "texto": "Cambiar mi contraseña", "destino": "cuenta-clave-cambiar" },
+        { "texto": "Actualizar los datos de mi club", "destino": "cuenta-datos" },
+        { "texto": "Dar de baja mi cuenta", "destino": "cuenta-baja" },
+        { "texto": "← Volver", "destino": "inicio" }
+      ]
+    },
+
+    "cuenta-clave-olvidada": {
+      "esRespuesta": true,
+      "mensaje": "En la pantalla de inicio de sesión toca «¿Olvidaste tu contraseña?» y sigue los pasos con el correo de tu cuenta.",
+      "opciones": [
+        { "texto": "Ir al login", "url": "/auth/login" }
+      ]
+    },
+
+    "cuenta-clave-cambiar": {
+      "esRespuesta": true,
+      "mensaje": "Con la sesión abierta: Panel → Perfil → Seguridad → Cambiar contraseña.",
+      "opciones": []
+    },
+
+    "cuenta-datos": {
+      "esRespuesta": true,
+      "mensaje": "Panel → Mi Club.\n\nAhí actualizas nombre, logo, descripción, dirección, teléfono y redes de tu club. Los cambios se reflejan de inmediato en tu página pública.",
+      "opciones": []
+    },
+
+    "cuenta-baja": {
+      "esRespuesta": true,
+      "mensaje": "Escríbenos desde el correo registrado pidiendo dar de baja tu club. Lo confirmamos contigo, despublicamos las canchas y cerramos la cuenta.",
+      "opciones": [
+        { "texto": "Escribir por WhatsApp", "accion": "whatsapp" }
+      ]
+    },
+
+    "asesor": {
+      "mensaje": "Con gusto te conectamos con el equipo 🙌\n\nHorario de atención:\n• Lunes a viernes: 8:00 a. m. – 7:00 p. m.\n• Sábados: 9:00 a. m. – 2:00 p. m.\n(Colombia, UTC-5)\n\nFuera de ese horario déjanos el mensaje y respondemos apenas abramos.",
+      "opciones": [
+        { "texto": "Escribir por WhatsApp", "accion": "whatsapp" },
+        { "texto": "Enviar un email", "url": "mailto:soporte@reservatucancha.co" },
+        { "texto": "Ir al centro de soporte", "url": "/soporte" },
+        { "texto": "← Volver al inicio", "destino": "inicio" }
+      ]
+    }
+  }
+}
