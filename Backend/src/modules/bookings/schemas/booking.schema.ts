@@ -55,7 +55,9 @@ export class Booking {
   @Prop({ trim: true })
   wompiTransactionId?: string; // ID interno de Wompi para seguimiento
 
-  @Prop({ enum: ['wompi', 'efectivo'], default: 'wompi' })
+  /* Solo se cobra en linea. El efectivo se retiro: la plata tiene que pasar
+     por la cuenta de la empresa para poder retener la comision y liquidar. */
+  @Prop({ enum: ['wompi'], default: 'wompi' })
   paymentMethod: string;
 
   // ─── Tokens para acciones sin login ──────────────────────────────────

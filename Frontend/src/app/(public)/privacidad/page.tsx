@@ -31,7 +31,7 @@ export default function PrivacidadPage() {
           </div>
           <div className="space-y-3">
             <h2 className="text-lg font-black text-gray-900 uppercase">3. Seguridad</h2>
-            <p>Los pagos se procesan mediante Stripe, cumpliendo con los estándares PCI-DSS. No almacenamos datos de tarjetas de crédito en nuestros servidores.</p>
+            <p>Los pagos se procesan mediante Wompi, cumpliendo con los estándares PCI-DSS. No almacenamos datos de tarjetas de crédito en nuestros servidores.</p>
           </div>
           <div className="space-y-3">
             <h2 className="text-lg font-black text-gray-900 uppercase">4. Tus derechos</h2>

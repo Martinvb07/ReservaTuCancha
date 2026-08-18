@@ -1,21 +1,17 @@
-import { Module, forwardRef } from '@nestjs/common'; // Agregamos forwardRef
-import { MongooseModule } from '@nestjs/mongoose';
-import { PaymentsController } from './payments.controller';
+import { Module } from '@nestjs/common';
 import { WompiWebhookController } from './wompi-webhook.controller';
-import { PaymentsService } from './payments.service';
-import { WompiModule } from '../wompi/wompi.module';
-import { Payment, PaymentSchema } from './schemas/payment.schema';
 import { BookingsModule } from '../bookings/bookings.module';
+import { WompiModule } from '../wompi/wompi.module';
 
-
+/**
+ * Solo aloja el webhook de Wompi.
+ *
+ * Antes vivía acá la integración con Stripe (PaymentsService, PaymentIntents y
+ * la colección Payment), que quedó sin uso cuando el cobro pasó a Wompi: el
+ * estado del pago se guarda en la propia reserva (`wompiTransactionId`).
+ */
 @Module({
-  imports: [
-    MongooseModule.forFeature([{ name: Payment.name, schema: PaymentSchema }]),
-    forwardRef(() => BookingsModule), // <--- CAMBIO AQUÍ
-    WompiModule,
-  ],
-  controllers: [PaymentsController, WompiWebhookController],
-  providers: [PaymentsService],
-  exports: [PaymentsService],
+  imports: [BookingsModule, WompiModule],
+  controllers: [WompiWebhookController],
 })
 export class PaymentsModule {}

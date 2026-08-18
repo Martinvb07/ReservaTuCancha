@@ -68,7 +68,7 @@ const FAQ_SOPORTE = [
     cat: 'Pagos',
     items: [
       { q: '¿Cuándo recibo el dinero de las reservas?', a: 'Los pagos se acreditan en tu cuenta bancaria entre 1 y 3 días hábiles después de confirmada la reserva.' },
-      { q: '¿Cómo configuro los métodos de pago?', a: 'En tu panel → Configuración → Pagos. Conectamos tu cuenta de Stripe o Wompi en menos de 5 minutos.' },
+      { q: '¿Cómo recibo el dinero de mis reservas?', a: 'No tienes que configurar ninguna pasarela: el cobro se hace a nombre de ReservaTuCancha y cada lunes te transferimos lo recaudado de la semana anterior, ya con la comisión descontada.' },
       { q: '¿Se emiten facturas electrónicas?', a: 'Sí. En el plan Pro generamos factura electrónica automática por cada reserva y la enviamos al cliente.' },
     ],
   },

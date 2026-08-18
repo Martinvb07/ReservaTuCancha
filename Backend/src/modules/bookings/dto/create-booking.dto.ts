@@ -61,6 +61,6 @@ export class CreateBookingDto {
 
   @ApiProperty({ example: 'wompi', required: false })
   @IsOptional()
-  @IsIn(['wompi', 'efectivo'])
-  paymentMethod?: 'wompi' | 'efectivo';
+  @IsIn(['wompi'])
+  paymentMethod?: 'wompi';
 }

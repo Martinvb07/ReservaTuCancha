@@ -82,7 +82,8 @@ export default function BookingForm({
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [dateOffset, setDateOffset]     = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState<'wompi' | 'efectivo' | null>(null);
+  /* Ya no hay que elegir: solo se cobra en línea. */
+  const paymentMethod = 'wompi' as const;
   const [processing, setProcessing]     = useState(false);
 
   const { data: wompiConfig } = useQuery({
@@ -235,15 +236,10 @@ export default function BookingForm({
   };
 
   const onSubmit = (values: FormValues) => {
-    if (!paymentMethod) { toast.error('Selecciona un método de pago'); return; }
     setProcessing(true);
     createBookingMutation.mutate(values, {
       onSuccess: (bookingData) => {
-        if (paymentMethod === 'efectivo') {
-          window.location.href = `/reservas/confirmacion?bookingId=${bookingData._id}&method=efectivo&code=${bookingData.bookingCode}`;
-        } else {
-          paymentMutation.mutate(bookingData._id);
-        }
+        paymentMutation.mutate(bookingData._id);
       },
       onError: (err: any) => {
         setProcessing(false);
@@ -419,44 +415,31 @@ export default function BookingForm({
               </div>
             </div>
 
-            {/* Método de pago */}
+            {/* Método de pago — solo en línea. El efectivo se retiró: la plata
+                tiene que entrar a la cuenta de ReservaTuCancha para poder
+                retener la comisión y liquidarle al club cada lunes. */}
             <div className="space-y-2.5">
               <p className={lbl}><Lock className="h-3.5 w-3.5" /> Método de pago</p>
 
               {wompiConfig && !wompiConfig.configured ? (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2 text-xs text-amber-800">
                   <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                  <span>Pago en línea no disponible para esta cancha. Puedes reservar y pagar en efectivo en el lugar.</span>
+                  <span>El pago en línea no está disponible en este momento. Intenta de nuevo en unos minutos.</span>
                 </div>
               ) : (
-                <button type="button" onClick={() => setPaymentMethod('wompi')}
-                  className={`w-full flex items-center justify-between border rounded-2xl p-4 text-left transition-all ${paymentMethod === 'wompi' ? 'border-green-600 bg-green-50' : 'border-gray-200 hover:border-green-400'}`}>
+                <div className="w-full flex items-center justify-between border border-green-600 bg-green-50 rounded-2xl p-4">
                   <span className="flex items-center gap-3">
-                    <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'wompi' ? 'border-green-600 bg-green-600' : 'border-gray-300'}`}>
-                      {paymentMethod === 'wompi' && <span className="w-2 h-2 rounded-full bg-white" />}
+                    <span className="w-5 h-5 rounded-full border-2 border-green-600 bg-green-600 flex items-center justify-center">
+                      <span className="w-2 h-2 rounded-full bg-white" />
                     </span>
                     <span>
                       <span className="block font-semibold text-gray-900 text-sm">Pago en línea</span>
-                      <span className="block text-xs text-gray-500">Nequi · Daviplata · Tarjeta (Wompi)</span>
+                      <span className="block text-xs text-gray-500">Nequi · Daviplata · PSE · Tarjeta (Wompi)</span>
                     </span>
                   </span>
                   <CreditCard className="h-5 w-5 text-gray-400" />
-                </button>
+                </div>
               )}
-
-              <button type="button" onClick={() => setPaymentMethod('efectivo')}
-                className={`w-full flex items-center justify-between border rounded-2xl p-4 text-left transition-all ${paymentMethod === 'efectivo' ? 'border-amber-500 bg-amber-50' : 'border-gray-200 hover:border-amber-300'}`}>
-                <span className="flex items-center gap-3">
-                  <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'efectivo' ? 'border-amber-500 bg-amber-500' : 'border-gray-300'}`}>
-                    {paymentMethod === 'efectivo' && <span className="w-2 h-2 rounded-full bg-white" />}
-                  </span>
-                  <span>
-                    <span className="block font-semibold text-gray-900 text-sm">Efectivo en el lugar</span>
-                    <span className="block text-xs text-gray-500">Lleva el dinero el día de tu reserva</span>
-                  </span>
-                </span>
-                <Banknote className="h-5 w-5 text-amber-500" />
-              </button>
             </div>
 
             {/* Total + CTA */}
@@ -465,12 +448,12 @@ export default function BookingForm({
               <span className="text-2xl font-bold text-gray-900">${totalPrice.toLocaleString('es-CO')} <span className="text-sm font-normal text-gray-500">COP</span></span>
             </div>
 
-            <button type="submit" disabled={processing || !paymentMethod}
-              className={`w-full flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-2xl transition-colors ${paymentMethod === 'efectivo' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-600 hover:bg-green-700'}`}>
-              {paymentMethod === 'efectivo' ? <Banknote className="h-5 w-5" /> : <CreditCard className="h-5 w-5" />}
-              {processing ? 'Procesando…' : paymentMethod === 'efectivo' ? 'Confirmar reserva' : 'Confirmar y pagar'}
+            <button type="submit" disabled={processing || wompiConfig?.configured === false}
+              className={`w-full flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-2xl transition-colors bg-green-600 hover:bg-green-700`}>
+              <CreditCard className="h-5 w-5" />
+              {processing ? 'Procesando…' : 'Confirmar y pagar'}
             </button>
-            <p className="text-xs text-center text-gray-400">Recibirás la confirmación y el link de cancelación por email.</p>
+            <p className="text-xs text-center text-gray-400">Recibirás la confirmación por email, con el link para cambiar tu horario si lo necesitas.</p>
           </form>
         )}
       </div>

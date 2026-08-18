@@ -124,7 +124,7 @@ export class CourtsService {
   /**
    * El pago en línea ya no depende del club: se cobra con la cuenta Wompi de
    * ReservaTuCancha. Se mantiene la ruta porque el formulario de reserva la
-   * consulta para decidir si ofrece pago en línea o solo efectivo.
+   * consulta para saber si puede cobrar en línea.
    */
   async getWompiConfig(courtId: string) {
     const court = await this.courtModel.findById(courtId).lean();

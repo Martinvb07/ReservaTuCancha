@@ -400,7 +400,7 @@ export class NotificationsService {
 
   async sendBookingConfirmation(booking: Booking & { _id: any }) {
     const { court, club } = await this.getCourtAndClub(booking);
-    const cancelUrl  = `${this.frontendUrl}/reservas/cancelar?token=${booking.cancelToken}`;
+    const cambiarUrl  = `${this.frontendUrl}/reservas/reprogramar?token=${booking.cancelToken}`;
     const bookingDate = formatDateCO(booking.date);
     const startAmPm = toAmPm(booking.startTime);
     const endAmPm = toAmPm(booking.endTime);
@@ -456,11 +456,11 @@ export class NotificationsService {
                   </tr>
                 </table>
                 <div style="margin-top: 32px; text-align: center;">
-                  <a href="${cancelUrl}" style="background-color: #ef4444; color: #ffffff; padding: 16px 32px; border-radius: 16px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-                    Cancelar reserva
+                  <a href="${cambiarUrl}" style="background-color: #16a34a; color: #ffffff; padding: 16px 32px; border-radius: 16px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                    Cambiar mi horario
                   </a>
                   <p style="color: #9ca3af; font-size: 12px; margin-top: 20px;">
-                    Cancelación gratuita hasta 2 horas antes del turno.
+                    Puedes mover tu reserva hasta 24 horas antes del turno.
                   </p>
                 </div>
               </td>
@@ -474,151 +474,6 @@ export class NotificationsService {
     });
   }
 
-  async sendBookingPendingCash(booking: Booking & { _id: any }) {
-    const { court, club } = await this.getCourtAndClub(booking);
-    const cancelUrl = `${this.frontendUrl}/reservas/cancelar?token=${booking.cancelToken}`;
-    const bookingDate = formatDateCO(booking.date);
-    await this.send({
-      to: booking.guestEmail,
-      from: this.fromEmail,
-      subject: `Reserva pendiente de pago — #${booking.bookingCode}`,
-      html: `
-        <div style="background-color: #f3f4f6; padding: 40px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-          <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 450px; background-color: #111827; border-radius: 32px; overflow: hidden; border-collapse: separate;">
-            <tr>
-              <td align="center" style="padding: 40px 30px;">
-                <div style="background-color: #f59e0b; width: 64px; height: 64px; border-radius: 50%; margin-bottom: 24px; display: table;">
-                  <span style="display: table-cell; vertical-align: middle; font-size: 26px; font-weight: 900; color: #111827; font-family: Georgia, serif;">$</span>
-                </div>
-                <h1 style="color: #ffffff; font-size: 26px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">Reserva Creada</h1>
-                <p style="color: #9ca3af; font-size: 14px; margin-top: 10px; line-height: 20px;">
-                  Hola <strong>${booking.guestName}</strong>, tu reserva fue registrada exitosamente. Recuerda llevar el valor en efectivo el día de tu visita.
-                </p>
-                <div style="background-color: #1f2937; border-radius: 20px; padding: 24px; margin-top: 28px; border: 1px solid #374151;">
-                  <span style="color: #9ca3af; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px;">Código de Reserva</span>
-                  <span style="color: #f59e0b; font-size: 34px; font-weight: 800; letter-spacing: 4px; display: block;">#${booking.bookingCode}</span>
-                  <span style="color: #6b7280; font-size: 12px; display: block; margin-top: 10px; line-height: 18px;">Presenta este código cuando llegues al lugar para confirmar tu reserva.</span>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td style="background-color: #ffffff; padding: 40px 30px; border-radius: 32px 32px 0 0;">
-                <table width="100%" border="0" cellpadding="0" cellspacing="0">
-                  <tr style="height: 45px;">
-                    <td style="color: #6b7280; font-size: 14px;">Club</td>
-                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${club?.name || '-'}</td>
-                  </tr>
-                  <tr style="height: 45px;">
-                    <td style="color: #6b7280; font-size: 14px;">Dirección</td>
-                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${club?.address || '-'}</td>
-                  </tr>
-                  <tr style="height: 45px;">
-                    <td style="color: #6b7280; font-size: 14px;">Fecha</td>
-                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${bookingDate}</td>
-                  </tr>
-                  <tr style="height: 45px;">
-                    <td style="color: #6b7280; font-size: 14px;">Horario</td>
-                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${toAmPm(booking.startTime)} – ${toAmPm(booking.endTime)}</td>
-                  </tr>
-                  <tr style="height: 65px;">
-                    <td style="color: #6b7280; font-size: 14px; border-top: 1px solid #f3f4f6;">Total a pagar</td>
-                    <td align="right" style="color: #d97706; font-size: 18px; font-weight: 800; border-top: 1px solid #f3f4f6;">$${booking.totalPrice?.toLocaleString('es-CO')} COP</td>
-                  </tr>
-                </table>
-                <div style="margin-top: 20px; background-color: #fef3c7; border-radius: 12px; padding: 16px; text-align: center;">
-                  <p style="color: #92400e; font-size: 13px; margin: 0; font-weight: 600;">Pago en efectivo al llegar al lugar</p>
-                </div>
-                <div style="margin-top: 24px; text-align: center;">
-                  <a href="${cancelUrl}" style="background-color: #ef4444; color: #ffffff; padding: 16px 32px; border-radius: 16px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block;">
-                    Cancelar reserva
-                  </a>
-                  <p style="color: #9ca3af; font-size: 12px; margin-top: 20px;">Cancelación gratuita hasta 2 horas antes del turno.</p>
-                </div>
-              </td>
-            </tr>
-          </table>
-          <div style="text-align: center; margin-top: 24px; color: #9ca3af; font-size: 12px;">
-            Enviado por <strong>ReservaTuCancha</strong>
-          </div>
-        </div>
-      `,
-    });
-  }
-
-  async sendCashPaymentConfirmed(booking: Booking & { _id: any }) {
-    const { court, club } = await this.getCourtAndClub(booking);
-    const bookingDate = formatDateCO(booking.date);
-    const startAmPm = toAmPm(booking.startTime);
-    const endAmPm = toAmPm(booking.endTime);
-    const sportLabel = formatSport(court?.sport);
-    const courtName = (booking.courtId as any)?.name || court?.name || 'tu cancha';
-    await this.send({
-      to: booking.guestEmail,
-      from: this.fromEmail,
-      subject: `¡Pago recibido! — #${booking.bookingCode}`,
-      html: `
-        <div style="background-color: #f3f4f6; padding: 40px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-          <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 450px; background-color: #111827; border-radius: 32px; overflow: hidden; border-collapse: separate;">
-            <tr>
-              <td align="center" style="padding: 40px 30px;">
-                <div style="background-color: #22c55e; width: 64px; height: 64px; border-radius: 50%; margin-bottom: 24px; display: table;">
-                  <span style="display: table-cell; vertical-align: middle; font-size: 30px; color: #ffffff;">✓</span>
-                </div>
-                <h1 style="color: #ffffff; font-size: 26px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">¡PAGO CONFIRMADO!</h1>
-                <p style="color: #9ca3af; font-size: 14px; margin-top: 10px; line-height: 20px;">
-                  Gracias por tu pago <strong>${booking.guestName}</strong>, fue recibido exitosamente. ¡Disfruta de ${courtName}! Este correo es tu comprobante de pago.
-                </p>
-                <div style="background-color: #1f2937; border-radius: 20px; padding: 20px; margin-top: 28px; border: 1px solid #374151;">
-                  <span style="color: #9ca3af; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">Código de Reserva</span>
-                  <span style="color: #22c55e; font-size: 30px; font-weight: 800; letter-spacing: 2px;">#${booking.bookingCode}</span>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td style="background-color: #ffffff; padding: 40px 30px; border-radius: 32px 32px 0 0;">
-                <table width="100%" border="0" cellpadding="0" cellspacing="0">
-                  <tr style="height: 45px;">
-                    <td style="color: #6b7280; font-size: 14px;">Cancha</td>
-                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${courtName}</td>
-                  </tr>
-                  <tr style="height: 45px;">
-                    <td style="color: #6b7280; font-size: 14px;">Club</td>
-                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${club?.name || '-'}</td>
-                  </tr>
-                  <tr style="height: 45px;">
-                    <td style="color: #6b7280; font-size: 14px;">Deporte</td>
-                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${sportLabel}</td>
-                  </tr>
-                  <tr style="height: 45px;">
-                    <td style="color: #6b7280; font-size: 14px;">Fecha</td>
-                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${bookingDate}</td>
-                  </tr>
-                  <tr style="height: 45px;">
-                    <td style="color: #6b7280; font-size: 14px;">Horario</td>
-                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${startAmPm} – ${endAmPm}</td>
-                  </tr>
-                  <tr style="height: 45px;">
-                    <td style="color: #6b7280; font-size: 14px;">Método de pago</td>
-                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">Efectivo</td>
-                  </tr>
-                  <tr style="height: 65px;">
-                    <td style="color: #6b7280; font-size: 14px; border-top: 1px solid #f3f4f6;">Total pagado</td>
-                    <td align="right" style="color: #22c55e; font-size: 18px; font-weight: 800; border-top: 1px solid #f3f4f6;">$${booking.totalPrice?.toLocaleString('es-CO')} COP</td>
-                  </tr>
-                </table>
-                <div style="margin-top: 20px; background-color: #f0fdf4; border-radius: 12px; padding: 16px; text-align: center;">
-                  <p style="color: #166534; font-size: 13px; margin: 0; font-weight: 600;">Comprobante de pago — ${courtName}</p>
-                </div>
-              </td>
-            </tr>
-          </table>
-          <div style="text-align: center; margin-top: 24px; color: #9ca3af; font-size: 12px;">
-            Enviado por <strong>ReservaTuCancha</strong>
-          </div>
-        </div>
-      `,
-    });
-  }
 
   async sendApprovalEmail(email: string, name: string, tempPassword: string, userData?: { id: string; nit: string; businessName: string }) {
     await this.send({
@@ -914,7 +769,7 @@ export class NotificationsService {
 
   async sendBookingReminder(booking: Booking & { _id: any }) {
     const { court, club } = await this.getCourtAndClub(booking);
-    const cancelUrl = `${this.frontendUrl}/reservas/cancelar?token=${booking.cancelToken}`;
+    const cambiarUrl = `${this.frontendUrl}/reservas/reprogramar?token=${booking.cancelToken}`;
 
     await this.send({
       to: booking.guestEmail,
@@ -934,13 +789,10 @@ export class NotificationsService {
           { label: 'Deporte', value: formatSport(court?.sport) },
           { label: 'Fecha', value: formatDateCO(booking.date) },
           { label: 'Horario', value: `${toAmPm(booking.startTime)} – ${toAmPm(booking.endTime)}` },
-          { label: 'Pago', value: booking.paymentMethod === 'efectivo' ? `Efectivo: ${formatPrice(booking.totalPrice)}` : 'Pagado online', highlight: true },
+          { label: 'Pago', value: 'Pagado online', highlight: true },
         ],
-        alertBox: booking.paymentMethod === 'efectivo'
-          ? { bg: '#fef3c7', color: '#92400e', text: 'Recuerda llevar el pago en efectivo' }
-          : undefined,
-        ctaText: '¿No puedes ir? Cancelar', ctaUrl: cancelUrl, ctaBg: '#ef4444',
-        ctaNote: 'Cancelación gratuita hasta 2 horas antes del turno.',
+        ctaText: '¿No puedes ir? Cambia tu horario', ctaUrl: cambiarUrl, ctaBg: '#16a34a',
+        ctaNote: 'Puedes mover tu reserva hasta 24 horas antes del turno.',
       }),
     });
   }
@@ -965,7 +817,7 @@ export class NotificationsService {
           { label: 'Cancha', value: court?.name || '-' },
           { label: 'Fecha', value: formatDateCO(booking.date) },
           { label: 'Horario', value: `${toAmPm(booking.startTime)} – ${toAmPm(booking.endTime)}` },
-          { label: 'Método de pago', value: booking.paymentMethod === 'efectivo' ? 'Efectivo' : 'Online (Wompi)' },
+          { label: 'Método de pago', value: 'Online (Wompi)' },
           { label: 'Total', value: formatPrice(booking.totalPrice), highlight: true },
         ],
         ctaText: 'Ver en el panel', ctaUrl: `${this.frontendUrl}/dashboard/propetario/reservas`, ctaBg: '#111827',

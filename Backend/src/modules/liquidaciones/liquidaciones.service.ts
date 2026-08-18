@@ -52,10 +52,9 @@ export class LiquidacionesService {
   /**
    * Suma por club lo cobrado en un periodo.
    *
-   * Solo entran las reservas pagadas en línea: las de efectivo las cobró el
-   * club directamente, así que no hay nada que girarle. Y solo las que siguen
-   * en pie — una reserva cancelada nunca llega a liquidarse, que es la razón
-   * por la que la comisión no se calcula al momento del pago.
+   * Solo entran las reservas que siguen en pie: una cancelada nunca llega a
+   * liquidarse, que es la razón por la que la comisión no se calcula al
+   * momento del pago sino en el corte.
    */
   private async agregarPorClub(periodo: Periodo) {
     return this.bookingModel.aggregate<{

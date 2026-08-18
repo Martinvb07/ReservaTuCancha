@@ -27,7 +27,7 @@ export class WompiService {
     return this.config.get<string>('WOMPI_EVENTS_SECRET');
   }
 
-  /** Sin llaves no se puede cobrar en línea: el front cae a pago en efectivo. */
+  /** Sin llaves no se puede cobrar: el formulario avisa y no deja reservar. */
   get configured(): boolean {
     return !!(this.publicKey && this.integritySecret);
   }

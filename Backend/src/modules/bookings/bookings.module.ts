@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common'; // 1. Importar forwardRef
+import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BookingsController } from './bookings.controller';
 import { BookingsService } from './bookings.service';
@@ -8,7 +8,6 @@ import { Court, CourtSchema } from '../courts/schemas/court.schema';
 import { BlockedSlot, BlockedSlotSchema } from '../courts/schemas/blocked-slot.schema';
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
-import { PaymentsModule } from '../payments/payments.module';
 import { WompiModule } from '../wompi/wompi.module';
 
 @Module({
@@ -21,8 +20,6 @@ import { WompiModule } from '../wompi/wompi.module';
       { name: User.name, schema: UserSchema },
     ]),
     NotificationsModule,
-    // 2. Usar forwardRef para evitar la referencia circular con Payments
-    forwardRef(() => PaymentsModule),
     WompiModule,
   ],
   controllers: [BookingsController],

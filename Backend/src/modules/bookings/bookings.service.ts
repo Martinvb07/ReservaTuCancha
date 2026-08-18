@@ -98,11 +98,7 @@ export class BookingsService {
 
     // Notificaciones automáticas según cambio de estado
     if (status === 'confirmed') {
-      if (updated.paymentMethod === 'efectivo') {
-        await this.notificationsService.sendCashPaymentConfirmed(updated as any);
-      } else {
-        await this.notificationsService.sendBookingConfirmation(updated as any);
-      }
+      await this.notificationsService.sendBookingConfirmation(updated as any);
     }
 
     if (status === 'completed') {
@@ -238,14 +234,6 @@ export class BookingsService {
 
     this.logger.log(`Reserva creada: ${saved.bookingCode} | método: ${createBookingDto.paymentMethod ?? 'no especificado'}`);
 
-    if (createBookingDto.paymentMethod === 'efectivo') {
-      try {
-        await this.notificationsService.sendBookingPendingCash(saved as any);
-      } catch (e) {
-        this.logger.error(`Error enviando email efectivo para ${saved.bookingCode}: ${e.message}`);
-      }
-    }
-
     // Notificación en tiempo real + email al owner
     try {
       const court = await this.courtModel.findById(courtId).select('ownerId name').lean();
@@ -281,7 +269,9 @@ export class BookingsService {
   async findByCancelToken(token: string): Promise<Booking> {
     const booking = await this.bookingModel
       .findOne({ cancelToken: token })
-      .populate('courtId', 'name sport location')
+      // `availability` la necesita la pantalla de reprogramar para saber qué
+      // días y horas atiende la cancha.
+      .populate('courtId', 'name sport location availability pricePerHour')
       .lean();
     if (!booking) throw new NotFoundException('Token inválido o reserva no encontrada');
     if (booking.status === BookingStatus.CANCELLED)
