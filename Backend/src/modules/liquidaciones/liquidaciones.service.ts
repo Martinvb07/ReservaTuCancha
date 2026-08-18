@@ -147,8 +147,9 @@ export class LiquidacionesService {
     };
   }
 
-  /** Periodos recientes para el selector de semana del panel. */
-  async periodos(cantidad = 8) {
+  /* Medio año de historial: el selector del panel ya no las pinta todas a la
+     vez, las lista en un desplegable con scroll, así que caben sin estorbar. */
+  async periodos(cantidad = 25) {
     const lista = [periodoActual(), ...periodosCerrados(cantidad)];
     const actual = periodoActual().inicio.getTime();
 

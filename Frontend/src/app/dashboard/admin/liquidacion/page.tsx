@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import {
   Banknote, CheckCircle, Loader2, Landmark, AlertCircle, Copy, Undo2, ChevronDown,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import api from '@/lib/api/axios';
 import { useApiAuth } from '@/hooks/useApiAuth';
@@ -59,11 +60,48 @@ export default function AdminLiquidacionPage() {
   /** Club cuya fila está expandida, para ver la cuenta y registrar el giro. */
   const [abierto, setAbierto] = useState<string | null>(null);
   const [referencia, setReferencia] = useState('');
+  /** Desplegable de semanas abierto. */
+  const [listaAbierta, setListaAbierta] = useState(false);
+  const selectorRef = useRef<HTMLDivElement>(null);
 
   const { data: periodos } = useQuery<Periodo[]>({
     queryKey: ['liquidacion-periodos'],
     queryFn: async () => (await api.get('/liquidaciones/periodos')).data,
   });
+
+  /* El backend las devuelve de la mas reciente a la mas vieja: el indice 0 es
+     la semana en curso, asi que "anterior" avanza en el arreglo. */
+  const listaPeriodos = useMemo(() => periodos ?? [], [periodos]);
+
+  /* Sin seleccion explicita mandamos la primera cerrada, que es la que toca
+     girar: es el mismo criterio que usa el backend cuando no recibe 'inicio'. */
+  const indiceActual = useMemo(() => {
+    if (listaPeriodos.length === 0) return 0;
+    const i = inicio
+      ? listaPeriodos.findIndex((p) => p.inicio === inicio)
+      : listaPeriodos.findIndex((p) => !p.enCurso);
+    return i >= 0 ? i : 0;
+  }, [listaPeriodos, inicio]);
+
+  const periodoActivo = listaPeriodos[indiceActual];
+
+  const irA = (i: number) => {
+    const destino = listaPeriodos[i];
+    if (!destino) return;
+    setInicio(destino.inicio);
+    setAbierto(null);
+    setListaAbierta(false);
+  };
+
+  /* Cerrar el desplegable al hacer clic fuera. */
+  useEffect(() => {
+    if (!listaAbierta) return;
+    const fuera = (e: MouseEvent) => {
+      if (selectorRef.current && !selectorRef.current.contains(e.target as Node)) setListaAbierta(false);
+    };
+    window.addEventListener('mousedown', fuera);
+    return () => window.removeEventListener('mousedown', fuera);
+  }, [listaAbierta]);
 
   const { data, isLoading, isError } = useQuery<Resumen>({
     queryKey: ['liquidacion', inicio],
@@ -115,21 +153,72 @@ export default function AdminLiquidacionPage() {
         </p>
       </div>
 
-      {/* Selector de semana */}
-      <div className="flex flex-wrap gap-2">
-        {periodos?.map((p) => {
-          const activo = inicio ? p.inicio === inicio : (!p.enCurso && p === periodos.find((x) => !x.enCurso));
-          return (
-            <button key={p.inicio} type="button" onClick={() => { setInicio(p.inicio); setAbierto(null); }}
-              className={`px-3.5 py-2 rounded-full text-[13px] font-bold border-2 whitespace-nowrap transition-all ${
-                activo ? 'bg-gray-900 border-gray-900 text-white' : 'border-gray-200 text-gray-600 hover:border-gray-400'
-              }`}>
-              {p.etiqueta}
-              {p.enCurso && <span className="ml-1.5 text-[10px] opacity-70">en curso</span>}
-              {p.tieneGiros && !p.enCurso && <CheckCircle className="inline h-3 w-3 ml-1.5 text-green-500" />}
-            </button>
-          );
-        })}
+      {/* Selector de semana — flechas + desplegable.
+          Antes era una fila de píldoras con todas las semanas: cada semana que
+          pasa agregaba una y terminaba envolviendo en varias filas. */}
+      <div className="flex flex-wrap items-center gap-2" ref={selectorRef}>
+        <div className="inline-flex items-center rounded-xl border-2 border-gray-200 bg-white overflow-hidden">
+          <button type="button" onClick={() => irA(indiceActual + 1)} disabled={indiceActual + 1 >= listaPeriodos.length}
+            aria-label="Semana anterior"
+            className="w-9 h-10 grid place-items-center text-gray-500 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-30 disabled:pointer-events-none transition-colors">
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+
+          <button type="button" onClick={() => setListaAbierta((v) => !v)}
+            className="flex items-center gap-2 px-3.5 h-10 border-x-2 border-gray-200 min-w-[13.5rem] justify-center">
+            <span className="text-[13px] font-bold text-gray-900 whitespace-nowrap">
+              {periodoActivo?.etiqueta ?? 'Semana'}
+            </span>
+            {periodoActivo?.enCurso && (
+              <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-full">en curso</span>
+            )}
+            {periodoActivo?.tieneGiros && !periodoActivo.enCurso && (
+              <CheckCircle className="h-3.5 w-3.5 text-green-500 shrink-0" />
+            )}
+            <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform ${listaAbierta ? 'rotate-180' : ''}`} />
+          </button>
+
+          <button type="button" onClick={() => irA(indiceActual - 1)} disabled={indiceActual <= 0}
+            aria-label="Semana siguiente"
+            className="w-9 h-10 grid place-items-center text-gray-500 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-30 disabled:pointer-events-none transition-colors">
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Vuelve a la semana que toca girar sin tener que buscarla */}
+        {inicio !== '' && (
+          <button type="button" onClick={() => { setInicio(''); setAbierto(null); }}
+            className="text-[13px] font-bold text-green-700 hover:underline px-2">
+            Ir a la semana por girar
+          </button>
+        )}
+
+        {/* Desplegable: la lista crece hacia abajo con scroll, no rompe el layout */}
+        {listaAbierta && (
+          <div className="relative w-full">
+            <div className="absolute z-30 mt-1 w-full max-w-sm bg-white border-2 border-gray-200 rounded-2xl shadow-xl overflow-hidden">
+              <div className="max-h-72 overflow-y-auto p-1.5">
+                {listaPeriodos.map((p, i) => {
+                  const activo = i === indiceActual;
+                  return (
+                    <button key={p.inicio} type="button" onClick={() => irA(i)}
+                      className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-left transition-colors ${
+                        activo ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'
+                      }`}>
+                      <span className="flex-1 truncate">{p.etiqueta}</span>
+                      {p.enCurso && (
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${activo ? 'bg-white/20' : 'bg-amber-100 text-amber-700'}`}>
+                          en curso
+                        </span>
+                      )}
+                      {p.tieneGiros && !p.enCurso && <CheckCircle className="h-3.5 w-3.5 text-green-500 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Totales */}
