@@ -61,7 +61,7 @@ export default function AdminReportesPage() {
           <span>✦</span> Administración
         </p>
         <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tight">Reportes</h1>
-        <p className="text-slate-500 text-sm mt-1">Métricas de la plataforma — clientes y suscripciones</p>
+        <p className="text-slate-500 text-sm mt-1">Métricas de la plataforma — clientes y reservas</p>
       </div>
 
       {/* KPIs */}

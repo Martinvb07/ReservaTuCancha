@@ -94,7 +94,7 @@ export function AdminHomeWidgets() {
       change: `${stats.totalOwners ?? 0} clientes`,
       trend: 'neutral',
       icon: Zap, color: 'text-green-600', bg: 'bg-green-50',
-      href: '/dashboard/admin/suscripciones',
+      href: '/dashboard/admin/liquidacion',
     },
     {
       title: 'En trial',
@@ -102,7 +102,7 @@ export function AdminHomeWidgets() {
       change: 'en periodo de prueba',
       trend: 'neutral',
       icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-50',
-      href: '/dashboard/admin/suscripciones',
+      href: '/dashboard/admin/liquidacion',
     },
     {
       title: 'Vencidas',
@@ -110,7 +110,7 @@ export function AdminHomeWidgets() {
       change: `${stats.estadoCounts?.cancelada ?? 0} canceladas`,
       trend: (stats.estadoCounts?.vencida ?? 0) > 0 ? 'warn' : 'neutral',
       icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50',
-      href: '/dashboard/admin/suscripciones',
+      href: '/dashboard/admin/liquidacion',
     },
   ];
 
@@ -133,7 +133,7 @@ export function AdminHomeWidgets() {
   const quickActions = [
     { href: '/dashboard/admin/solicitudes',  label: 'Solicitudes',   desc: `${stats.pendingSolicitudes ?? 0} pendientes`,  icon: FileText,  color: 'bg-lime-400',   text: 'text-gray-900', hot: (stats.pendingSolicitudes ?? 0) > 0 },
     { href: '/dashboard/admin/usuarios',     label: 'Usuarios',      desc: `${stats.activeOwners ?? 0} activos`,           icon: Users,     color: 'bg-blue-600',   text: 'text-white',    hot: false },
-    { href: '/dashboard/admin/suscripciones',label: 'Suscripciones', desc: 'Planes y pagos',                               icon: CreditCard,color: 'bg-yellow-500', text: 'text-white',    hot: false },
+    { href: '/dashboard/admin/liquidacion',label: 'Liquidación',   desc: 'Pagos a los clubes',                               icon: CreditCard,color: 'bg-yellow-500', text: 'text-white',    hot: false },
     { href: '/dashboard/admin/cambios',      label: 'Changelog',     desc: 'Notificar a owners',                           icon: Bell,      color: 'bg-purple-600', text: 'text-white',    hot: false },
     { href: '/dashboard/admin/reportes',     label: 'Reportes',      desc: 'Métricas globales',                            icon: BarChart3, color: 'bg-slate-800',  text: 'text-white',    hot: false },
   ];

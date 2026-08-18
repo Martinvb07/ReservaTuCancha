@@ -25,7 +25,7 @@ const ADMIN_SECTIONS: NavSection[] = [
   ]},
   { label: 'Gestión', items: [
     { href: '/dashboard/admin/usuarios',      label: 'Usuarios',      icon: Users      },
-    { href: '/dashboard/admin/suscripciones', label: 'Suscripciones', icon: CreditCard },
+    { href: '/dashboard/admin/liquidacion',    label: 'Liquidación',   icon: CreditCard },
     { href: '/dashboard/admin/solicitudes',   label: 'Solicitudes',   icon: FileText   },
   ]},
   { label: 'Sistema', items: [
@@ -48,7 +48,6 @@ const OWNER_SECTIONS: NavSection[] = [
   ]},
   { label: 'Cuenta', items: [
     { href: '/dashboard/propetario/mi-club',     label: 'Mi Club', icon: Building2     },
-    { href: '/dashboard/propetario/suscripcion', label: 'Mi Plan', icon: Zap          },
     { href: '/dashboard/propetario/soporte',     label: 'Soporte', icon: MessageSquare },
   ]},
 ];

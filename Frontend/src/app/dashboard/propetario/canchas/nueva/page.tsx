@@ -18,7 +18,6 @@ import Link from 'next/link';
 import { courtsApi } from '@/lib/api/courts.api';
 import api from '@/lib/api/axios';
 import { uploadToCloudinary } from '@/lib/cloudinary';
-import { UpgradePlanModal, extractUpgradeError } from '@/components/dashboard/UpgradePlanModal';
 import StepWizard, { WIZARD_EASE, type WizardStep } from '@/components/ui/StepWizard';
 import { FutbolIcon, PadelIcon, VoleyIcon } from '@/components/ui/SportIcons';
 import SelectField from '@/components/ui/SelectField';
@@ -103,7 +102,6 @@ export default function AdminNuevaCanchaPage() {
   const [availability, setAvailability] = useState<AvailabilitySlot[]>(
     [1,2,3,4,5].map(d => ({ dayOfWeek: d, openTime: '07:00', closeTime: '22:00', slotDurationMinutes: 60 }))
   );
-  const [upgradeError, setUpgradeError] = useState<ReturnType<typeof extractUpgradeError> & { isUpgrade: true } | null>(null);
 
   const { register, handleSubmit, setValue, watch, trigger, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -171,9 +169,7 @@ export default function AdminNuevaCanchaPage() {
     onSuccess: () => { toast.success('¡Cancha publicada!'); router.push('/dashboard/propetario/canchas'); },
     onError: (e: any) => {
       setUploadStatus(null);
-      const ue = extractUpgradeError(e);
-      if (ue.isUpgrade) { setUpgradeError(ue as any); }
-      else { toast.error(e?.response?.data?.message || e.message || 'Error al crear la cancha'); }
+      toast.error(e?.response?.data?.message || e.message || 'Error al crear la cancha');
     },
   });
 
@@ -582,14 +578,6 @@ export default function AdminNuevaCanchaPage() {
         </div>
       </form>
 
-      <UpgradePlanModal
-        open={!!upgradeError}
-        onClose={() => setUpgradeError(null)}
-        code={upgradeError?.code}
-        message={upgradeError?.message}
-        currentPlan={upgradeError?.currentPlan}
-        limit={upgradeError?.limit}
-      />
     </div>
   );
 }

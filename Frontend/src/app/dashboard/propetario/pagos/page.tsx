@@ -5,14 +5,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   CreditCard, DollarSign, TrendingUp, Clock, CheckCircle, XCircle,
   Download, Lock, AlertCircle, Eye, EyeOff, Search, CalendarDays,
-  Banknote, BarChart3, ChevronLeft, ChevronRight, SlidersHorizontal,
+  Banknote, BarChart3, ChevronLeft, ChevronRight, SlidersHorizontal, Landmark, Save, Loader2,
 } from 'lucide-react';
 import { format, isThisWeek, isThisMonth, isToday, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import api from '@/lib/api/axios';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import { toast } from 'sonner';
-import { UpgradePlanModal, extractUpgradeError } from '@/components/dashboard/UpgradePlanModal';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 const STATUS_PILL: Record<string, string> = {
@@ -92,16 +91,14 @@ export default function OwnerPagosPage() {
   const queryClient = useQueryClient();
   useApiAuth();
 
-  const [tab, setTab]                   = useState<'historial' | 'wompi'>('historial');
+  const [tab, setTab]                   = useState<'historial' | 'liquidaciones' | 'cuenta'>('historial');
   const [period, setPeriod]             = useState<Period>('todo');
   const [filterStatus, setFilterStatus] = useState('all');
   const [search, setSearch]             = useState('');
   const [currentPage, setCurrentPage]   = useState(1);
-  const [showPassword, setShowPassword] = useState(false);
-  const [wompiForm, setWompiForm]       = useState({
-    wompiPublicKey: '', wompiIntegritySecret: '', wompiEventsSecret: '',
+  const [bancoForm, setBancoForm]       = useState({
+    titular: '', documento: '', banco: '', tipoCuenta: 'ahorros', numero: '',
   });
-  const [upgradeError, setUpgradeError] = useState<ReturnType<typeof extractUpgradeError> | null>(null);
 
   // ── Queries ──
   const { data: clubInfo, isLoading: loadingClub, isError } = useQuery({
@@ -116,22 +113,25 @@ export default function OwnerPagosPage() {
   });
 
   useEffect(() => {
-    if (clubInfo) setWompiForm({ wompiPublicKey: clubInfo.wompiPublicKey || '', wompiIntegritySecret: '', wompiEventsSecret: '' });
-  }, [clubInfo?.wompiPublicKey]);
+    if (clubInfo?.banco) setBancoForm(f => ({ ...f, ...clubInfo.banco }));
+  }, [clubInfo?.banco]);
 
-  // ── Mutación Wompi ──
-  const saveWompi = useMutation({
-    mutationFn: async (formData: typeof wompiForm) => {
+  /* Liquidaciones semanales: lo que ReservaTuCancha le gira al club cada lunes,
+     ya con la comision descontada. */
+  const { data: liquidaciones, isLoading: loadingLiq } = useQuery({
+    queryKey: ['mis-liquidaciones'],
+    queryFn: async () => { const { data } = await api.get('/liquidaciones/mias'); return data; },
+  });
+
+  // ── Cuenta donde el club recibe su giro semanal ──
+  const saveBanco = useMutation({
+    mutationFn: async (formData: typeof bancoForm) => {
       const clubId = clubInfo?._id || clubInfo?.id;
       if (!clubId) throw new Error('ID del club no detectado. Recarga la página.');
-      return api.patch(`/clubs/${clubId}/wompi`, formData);
+      return api.patch(`/clubs/${clubId}/banco`, formData);
     },
-    onSuccess: () => { toast.success('Credenciales de Wompi guardadas'); queryClient.invalidateQueries({ queryKey: ['club-info'] }); },
-    onError: (e: any) => {
-      const ue = extractUpgradeError(e);
-      if (ue.isUpgrade) { setUpgradeError(ue); }
-      else { toast.error(e.response?.data?.message || 'Error al guardar credenciales'); }
-    },
+    onSuccess: () => { toast.success('Cuenta de pagos guardada'); queryClient.invalidateQueries({ queryKey: ['club-info'] }); },
+    onError: (e: any) => toast.error(e.response?.data?.message || 'Error al guardar la cuenta'),
   });
 
   // ── Filtrado ──
@@ -170,7 +170,7 @@ export default function OwnerPagosPage() {
             <span>✦</span> Panel Propietario
           </p>
           <h1 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase">Pagos</h1>
-          <p className="text-gray-500 text-sm mt-1">Historial de cobros y configuración de Wompi</p>
+          <p className="text-gray-500 text-sm mt-1">Historial de cobros, liquidaciones semanales y tu cuenta</p>
         </div>
         <button
           onClick={() => downloadCSV(filtered)}
@@ -184,7 +184,8 @@ export default function OwnerPagosPage() {
       <div className="flex gap-2 flex-wrap">
         {[
           { key: 'historial', label: 'Historial de pagos', icon: BarChart3 },
-          { key: 'wompi',     label: 'Configurar Wompi',   icon: Lock      },
+          { key: 'liquidaciones', label: 'Mis liquidaciones', icon: Banknote },
+          { key: 'cuenta',        label: 'Cuenta de pagos',   icon: Landmark },
         ].map(({ key, label, icon: Icon }) => (
           <button
             key={key}
@@ -449,105 +450,133 @@ export default function OwnerPagosPage() {
       )}
 
       {/* ════════════════════════════════ TAB: WOMPI ════════════════════════════════ */}
-      {tab === 'wompi' && (
-        <div className="space-y-5">
-
-          {/* Estado Wompi */}
-          <div className={`rounded-2xl border p-5 flex items-center gap-4 ${
-            clubInfo?.wompiConfigured
-              ? 'bg-green-50 border-green-200'
-              : 'bg-amber-50 border-amber-200'
-          }`}>
-            <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
-              clubInfo?.wompiConfigured ? 'bg-green-600' : 'bg-amber-500'
-            }`}>
-              <CreditCard className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <p className="font-black text-gray-900 text-sm">
-                {clubInfo?.wompiConfigured ? 'Wompi configurado correctamente' : 'Wompi no configurado'}
-              </p>
-              <p className="text-xs text-gray-500 mt-0.5">
-                {clubInfo?.wompiConfigured
-                  ? 'Tu club puede recibir pagos online. Actualiza las credenciales si cambian.'
-                  : 'Agrega tus credenciales para activar los pagos online con Wompi.'
-                }
+      {/* ════════════════ TAB: LIQUIDACIONES ════════════════ */}
+      {tab === 'liquidaciones' && (
+        <div className="space-y-4">
+          <div className="bg-green-50 border border-green-200 rounded-2xl p-4 md:p-5 flex items-start gap-3">
+            <Banknote className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+            <div className="text-sm text-green-900">
+              <p className="font-bold">Te giramos todos los lunes</p>
+              <p className="text-green-800 mt-1">
+                La semana cierra el domingo al mediodía y el lunes a las 2:00 PM transferimos
+                a tu cuenta lo recaudado, con la comisión del {liquidaciones?.comisionPorcentaje ?? 6}% ya descontada.
+                Lo que se agende después del corte entra a la semana siguiente.
               </p>
             </div>
           </div>
 
-          {loadingClub && (
-            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
-              <div className="h-3 bg-gray-200 rounded w-1/2" />
+          {loadingLiq ? (
+            <div className="space-y-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-16 bg-gray-100 rounded-2xl animate-pulse" />
+              ))}
             </div>
-          )}
-
-          {isError && (
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-start gap-4">
-              <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
-              <div>
-                <p className="font-bold text-red-900 text-sm">Error al cargar el club</p>
-                <p className="text-xs text-red-700 mt-1">No pudimos cargar la información. Recarga la página.</p>
-              </div>
+          ) : !liquidaciones?.semanas?.length ? (
+            <div className="text-center py-16 bg-gray-50 rounded-2xl border border-gray-100">
+              <Banknote className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+              <p className="font-semibold text-gray-900">Todavía no hay liquidaciones</p>
+              <p className="text-gray-500 text-sm mt-1">Aparecen apenas recibas tu primera reserva pagada en línea.</p>
             </div>
-          )}
+          ) : (
+            <div className="space-y-2.5">
+              {liquidaciones.semanas.map((sem: any) => (
+                <div key={sem.inicio}
+                  className={`rounded-2xl border p-4 md:p-5 ${sem.enCurso ? 'border-green-300 bg-green-50/40' : 'border-gray-200 bg-white'}`}>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-black text-gray-900">
+                        {sem.etiqueta}
+                        {sem.enCurso && <span className="ml-2 text-[11px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full align-middle">En curso</span>}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {sem.reservas} {sem.reservas === 1 ? 'reserva' : 'reservas'}
+                        {sem.estado === 'girada'
+                          ? ` · girada el ${format(parseISO(sem.giradaAt), "d 'de' MMM", { locale: es })}${sem.referencia ? ` · ref. ${sem.referencia}` : ''}`
+                          : sem.enCurso
+                            ? ` · se gira el ${format(parseISO(sem.giro), "EEEE d 'de' MMM", { locale: es })}`
+                            : ' · pendiente de giro'}
+                      </p>
+                    </div>
 
-          {clubInfo && (
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 space-y-6">
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-800 space-y-1">
-                <p className="font-bold text-sm">¿Dónde encuentro estos datos?</p>
-                <p className="text-xs text-blue-700">Dashboard de Wompi → <strong>Developers</strong> → <strong>Llaves del API</strong> y <strong>Secretos para integración técnica</strong></p>
-              </div>
-
-              <FormField
-                label="Llave pública"
-                hint="pub_test_... o pub_prod_..."
-                placeholder="pub_test_xxxxxxxxxxxxxx"
-                value={wompiForm.wompiPublicKey}
-                onChange={v => setWompiForm(f => ({ ...f, wompiPublicKey: v }))}
-                type="text"
-              />
-              <FormField
-                label="Secreto de integridad"
-                hint={clubInfo?.wompiConfigured ? 'Deja vacío para mantener el actual' : 'Secretos → Integridad'}
-                placeholder={clubInfo?.wompiConfigured ? '••••••••• (sin cambios)' : 'Pega el secreto de integridad'}
-                value={wompiForm.wompiIntegritySecret}
-                onChange={v => setWompiForm(f => ({ ...f, wompiIntegritySecret: v }))}
-                type={showPassword ? 'text' : 'password'}
-                toggleShow={() => setShowPassword(s => !s)}
-                showPassword={showPassword}
-              />
-              <FormField
-                label="Secreto de eventos"
-                hint={clubInfo?.wompiConfigured ? 'Deja vacío para mantener el actual' : 'Secretos → Eventos'}
-                placeholder={clubInfo?.wompiConfigured ? '••••••••• (sin cambios)' : 'Pega el secreto de eventos'}
-                value={wompiForm.wompiEventsSecret}
-                onChange={v => setWompiForm(f => ({ ...f, wompiEventsSecret: v }))}
-                type={showPassword ? 'text' : 'password'}
-                toggleShow={() => setShowPassword(s => !s)}
-                showPassword={showPassword}
-              />
-
-              <button
-                onClick={() => saveWompi.mutate(wompiForm)}
-                disabled={saveWompi.isPending || !wompiForm.wompiPublicKey.trim() || (!clubInfo?.wompiConfigured && !wompiForm.wompiIntegritySecret.trim())}
-                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold py-3.5 rounded-xl transition-colors shadow-lg shadow-green-100 disabled:shadow-none text-sm"
-              >
-                {saveWompi.isPending ? 'Guardando...' : clubInfo?.wompiConfigured ? 'Actualizar credenciales' : 'Guardar credenciales'}
-              </button>
+                    <div className="text-right shrink-0">
+                      <p className="text-xl md:text-2xl font-black text-gray-900">${(sem.neto ?? 0).toLocaleString('es-CO')}</p>
+                      <p className="text-[11px] text-gray-400">
+                        bruto ${(sem.bruto ?? 0).toLocaleString('es-CO')} − comisión ${(sem.comision ?? 0).toLocaleString('es-CO')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
       )}
 
-      <UpgradePlanModal
-        open={!!upgradeError?.isUpgrade}
-        onClose={() => setUpgradeError(null)}
-        code={upgradeError?.code}
-        message={upgradeError?.message}
-        currentPlan={upgradeError?.currentPlan}
-      />
+      {/* ════════════════ TAB: CUENTA DE PAGOS ════════════════ */}
+      {tab === 'cuenta' && (
+        <div className="space-y-5 max-w-2xl">
+          <div className={`rounded-2xl p-4 md:p-5 flex items-start gap-3 ${
+            clubInfo?.banco?.numero ? 'bg-green-50 border border-green-200' : 'bg-amber-50 border border-amber-200'
+          }`}>
+            <span className={`w-9 h-9 rounded-xl grid place-items-center shrink-0 ${
+              clubInfo?.banco?.numero ? 'bg-green-600' : 'bg-amber-500'
+            }`}>
+              {clubInfo?.banco?.numero ? <CheckCircle className="h-5 w-5 text-white" /> : <AlertCircle className="h-5 w-5 text-white" />}
+            </span>
+            <div className="text-sm">
+              <p className="font-bold text-gray-900">
+                {clubInfo?.banco?.numero ? 'Cuenta registrada' : 'Falta tu cuenta de pagos'}
+              </p>
+              <p className="text-gray-600 mt-1">
+                {clubInfo?.banco?.numero
+                  ? 'Acá te transferimos tu liquidación cada lunes. Mantenla al día.'
+                  : 'Sin estos datos no podemos girarte lo recaudado. Llénalos para recibir tu primer pago.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 md:p-6 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField label="Titular de la cuenta" placeholder="Nombre como aparece en el banco" type="text"
+                value={bancoForm.titular} onChange={v => setBancoForm(f => ({ ...f, titular: v }))} />
+              <FormField label="Cédula o NIT" placeholder="1.234.567.890" type="text"
+                value={bancoForm.documento} onChange={v => setBancoForm(f => ({ ...f, documento: v }))} />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField label="Banco o billetera" placeholder="Bancolombia, Nequi, Daviplata..." type="text"
+                value={bancoForm.banco} onChange={v => setBancoForm(f => ({ ...f, banco: v }))} />
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-1">Tipo de cuenta</label>
+                <select
+                  value={bancoForm.tipoCuenta}
+                  onChange={e => setBancoForm(f => ({ ...f, tipoCuenta: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 text-sm bg-white"
+                >
+                  <option value="ahorros">Ahorros</option>
+                  <option value="corriente">Corriente</option>
+                  <option value="nequi">Nequi</option>
+                  <option value="daviplata">Daviplata</option>
+                </select>
+              </div>
+            </div>
+
+            <FormField label="Número de cuenta" hint="o el celular, si es Nequi o Daviplata" placeholder="000-000000-00" type="text"
+              value={bancoForm.numero} onChange={v => setBancoForm(f => ({ ...f, numero: v }))} />
+
+            <button
+              onClick={() => saveBanco.mutate(bancoForm)}
+              disabled={saveBanco.isPending || !bancoForm.numero.trim()}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-black px-8 py-3.5 rounded-2xl transition-colors"
+            >
+              {saveBanco.isPending
+                ? <><Loader2 className="h-5 w-5 animate-spin" /> Guardando...</>
+                : <><Save className="h-5 w-5" /> Guardar cuenta</>}
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

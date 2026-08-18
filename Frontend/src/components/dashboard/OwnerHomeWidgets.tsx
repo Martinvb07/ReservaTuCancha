@@ -127,7 +127,7 @@ export function OwnerHomeWidgets() {
 
       {/* ── Banner suscripción vencida ── */}
       {planInfo?.isExpired && (
-        <Link href="/dashboard/propetario/suscripcion" className="block group">
+        <Link href="/dashboard/propetario/pagos" className="block group">
           <div className="bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5 flex items-center gap-4 hover:bg-red-100 transition-all">
             <div className="w-10 h-10 sm:w-11 sm:h-11 bg-red-500 rounded-xl flex items-center justify-center shrink-0">
               <Zap className="h-5 w-5 text-white" />
@@ -147,7 +147,7 @@ export function OwnerHomeWidgets() {
 
       {/* ── Banner vencimiento próximo ── */}
       {planInfo?.isExpiringSoon && !planInfo?.isExpired && (
-        <Link href="/dashboard/propetario/suscripcion" className="block group">
+        <Link href="/dashboard/propetario/pagos" className="block group">
           <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 sm:p-5 flex items-center gap-4 hover:bg-orange-100 transition-all">
             <div className="w-10 h-10 sm:w-11 sm:h-11 bg-orange-500 rounded-xl flex items-center justify-center shrink-0">
               <Clock className="h-5 w-5 text-white" />
