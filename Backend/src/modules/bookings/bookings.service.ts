@@ -28,6 +28,12 @@ function generateBookingCode(length = 8) {
   return code;
 }
 
+/**
+ * Cuántas horas antes del turno se puede mover o soltar una reserva.
+ * Es el margen que le queda al club para revender el horario.
+ */
+const REPROGRAMAR_HORAS = 24;
+
 @Injectable()
 export class BookingsService {
   private readonly logger = new Logger(BookingsService.name);
@@ -293,15 +299,138 @@ export class BookingsService {
     return booking;
   }
 
+  /**
+   * Cambia una reserva de horario sin devolver plata.
+   *
+   * Reemplaza al reembolso: el dinero ya entró a la cuenta de la empresa y se
+   * le gira al club en la liquidación de la semana en que efectivamente se
+   * juegue. Se permite hasta REPROGRAMAR_HORAS antes del turno original, que es
+   * el plazo en el que el club todavía alcanza a revender ese horario.
+   *
+   * Se conservan cancha y duración: así el precio ya cobrado sigue siendo el
+   * correcto y no hay que cobrar ni devolver diferencias.
+   */
+  async reprogramarByToken(
+    token: string,
+    nuevo: { date: string; startTime: string; endTime: string },
+  ): Promise<Booking> {
+    const booking = await this.bookingModel.findOne({ cancelToken: token });
+    if (!booking) throw new NotFoundException('Token de reserva inválido');
+    if (booking.status === BookingStatus.CANCELLED)
+      throw new BadRequestException('Esta reserva está cancelada');
+
+    const horasRestantes = this.horasHastaElTurno(booking);
+    if (horasRestantes < REPROGRAMAR_HORAS) {
+      throw new BadRequestException(
+        `Solo se puede cambiar el horario hasta ${REPROGRAMAR_HORAS} horas antes del turno`,
+      );
+    }
+
+    const minutos = (hhmm: string) => {
+      const [h, m] = hhmm.split(':').map(Number);
+      return h * 60 + m;
+    };
+
+    const duracionActual = minutos(booking.endTime) - minutos(booking.startTime);
+    const duracionNueva  = minutos(nuevo.endTime) - minutos(nuevo.startTime);
+    if (duracionNueva !== duracionActual) {
+      throw new BadRequestException('El nuevo horario debe durar lo mismo que el original');
+    }
+
+    const [anio, mes, dia] = nuevo.date.split('-').map(Number);
+    const fechaNueva = new Date(anio, mes - 1, dia);
+
+    await this.assertSlotLibre(
+      booking.courtId,
+      fechaNueva,
+      minutos(nuevo.startTime),
+      minutos(nuevo.endTime),
+      booking._id,
+    );
+
+    booking.date = fechaNueva;
+    booking.startTime = nuevo.startTime;
+    booking.endTime = nuevo.endTime;
+    booking.reprogramaciones = (booking.reprogramaciones ?? 0) + 1;
+    booking.reminderSent = false;
+    const guardada = await booking.save();
+
+    this.logger.log(`Reserva ${booking.bookingCode} movida a ${nuevo.date} ${nuevo.startTime}`);
+
+    try {
+      await this.notificationsService.sendBookingConfirmation(guardada as any);
+    } catch (e) {
+      this.logger.error(`Error enviando email de reprogramación: ${e.message}`);
+    }
+
+    return guardada;
+  }
+
+  /** Horas que faltan para que empiece el turno (hora Colombia). */
+  private horasHastaElTurno(booking: BookingDocument): number {
+    const [h, m] = booking.startTime.split(':').map(Number);
+    const inicio = new Date(booking.date);
+    inicio.setHours(h, m, 0, 0);
+    return (inicio.getTime() - Date.now()) / 1000 / 60 / 60;
+  }
+
+  /** Falla si el horario choca con otra reserva o con un bloqueo del club. */
+  private async assertSlotLibre(
+    courtId: Types.ObjectId,
+    fecha: Date,
+    inicioMins: number,
+    finMins: number,
+    ignorarBookingId?: Types.ObjectId,
+  ): Promise<void> {
+    if (fecha.getTime() < new Date().setHours(0, 0, 0, 0)) {
+      throw new BadRequestException('No puedes mover la reserva a una fecha que ya pasó');
+    }
+
+    const rango = {
+      $gte: new Date(new Date(fecha).setHours(0, 0, 0, 0)),
+      $lt: new Date(new Date(fecha).setHours(23, 59, 59, 999)),
+    };
+
+    const seCruza = (desde: string, hasta: string) => {
+      const [dh, dm] = desde.split(':').map(Number);
+      const [hh, hm] = hasta.split(':').map(Number);
+      return !(finMins <= dh * 60 + dm || inicioMins >= hh * 60 + hm);
+    };
+
+    const ocupadas = await this.bookingModel.find({
+      courtId,
+      date: rango,
+      status: { $in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
+      ...(ignorarBookingId ? { _id: { $ne: ignorarBookingId } } : {}),
+    }).lean();
+
+    for (const otra of ocupadas) {
+      if (seCruza(otra.startTime, otra.endTime)) {
+        throw new ConflictException('El horario seleccionado ya no está disponible');
+      }
+    }
+
+    const bloqueos = await this.blockedSlotModel.find({ courtId, date: rango }).lean();
+    for (const bloqueo of bloqueos) {
+      if (seCruza(bloqueo.startTime, bloqueo.endTime)) {
+        throw new ConflictException('Ese horario está bloqueado por el club');
+      }
+    }
+  }
+
   async cancelByToken(token: string): Promise<{ message: string }> {
     const booking = await this.bookingModel.findOne({ cancelToken: token });
     if (!booking) throw new NotFoundException('Token de cancelación inválido');
     if (booking.status === BookingStatus.CANCELLED)
       throw new BadRequestException('Esta reserva ya fue cancelada');
 
-    const hoursUntilBooking = (new Date(booking.date).getTime() - Date.now()) / 1000 / 60 / 60;
-    if (hoursUntilBooking < 2)
-      throw new BadRequestException('No se puede cancelar con menos de 2 horas de anticipación');
+    /* Cancelar libera el horario para que el club lo revenda, pero no
+       devuelve el dinero: para eso está la reprogramación. */
+    if (this.horasHastaElTurno(booking) < REPROGRAMAR_HORAS) {
+      throw new BadRequestException(
+        `No se puede cancelar con menos de ${REPROGRAMAR_HORAS} horas de anticipación`,
+      );
+    }
 
     booking.status = BookingStatus.CANCELLED;
     await booking.save();

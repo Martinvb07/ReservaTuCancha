@@ -32,6 +32,15 @@ export class BookingsController {
     return this.bookingsService.create(dto);
   }
 
+  @Post('reprogramar')
+  @ApiOperation({ summary: 'Mover una reserva de horario (sin login, con el token del email)' })
+  reprogramarByToken(
+    @Query('token') token: string,
+    @Body() body: { date: string; startTime: string; endTime: string },
+  ) {
+    return this.bookingsService.reprogramarByToken(token, body);
+  }
+
   @Get('cancel')
   @ApiOperation({ summary: 'Cancelar reserva con token' })
   cancelByToken(@Query('token') token: string) {

@@ -372,7 +372,7 @@ export default function BookingForm({
               className={`w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white font-semibold py-3.5 rounded-2xl transition-colors ${selectedDate && selectedSlots.length > 0 ? 'rtc-ready' : ''}`}>
               Continuar <ChevronRight className="h-5 w-5" />
             </button>
-            <p className="text-xs text-center text-gray-400">Sin registro · Cancelación gratis hasta 2h antes</p>
+            <p className="text-xs text-center text-gray-400">Sin registro · Puedes cambiar de horario hasta 24h antes</p>
           </div>
         )}
 

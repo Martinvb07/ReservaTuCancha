@@ -74,6 +74,10 @@ export class Booking {
 
   @Prop({ default: false })
   reminderSent: boolean;
+
+  /** Cuántas veces el jugador movió el horario de esta reserva */
+  @Prop({ default: 0 })
+  reprogramaciones: number;
 }
 
 export const BookingSchema = SchemaFactory.createForClass(Booking);

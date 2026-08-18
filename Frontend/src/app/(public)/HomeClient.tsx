@@ -25,7 +25,7 @@ const STEPS = [
 
 const FAQ = [
   { q: 'Necesito crear una cuenta para reservar?', a: 'No. Solo ingresas tu nombre, email y telefono al momento de reservar. Sin contrasenas, sin registro.' },
-  { q: 'Como cancelo mi reserva?',                 a: 'Recibes un link de cancelacion en tu email. Puedes cancelar gratis hasta 2 horas antes de tu turno.' },
+  { q: 'Como cancelo mi reserva?',                 a: 'Recibes un link en tu email para soltar tu horario hasta 24 horas antes del turno. El pago ya quedo procesado, asi que no hacemos devoluciones: si lo que necesitas es jugar otro dia, escribenos a soporte y te movemos la reserva.' },
   { q: 'Cuales son los metodos de pago?',          a: 'Aceptamos tarjetas de credito/debito, Nequi, Daviplata y PSE a traves de Wompi, la plataforma de pagos mas segura de Colombia.' },
   { q: 'Como recibo la confirmacion?',             a: 'Al instante por email. Incluye los datos de la cancha, horario y el link para cancelar si lo necesitas.' },
 ];
@@ -212,7 +212,7 @@ export default function HomeClient({ stats }: Props) {
         />
 
         <div className="flex flex-col md:flex-row justify-center gap-4 md:gap-8 pt-4">
-          {['Sin registro requerido', 'Pago seguro', 'Cancelacion gratis'].map(t => (
+          {['Sin registro requerido', 'Pago seguro', 'Confirmacion inmediata'].map(t => (
             <span key={t} className="flex items-center gap-1.5 text-xs md:text-sm text-gray-500">
               <CheckCircle className="h-4 w-4 text-lime-500 shrink-0" /> {t}
             </span>

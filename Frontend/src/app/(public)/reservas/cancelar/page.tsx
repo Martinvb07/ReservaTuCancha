@@ -64,7 +64,7 @@ function CancelarContent() {
           <XCircle className="h-8 w-8 text-red-400" />
         </div>
         <h2 className="text-2xl font-black text-white uppercase">No se puede cancelar</h2>
-        <p className="text-gray-400">El link expiró, la reserva ya fue cancelada, o han pasado más de 2 horas del turno.</p>
+        <p className="text-gray-400">El link expiró, la reserva ya fue cancelada, o faltan menos de 24 horas para el turno.</p>
         <Link href="/mis-reservas" className="inline-flex items-center gap-2 bg-lime-400 hover:bg-lime-300 text-gray-900 font-bold px-6 py-3 rounded-full transition-colors">
           Ver mis reservas
         </Link>
@@ -141,7 +141,7 @@ function CancelarContent() {
       )}
 
       <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4 text-sm text-yellow-300">
-        ⚠️ La cancelación gratuita aplica hasta 2 horas antes del turno. Pasado ese tiempo el propietario puede no efectuar el reembolso.
+        ⚠️ Soltar el horario no devuelve el dinero: el pago ya fue procesado. Si lo que quieres es jugar otro día, escríbenos a soporte y movemos tu reserva sin costo.
       </div>
 
       <div className="flex gap-3">

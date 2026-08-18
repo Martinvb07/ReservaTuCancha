@@ -222,7 +222,7 @@ export default async function CourtDetailPage({
                 <div className="space-y-2.5">
                   <div className="flex items-center gap-2.5 text-sm text-gray-600"><Clock className="h-4 w-4 text-green-600 shrink-0" />Duración mínima: 1 hora</div>
                   <div className="flex items-center gap-2.5 text-sm text-gray-600"><Users className="h-4 w-4 text-green-600 shrink-0" />Sin límite de jugadores</div>
-                  <div className="flex items-center gap-2.5 text-sm text-gray-600"><ShieldCheck className="h-4 w-4 text-green-600 shrink-0" />Cancelación gratis hasta 2h antes</div>
+                  <div className="flex items-center gap-2.5 text-sm text-gray-600"><ShieldCheck className="h-4 w-4 text-green-600 shrink-0" />Cambio de horario hasta 24h antes</div>
                 </div>
               </div>
             </div>
