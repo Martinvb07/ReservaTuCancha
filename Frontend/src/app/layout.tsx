@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     default: 'ReservaTuCancha — Fútbol, Pádel y Voley Playa',
     template: '%s | ReservaTuCancha',
   },
-  description: 'Reserva canchas deportivas de fútbol, pádel y voley playa fácil y rápido. Sin registro requerido.',
+  description: 'Encuentra y reserva canchas de fútbol, pádel y voley playa en clubes deportivos de Colombia. Sin registro, pago seguro y confirmación inmediata.',
   keywords: ['canchas', 'fútbol', 'pádel', 'voley playa', 'reservas deportivas', 'Colombia'],
   openGraph: {
     type: 'website',

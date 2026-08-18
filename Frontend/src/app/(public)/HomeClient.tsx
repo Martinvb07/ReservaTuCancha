@@ -66,6 +66,12 @@ export default function HomeClient({ stats }: Props) {
               Reserva canchas deportivas o{' '}
               <span className="text-lime-400">unete a emocionantes eventos</span>
             </h1>
+            {/* Quienes somos, en una linea: las canchas son de los clubes, no
+                nuestras. Es lo primero que tiene que quedar claro. */}
+            <p className="text-gray-200 text-xs md:text-base max-w-2xl mx-auto">
+              Conectamos jugadores con clubes deportivos independientes de Colombia.
+              Tu eliges donde jugar; nosotros ponemos la reserva y el pago seguro.
+            </p>
           </div>
 
           {/* Buscador propio (deporte / ciudad / fecha / hora).
@@ -90,7 +96,7 @@ export default function HomeClient({ stats }: Props) {
             <span className="text-lime-500">*</span> Servicios
           </p>
           <h2 className="text-2xl md:text-4xl font-black text-gray-900 uppercase">Encuentra tu lugar en la cancha</h2>
-          <p className="text-gray-500 mt-2 text-sm md:text-base">Instalaciones de calidad, reservas en segundos y eventos que unen a la comunidad.</p>
+          <p className="text-gray-500 mt-2 text-sm md:text-base">Canchas de clubes verificados, reservas en segundos y eventos que unen a la comunidad.</p>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-8 md:mb-10">
@@ -122,11 +128,11 @@ export default function HomeClient({ stats }: Props) {
         </div>
       </section>
 
-      {/* ── EXPLORA NUESTRAS CANCHAS ───────────────────────────────────── */}
+      {/* ── EXPLORA POR DEPORTE ────────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-4 py-8 md:py-16">
         <div className="mb-6 md:mb-8">
-          <h2 className="text-2xl md:text-4xl font-black text-gray-900 uppercase">Explora nuestras canchas</h2>
-          <p className="text-gray-500 mt-1 text-sm md:text-base">Juega en instalaciones con iluminacion nocturna, cesped de primera y mas.</p>
+          <h2 className="text-2xl md:text-4xl font-black text-gray-900 uppercase">Explora por deporte</h2>
+          <p className="text-gray-500 mt-1 text-sm md:text-base">Clubes con iluminacion nocturna, cesped de primera y mas.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
           {SPORT_GALLERY.map((s) => (
@@ -172,7 +178,7 @@ export default function HomeClient({ stats }: Props) {
             {[
               { icon: Shield,      title: 'Pago 100% seguro',       desc: 'Procesamos pagos con Wompi, la plataforma mas segura de Colombia. Nequi, Daviplata y tarjetas.' },
               { icon: Users,       title: 'Sin registro',           desc: 'Reserva en segundos sin crear cuenta. Solo nombre, email y telefono. Asi de facil.' },
-              { icon: TrendingUp,  title: 'Para propietarios',      desc: 'Dashboard completo con analytics, pagos automaticos y gestion de reservas en tiempo real.' },
+              { icon: TrendingUp,  title: 'Tienes una cancha?',     desc: 'Publica tu club y administralo desde tu panel: reservas en tiempo real, pagos automaticos y analytics.' },
             ].map((item, i) => (
               <FadeIn key={i} delay={i * 90} className="bg-white rounded-2xl p-6 border border-gray-100 text-center space-y-3 hover:shadow-lg transition-shadow">
                 <div className="w-14 h-14 bg-lime-100 rounded-2xl flex items-center justify-center mx-auto">
