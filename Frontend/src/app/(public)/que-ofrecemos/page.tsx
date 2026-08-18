@@ -7,65 +7,29 @@ import {
 } from 'lucide-react';
 import FaqAccordion from '@/components/ui/FaqAccordion';
 
-const PLANES = [
-  {
-    name: 'Básico',
-    price: 'Gratis',
-    period: 'para siempre',
-    desc: 'Ideal para empezar a recibir reservas sin costo.',
-    color: 'border-gray-200',
-    badge: '',
-    features: [
-      '1 cancha activa',
-      'Reservas ilimitadas',
-      'Confirmaciones por email',
-      'Pago en efectivo en el lugar',
-      'Panel de gestión básico',
-      'Soporte por email (72h)',
-    ],
-    cta: 'Comenzar gratis',
-    ctaHref: '/solicitar-acceso',
-    ctaStyle: 'border-2 border-green-600 text-green-700 hover:bg-green-50',
-  },
-  {
-    name: 'Pro',
-    price: '$89.900',
-    period: 'COP / mes',
-    desc: 'Para propietarios que quieren crecer con pagos online.',
-    color: 'border-green-500',
-    badge: 'Más popular',
-    features: [
-      'Hasta 5 canchas activas',
-      'Pagos online con Wompi (tarjeta, PSE, Nequi)',
-      'Analytics e ingresos detallados',
-      'Exportar reportes CSV',
-      'Hasta 10 fotos por cancha',
-      'Historial de reservas ilimitado',
-      'Soporte prioritario 24h',
-    ],
-    cta: 'Solicitar acceso Pro',
-    ctaHref: '/solicitar-acceso',
-    ctaStyle: 'bg-green-600 hover:bg-green-700 text-white',
-  },
-  {
-    name: 'Empresarial',
-    price: '$189.900',
-    period: 'COP / mes',
-    desc: 'Para complejos deportivos con múltiples canchas.',
-    color: 'border-purple-300',
-    badge: '',
-    features: [
-      'Canchas ilimitadas',
-      'Todo lo del Plan Pro',
-      'Fotos ilimitadas por cancha',
-      'Facturación electrónica',
-      'Soporte dedicado',
-      'Acceso anticipado a nuevas funciones',
-    ],
-    cta: 'Solicitar acceso Empresarial',
-    ctaHref: '/solicitar-acceso',
-    ctaStyle: 'border-2 border-gray-800 text-gray-800 hover:bg-gray-50',
-  },
+/* Modelo de cobro: comisión por reserva, no mensualidad. Antes eran tres
+   planes con precio fijo al mes; ahora el club solo paga cuando vende. */
+const COMISION = {
+  porcentaje: '6%',
+  desc: 'Solo pagas cuando alguien reserva y paga por la plataforma. Sin mensualidad, sin contrato y sin costo de instalación.',
+  incluye: [
+    'Reservas y pagos online 24/7',
+    'Cobro con Nequi, Daviplata, PSE y tarjeta',
+    'Panel en tiempo real con analytics',
+    'Cero dobles reservas',
+    'Confirmaciones automáticas por email',
+    'Reseñas verificadas de tus clientes',
+    'Bloqueo de horarios por mantenimiento o eventos',
+    'Soporte cuando lo necesites',
+  ],
+};
+
+/* Cómo viaja la plata: el cliente le paga a ReservaTuCancha y el club recibe
+   su liquidación semanal. */
+const FLUJO_PAGOS = [
+  { t: 'Tu cliente paga', d: 'El cobro se hace a nombre de ReservaTuCancha con la pasarela segura de Wompi.' },
+  { t: 'Descontamos el 6%', d: 'Es lo único que cobramos. No hay cuota mensual ni cobros por instalación.' },
+  { t: 'Te pagamos cada lunes', d: 'Todos los lunes transferimos a tu cuenta lo recaudado durante la semana anterior.' },
 ];
 
 const FEATURES = [
@@ -79,7 +43,7 @@ const FEATURES = [
   {
     icon: CreditCard,
     title: 'Pagos online integrados',
-    desc: 'Cobra con tarjeta, PSE o Nequi a través de Wompi. El dinero llega directo a tu cuenta sin intermediarios.',
+    desc: 'Tus clientes pagan con tarjeta, PSE o Nequi a través de Wompi. Nosotros recibimos el pago y te lo transferimos cada lunes.',
     color: 'bg-green-50',
     iconColor: 'text-green-600',
   },
@@ -122,10 +86,11 @@ const STATS = [
 
 const FAQ_QO = [
   { q: '¿Cuánto tiempo tarda el proceso de aprobación?', a: 'Una vez enviada tu solicitud, nuestro equipo la revisa en máximo 24–48 horas hábiles. Recibirás un email con tus credenciales de acceso.' },
-  { q: '¿Cómo puedo subir de plan?', a: 'Escríbenos por la sección de Soporte indicando el plan que deseas. Te enviamos los datos de pago (Nequi, Daviplata o transferencia bancaria) y en menos de 24h activamos tu plan.' },
-  { q: '¿Cobran comisión por reserva?', a: 'No cobramos comisión por reserva. Solo pagas el plan mensual. Los pagos de tus clientes van directo a tu cuenta.' },
+  { q: '¿Cobran comisión por reserva?', a: 'Sí: el 6% de cada reserva pagada por la plataforma. No hay mensualidad, contrato ni costo de instalación, así que si un mes no recibes reservas, no pagas nada.' },
+  { q: '¿Cuándo recibo mi dinero?', a: 'Todos los lunes. Transferimos a la cuenta del club lo recaudado durante la semana anterior, ya con el 6% descontado, y te queda el detalle de cada reserva en el panel.' },
+  { q: '¿A nombre de quién se cobra la reserva?', a: 'El pago se recibe a nombre de ReservaTuCancha a través de Wompi. Tú no tienes que abrir ni configurar ninguna pasarela de pagos.' },
   { q: '¿Necesito conocimientos técnicos?', a: 'Para nada. El panel es 100% intuitivo. Te guiamos paso a paso desde la configuración de tu primera cancha hasta recibir tu primer pago.' },
-  { q: '¿Qué métodos de pago online ofrece Wompi?', a: 'Con el Plan Pro o Empresarial tus clientes pueden pagar con tarjeta de crédito/débito, PSE y Nequi directamente desde la plataforma.' },
+  { q: '¿Qué métodos de pago puede usar mi cliente?', a: 'Tarjeta de crédito y débito, PSE y Nequi, directamente desde la plataforma.' },
 ];
 
 export default function QueOfrecemosPage() {
@@ -237,55 +202,67 @@ export default function QueOfrecemosPage() {
         </div>
       </section>
 
-      {/* ── PLANES ────────────────────────────────────────────────────── */}
-      <section className="max-w-6xl mx-auto px-4 py-20">
-        <div className="text-center mb-14">
+      {/* ── PRECIO ──────────────────────────────────────── */}
+      <section className="max-w-6xl mx-auto px-4 py-16 md:py-20">
+        <div className="text-center mb-10 md:mb-14">
           <p className="text-lime-600 font-semibold text-sm uppercase tracking-widest flex items-center justify-center gap-2 mb-3">
             <span>✦</span> Precios
           </p>
-          <h2 className="text-4xl font-black text-gray-900 uppercase">Planes para cada necesidad</h2>
-          <p className="text-gray-500 mt-3">Sin comisiones por reserva. Sin sorpresas.</p>
+          <h2 className="text-3xl md:text-4xl font-black text-gray-900 uppercase">Sin mensualidad</h2>
+          <p className="text-gray-500 mt-3">Ganas tú, ganamos nosotros. Nunca al revés.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-          {PLANES.map((plan) => (
-            <div
-              key={plan.name}
-              className={`relative rounded-2xl border-2 ${plan.color} p-8 ${plan.badge ? 'shadow-2xl scale-105' : ''}`}
-            >
-              {plan.badge && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className="bg-green-600 text-white text-xs font-bold px-4 py-1.5 rounded-full">
-                    {plan.badge}
-                  </span>
-                </div>
-              )}
-              <div className="mb-6">
-                <h3 className="font-black text-gray-900 text-lg">{plan.name}</h3>
-                <div className="mt-2">
-                  <span className="text-3xl font-black text-gray-900">{plan.price}</span>
-                  <span className="text-sm text-gray-400 ml-2">{plan.period}</span>
-                </div>
-                <p className="text-sm text-gray-500 mt-2">{plan.desc}</p>
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
 
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm text-gray-700">
-                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-
-              <Link
-                href={plan.ctaHref}
-                className={`block w-full text-center py-3 rounded-xl font-bold text-sm transition-all ${plan.ctaStyle}`}
-              >
-                {plan.cta}
-              </Link>
+          {/* Tarifa única */}
+          <div className="rounded-2xl border-2 border-green-500 p-6 md:p-8 shadow-xl">
+            <div className="flex items-baseline gap-2">
+              <span className="text-5xl md:text-6xl font-black text-green-600">{COMISION.porcentaje}</span>
+              <span className="text-sm font-bold text-gray-500">por reserva</span>
             </div>
-          ))}
+            <p className="text-sm text-gray-500 mt-3">{COMISION.desc}</p>
+
+            <ul className="space-y-2.5 mt-6 mb-8">
+              {COMISION.incluye.map((f) => (
+                <li key={f} className="flex items-start gap-2 text-sm text-gray-700">
+                  <CheckCircle className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+
+            <Link href="/solicitar-acceso"
+              className="block w-full text-center py-3.5 rounded-xl font-bold text-sm bg-green-600 hover:bg-green-700 text-white transition-all">
+              Solicitar acceso
+            </Link>
+          </div>
+
+          {/* Cómo te pagamos */}
+          <div className="rounded-2xl border-2 border-gray-200 p-6 md:p-8 bg-gray-50">
+            <h3 className="font-black text-gray-900 text-lg uppercase">Cómo te pagamos</h3>
+            <p className="text-sm text-gray-500 mt-2">
+              No tienes que configurar ninguna pasarela: nosotros cobramos y te liquidamos.
+            </p>
+
+            <ol className="mt-6 space-y-5">
+              {FLUJO_PAGOS.map((paso, i) => (
+                <li key={paso.t} className="flex gap-4">
+                  <span className="w-8 h-8 rounded-full bg-green-600 text-white font-black text-sm grid place-items-center shrink-0">
+                    {i + 1}
+                  </span>
+                  <div>
+                    <p className="font-bold text-gray-900 text-sm">{paso.t}</p>
+                    <p className="text-sm text-gray-500 mt-0.5">{paso.d}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+
+            <p className="text-xs text-gray-400 mt-6 pt-5 border-t border-gray-200">
+              Ejemplo: una cancha de $100.000 la hora. El cliente paga $100.000, nosotros
+              retenemos $6.000 y el lunes recibes $94.000.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -331,7 +308,7 @@ export default function QueOfrecemosPage() {
             </Link>
           </div>
           <div className="flex justify-center gap-8 pt-2">
-            {['Sin contrato', 'Gratis para empezar', 'Sin comisiones'].map(t => (
+            {['Sin mensualidad', 'Sin contrato', 'Te pagamos cada lunes'].map(t => (
               <span key={t} className="flex items-center gap-1.5 text-sm text-green-200">
                 <CheckCircle className="h-4 w-4 text-lime-300" /> {t}
               </span>

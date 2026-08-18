@@ -356,7 +356,8 @@ export default function SolicitarAccesoPage() {
             <div className="space-y-2">
               <h2 className="text-xl font-black text-gray-900 uppercase">Lo que obtienes</h2>
               <p className="text-gray-500 text-sm leading-relaxed">
-                Todo lo necesario para gestionar tu cancha, sin cuotas ni comisiones.
+                Todo lo necesario para gestionar tu cancha, sin mensualidad ni contrato:
+                solo el 6% de cada reserva pagada por la plataforma.
               </p>
             </div>
 

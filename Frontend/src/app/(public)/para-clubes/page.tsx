@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 
 const BENEFITS = [
   { icon: LayoutDashboard, title: 'Panel en tiempo real', desc: 'Ve tus reservas, ingresos y ocupación al instante desde cualquier dispositivo.' },
-  { icon: CreditCard, title: 'Pagos automáticos', desc: 'Cobra online con Wompi: Nequi, Daviplata y tarjetas. El dinero llega directo a tu cuenta.' },
+  { icon: CreditCard, title: 'Pagos automáticos', desc: 'Tus clientes pagan online con Nequi, Daviplata, PSE o tarjeta. Te transferimos lo recaudado cada lunes.' },
   { icon: CalendarCheck, title: 'Cero dobles reservas', desc: 'El sistema bloquea el horario apenas alguien reserva. Se acabaron los cruces.' },
   { icon: Bell, title: 'Notificaciones al instante', desc: 'Te avisamos cada nueva reserva y pago en el momento en que ocurre.' },
   { icon: TrendingUp, title: 'Analytics de tu negocio', desc: 'Conoce tus horas pico, canchas más rentables y tendencias para decidir mejor.' },
@@ -35,8 +35,8 @@ const STEPS = [
 ];
 
 const FAQ = [
-  { q: '¿Cuánto cuesta?', a: 'Trabajamos con planes según el tamaño de tu club. Solicita acceso y te mostramos las opciones sin compromiso.' },
-  { q: '¿Cómo recibo los pagos?', a: 'Los pagos de tus clientes llegan a tu cuenta vía Wompi (Nequi, Daviplata, PSE y tarjetas). Tú configuras tu cuenta una sola vez.' },
+  { q: '¿Cuánto cuesta?', a: 'No hay mensualidad ni contrato. Cobramos una comisión del 6% sobre cada reserva pagada por la plataforma: si nadie reserva, no pagas nada.' },
+  { q: '¿Cómo recibo los pagos?', a: 'Tus clientes pagan a ReservaTuCancha con Nequi, Daviplata, PSE o tarjeta. Cada lunes te transferimos lo recaudado de la semana anterior, ya con la comisión del 6% descontada.' },
   { q: '¿Puedo bloquear horarios?', a: 'Sí. Bloqueas horarios por mantenimiento, torneos o eventos privados cuando quieras, desde el panel.' },
   { q: '¿Mis clientes necesitan registrarse?', a: 'No. Reservan con su nombre, email y teléfono. Menos fricción, más reservas para ti.' },
 ];
