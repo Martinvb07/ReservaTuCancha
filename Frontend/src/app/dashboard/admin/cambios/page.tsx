@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -25,6 +25,14 @@ const DESTINATARIOS = [
   { value: 'empresarial',  label: 'Solo Empresarial'       },
   { value: 'basico',       label: 'Solo plan Básico'       },
 ];
+
+/** Respuesta de GET /changelog/next-version */
+interface VersionHint {
+  /** Última versión publicada, ya normalizada a X.Y.Z (null si no hay ninguna) */
+  ultima: string | null;
+  sugerida: string;
+  salto: 'minor' | 'patch';
+}
 
 interface FormState {
   titulo: string;
@@ -146,6 +154,25 @@ export default function AdminCambiosPage() {
     },
   });
 
+  /* El backend dice cuál fue la última versión y cuál toca según el tipo de
+     cambio: una función nueva sube el minor (2.1.1 → 2.2.0) y una corrección
+     el patch (2.1.1 → 2.1.2). Así no hay que acordarse de cuál iba. */
+  const { data: sugerencia } = useQuery<VersionHint>({
+    queryKey: ['changelog-next-version', form.tag],
+    queryFn: async () => {
+      const { data } = await api.get<VersionHint>('/changelog/next-version', { params: { tag: form.tag } });
+      return data;
+    },
+  });
+
+  /* Mientras el admin no escriba una versión propia, el campo sigue a la
+     sugerencia (que cambia al cambiar el tipo). En cuanto la toca, manda él. */
+  const versionTocada = useRef(false);
+  useEffect(() => {
+    if (!sugerencia?.sugerida || versionTocada.current) return;
+    setForm(f => ({ ...f, version: sugerencia.sugerida }));
+  }, [sugerencia?.sugerida]);
+
   const mutation = useMutation({
     mutationFn: async () => {
       const { data } = await api.post('/changelog', form);
@@ -162,10 +189,19 @@ export default function AdminCambiosPage() {
       }
       queryClient.invalidateQueries({ queryKey: ['admin-cambios'] });
       queryClient.invalidateQueries({ queryKey: ['changelog-public'] });
+      queryClient.invalidateQueries({ queryKey: ['changelog-next-version'] });
       setShowPreview(false);
+      // La versión vuelve a seguir la sugerencia para la próxima publicación.
+      versionTocada.current = false;
       setForm({ titulo: '', descripcion: '', version: '', tag: 'nueva_funcion', destinatarios: 'todos' });
     },
-    onError: () => toast.error('Error al publicar el cambio'),
+    /* El backend rechaza versiones que no avanzan ("2.1" después de "2.1.1")
+       y dice cuál corresponde: ese mensaje tiene que llegar tal cual. */
+    onError: (e: any) => {
+      const msg = e?.response?.data?.message;
+      toast.error(Array.isArray(msg) ? msg.join('. ') : msg || 'Error al publicar el cambio');
+      setShowPreview(false);
+    },
   });
 
   const inp = 'w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 transition';
@@ -258,8 +294,31 @@ export default function AdminCambiosPage() {
             <div>
               <label className={lbl}>Versión <span className="text-gray-400 font-normal normal-case">(opcional)</span></label>
               <input className={inp} placeholder="Ej: 2.4.0"
-                value={form.version} onChange={e => setForm({ ...form, version: e.target.value })} />
-              <p className="text-[11px] text-gray-400 mt-1">La "v" se agrega sola al mostrarla</p>
+                value={form.version}
+                onChange={e => { versionTocada.current = true; setForm({ ...form, version: e.target.value }); }} />
+
+              {/* Pista de versión: qué se publicó por última vez y qué toca
+                  ahora. El botón vuelve a la sugerencia si la editaron. */}
+              {sugerencia ? (
+                <p className="text-[11px] text-gray-400 mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                  {sugerencia.ultima
+                    ? <>Última publicada: <strong className="text-gray-600">{sugerencia.ultima}</strong> ·</>
+                    : <>Primera publicación ·</>}
+                  <span>
+                    {sugerencia.salto === 'minor' ? 'Función nueva' : 'Cambio menor'}, toca{' '}
+                    <strong className="text-gray-600">{sugerencia.sugerida}</strong>
+                  </span>
+                  {form.version.trim() !== sugerencia.sugerida && (
+                    <button type="button"
+                      onClick={() => { versionTocada.current = false; setForm({ ...form, version: sugerencia.sugerida }); }}
+                      className="font-bold text-green-700 hover:underline">
+                      usar {sugerencia.sugerida}
+                    </button>
+                  )}
+                </p>
+              ) : (
+                <p className="text-[11px] text-gray-400 mt-1">La "v" se agrega sola al mostrarla</p>
+              )}
             </div>
             <div>
               <label className={lbl}>Destinatarios</label>
