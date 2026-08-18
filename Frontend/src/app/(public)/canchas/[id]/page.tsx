@@ -6,6 +6,7 @@ import { MapPin, Star, ArrowLeft, Clock, Users, ShieldCheck } from 'lucide-react
 import BookingForm from '@/components/bookings/BookingForm';
 import ReviewCard from '@/components/reviews/ReviewCard';
 import SportIcon from '@/components/ui/SportIcon';
+import CourtLocationMap from '@/components/map/CourtLocationMap';
 import { getSport } from '@/lib/constants';
 import { amenityIcon } from '@/lib/amenityIcons';
 
@@ -173,6 +174,17 @@ export default async function CourtDetailPage({
                 </div>
               </div>
             )}
+
+            <div className="space-y-3">
+              <SectionHeading>Dónde queda</SectionHeading>
+              <CourtLocationMap
+                coordinates={court.location?.coordinates}
+                city={court.location?.city}
+                address={court.location?.address}
+                seed={court._id}
+                name={court.name}
+              />
+            </div>
 
             <div className="space-y-4">
               <SectionHeading>

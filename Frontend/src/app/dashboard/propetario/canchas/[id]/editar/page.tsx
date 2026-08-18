@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,6 +15,14 @@ import SettingsTabs, { type SettingsSection } from '@/components/ui/SettingsTabs
 import AvailabilityEditor, { type AvailabilitySlot } from '@/components/dashboard/AvailabilityEditor';
 import Link from 'next/link';
 import api from '@/lib/api/axios';
+import type { ResolvedAddress } from '@/components/map/LocationPicker';
+import type { LatLng } from '@/lib/geo';
+
+/* Leaflet toca `window` al importarse: el selector nunca se renderiza en servidor. */
+const LocationPicker = dynamic(() => import('@/components/map/LocationPicker'), {
+  ssr: false,
+  loading: () => <div className="h-[22.5rem] rounded-2xl bg-gray-100 animate-pulse" />,
+});
 
 const schema = z.object({
   name:         z.string().min(3, 'Mínimo 3 caracteres'),
@@ -45,6 +54,10 @@ export default function EditarCanchaPage() {
 
   const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
   const [section, setSection]           = useState('info');
+  /* Punto exacto en el mapa. `pinDirty` porque el pin no pasa por react-hook-form
+     y sin él el aviso de "cambios sin guardar" se quedaría corto. */
+  const [pin, setPin]                   = useState<LatLng | null>(null);
+  const [pinDirty, setPinDirty]         = useState(false);
 
   const { data: court, isLoading } = useQuery({
     queryKey: ['court', id],
@@ -52,10 +65,12 @@ export default function EditarCanchaPage() {
     enabled: !!id,
   });
 
-  const { register, handleSubmit, reset, formState: { errors, isDirty } } = useForm<FormValues>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors, isDirty } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     mode: 'onTouched',
   });
+
+  const city = watch('city');
 
   // Pre-llenar el form cuando lleguen los datos
   useEffect(() => {
@@ -71,6 +86,11 @@ export default function EditarCanchaPage() {
       if (court.availability && Array.isArray(court.availability)) {
         setAvailability(court.availability);
       }
+      // El backend las guarda [lng, lat]; el mapa las quiere al revés.
+      const c = court.location?.coordinates;
+      if (Array.isArray(c) && c.length === 2 && Number.isFinite(c[0]) && Number.isFinite(c[1])) {
+        setPin({ lat: c[1], lng: c[0] });
+      }
     }
   }, [court, reset]);
 
@@ -82,6 +102,8 @@ export default function EditarCanchaPage() {
         address:    values.address,
         city:       values.city,
         department: values.department,
+        // Mongo guarda GeoJSON: [lng, lat]
+        ...(pin ? { coordinates: [pin.lng, pin.lat] } : {}),
       },
       pricePerHour: values.pricePerHour,
       availability,
@@ -92,6 +114,14 @@ export default function EditarCanchaPage() {
     },
     onError: (e: any) => toast.error(e?.response?.data?.message || e.message || 'Error al actualizar la cancha'),
   });
+
+  /* El mapa rellena los campos de texto, pero no los bloquea: el dueño siempre
+     puede corregir la dirección a mano. */
+  const applyResolved = (r: ResolvedAddress) => {
+    if (r.address)    setValue('address',    r.address,    { shouldValidate: true, shouldDirty: true });
+    if (r.city)       setValue('city',       r.city,       { shouldValidate: true, shouldDirty: true });
+    if (r.department) setValue('department', r.department, { shouldValidate: true, shouldDirty: true });
+  };
 
   /* Si el guardado falla, abrimos la sección que tiene el error */
   const onInvalid = () => {
@@ -195,6 +225,16 @@ export default function EditarCanchaPage() {
                   {errors.department && <p className="text-xs text-red-500 mt-1">{errors.department.message}</p>}
                 </div>
               </div>
+
+              <div className="pt-2">
+                <label className={lbl}>Punto en el mapa <span className="text-gray-400 font-normal normal-case">(recomendado)</span></label>
+                <LocationPicker
+                  value={pin}
+                  onChange={(v) => { setPin(v); setPinDirty(true); }}
+                  onResolve={applyResolved}
+                  city={city}
+                />
+              </div>
             </div>
           )}
 
@@ -230,7 +270,7 @@ export default function EditarCanchaPage() {
                 : <><Save className="h-5 w-5" /> Guardar cambios</>}
             </button>
           </div>
-          {isDirty && (
+          {(isDirty || pinDirty) && (
             <p className="text-xs text-gray-400 text-center mt-2">Tienes cambios sin guardar</p>
           )}
         </div>

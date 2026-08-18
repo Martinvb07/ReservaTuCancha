@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,6 +23,14 @@ import StepWizard, { WIZARD_EASE, type WizardStep } from '@/components/ui/StepWi
 import { FutbolIcon, PadelIcon, VoleyIcon } from '@/components/ui/SportIcons';
 import SelectField from '@/components/ui/SelectField';
 import AvailabilityEditor, { DAYS, type AvailabilitySlot } from '@/components/dashboard/AvailabilityEditor';
+import type { ResolvedAddress } from '@/components/map/LocationPicker';
+import type { LatLng } from '@/lib/geo';
+
+/* Leaflet toca `window` al importarse: el selector nunca se renderiza en servidor. */
+const LocationPicker = dynamic(() => import('@/components/map/LocationPicker'), {
+  ssr: false,
+  loading: () => <div className="h-[22.5rem] rounded-2xl bg-gray-100 animate-pulse" />,
+});
 
 const schema = z.object({
   name:            z.string().min(3, 'Mínimo 3 caracteres'),
@@ -89,6 +98,8 @@ export default function AdminNuevaCanchaPage() {
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [amenities, setAmenities]       = useState<string[]>([]);
+  /* Punto exacto en el mapa. Opcional: sin él la cancha se ubica por ciudad. */
+  const [pin, setPin]                   = useState<LatLng | null>(null);
   const [availability, setAvailability] = useState<AvailabilitySlot[]>(
     [1,2,3,4,5].map(d => ({ dayOfWeek: d, openTime: '07:00', closeTime: '22:00', slotDurationMinutes: 60 }))
   );
@@ -129,7 +140,11 @@ export default function AdminNuevaCanchaPage() {
         amenities: v.futbolModalidad
           ? [v.futbolModalidad.replace('_',' ').replace('futbol','Fútbol'), ...amenities]
           : amenities,
-        location: { address: v.address, city: v.city, department: v.department },
+        location: {
+          address: v.address, city: v.city, department: v.department,
+          // Mongo guarda GeoJSON: [lng, lat]
+          ...(pin ? { coordinates: [pin.lng, pin.lat] as [number, number] } : {}),
+        },
         pricePerHour: v.pricePerHour, currency: v.currency, availability,
       });
 
@@ -217,6 +232,14 @@ export default function AdminNuevaCanchaPage() {
   const toggleAmenity = (a: string) =>
     setAmenities(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a]);
 
+  /* El mapa rellena los campos de texto, pero no los bloquea: el dueño siempre
+     puede corregir la dirección a mano (Nominatim no conoce todos los barrios). */
+  const applyResolved = (r: ResolvedAddress) => {
+    if (r.address)    setValue('address',    r.address,    { shouldValidate: true });
+    if (r.city)       setValue('city',       r.city,       { shouldValidate: true });
+    if (r.department) setValue('department', r.department, { shouldValidate: true });
+  };
+
   const sportLabel     = SPORTS.find(s => s.value === watchSport);
   const modalidadLabel = FUTBOL_MODALIDADES.find(m => m.value === watchModalidad);
 
@@ -225,6 +248,7 @@ export default function AdminNuevaCanchaPage() {
     { label: 'Nombre',   value: values.name,                                                            step: 1 },
     { label: 'Dirección',value: values.address,                                                         step: 1 },
     { label: 'Ciudad',   value: [values.city, values.department].filter(Boolean).join(', '),            step: 1 },
+    { label: 'Mapa',     value: pin ? `${pin.lat.toFixed(5)}, ${pin.lng.toFixed(5)}` : 'Sin punto exacto (se ubica por ciudad)', step: 1 },
     { label: 'Precio',   value: values.pricePerHour ? `$${Number(values.pricePerHour).toLocaleString('es-CO')} ${values.currency || 'COP'} / hora` : '', step: 2 },
     { label: 'Días',     value: availability.length ? availability.map(s => DAYS[s.dayOfWeek]).join(', ') : '', step: 2 },
     { label: 'Fotos',    value: photos.length ? `${photos.length} seleccionada${photos.length > 1 ? 's' : ''}` : 'Ninguna', step: 3 },
@@ -358,6 +382,16 @@ export default function AdminNuevaCanchaPage() {
                   <input className={inp} placeholder="Meta" {...register('department')} />
                   {errors.department && <p className="text-xs text-red-500 mt-1">{errors.department.message}</p>}
                 </div>
+              </div>
+
+              <div className="pt-2">
+                <label className={lbl}>Punto en el mapa <span className="text-gray-400 font-normal normal-case">(recomendado)</span></label>
+                <LocationPicker
+                  value={pin}
+                  onChange={setPin}
+                  onResolve={applyResolved}
+                  city={values.city}
+                />
               </div>
             </>
           )}

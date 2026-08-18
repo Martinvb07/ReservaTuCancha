@@ -314,3 +314,99 @@ body.sheet-open .fab-float {
   .rtc-scrim-in, .rtc-scrim-out,
   .mobile-sheet-in, .mobile-sheet-out, .rtc-sheet-up, .mobile-search-stack > * { animation: none !important; transition: none !important; transform: none !important; }
 }
+
+/* ───────────────────────────────────────────────────────────────────
+   MAPA (Leaflet)
+   Los pines y el popup se dibujan con HTML propio (divIcon), así que el
+   estilo vive acá y no en el CSS de Leaflet.
+   ─────────────────────────────────────────────────────────────────── */
+
+/* Leaflet pinta su tipografía por defecto: la alineamos con la del sitio */
+.leaflet-container {
+  font-family: inherit;
+  background: #eef1f5;
+}
+
+.leaflet-container a { color: #16a34a; }
+
+/* El contenedor del divIcon es solo un ancla: el pin se centra sobre él */
+.rtc-pin-wrap {
+  background: none;
+  border: none;
+}
+
+/* Píldora de precio, estilo Airbnb */
+.rtc-pin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-block;
+  white-space: nowrap;
+  padding: 5px 11px;
+  border-radius: 9999px;
+  background: #fff;
+  color: #111827;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1;
+  border: 1px solid rgba(0, 0, 0, .08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
+  transition: transform .16s cubic-bezier(.2, .8, .3, 1), background-color .16s ease, color .16s ease;
+}
+
+.leaflet-marker-icon:hover .rtc-pin {
+  transform: translate(-50%, -50%) scale(1.09);
+}
+
+.rtc-pin--active {
+  background: #111827;
+  color: #fff;
+  border-color: #111827;
+  transform: translate(-50%, -50%) scale(1.09);
+}
+
+.leaflet-marker-icon:hover .rtc-pin--active {
+  transform: translate(-50%, -50%) scale(1.13);
+}
+
+/* Popup con la ficha de la cancha: sin padding, la tarjeta ocupa todo */
+.rtc-map-popup .leaflet-popup-content-wrapper {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .22);
+}
+
+.rtc-map-popup .leaflet-popup-content {
+  margin: 0;
+  width: 248px !important;
+}
+
+.rtc-map-popup .leaflet-popup-tip { box-shadow: none; }
+
+.rtc-map-popup .leaflet-popup-close-button {
+  width: 26px;
+  height: 26px;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, .92);
+  color: #374151;
+  font-size: 17px;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .2);
+}
+
+.rtc-map-popup .leaflet-popup-close-button:hover { background: #fff; color: #111827; }
+
+/* Pin de gota del selector del panel: la sombra ayuda a verlo sobre el mapa */
+.rtc-picker-pin {
+  background: none;
+  border: none;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .3));
+}
+
+.rtc-picker-pin:active { cursor: grabbing; }

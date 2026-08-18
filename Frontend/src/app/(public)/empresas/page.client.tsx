@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { format, parse } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -10,13 +11,31 @@ import HeroSearch from '@/components/home/HeroSearch';
 import MobileSearchTrigger from '@/components/home/MobileSearchTrigger';
 import { AMENITIES, getSport } from '@/lib/constants';
 import { AMEN_ICONS } from '@/lib/amenityIcons';
-import { SlidersHorizontal, X, CalendarDays, Search, ChevronDown, Check, Sparkles, Banknote, ArrowUpDown } from 'lucide-react';
+import { SlidersHorizontal, X, CalendarDays, Search, ChevronDown, Check, Sparkles, Banknote, ArrowUpDown, Map as MapIcon, LayoutGrid, Columns2 } from 'lucide-react';
 import { useAnimatedDisclosure } from '@/hooks/useAnimatedDisclosure';
 import { SEARCH_ANCHOR_ID } from '@/hooks/useSearchDock';
 import MobileStackSheet, { STACK_SHEET_EXIT_MS } from '@/components/ui/MobileStackSheet';
 import type { Court } from '@/types';
 
 const PAGE_SIZE = 9;
+
+/** Alto del mapa: casi toda la pantalla, descontando navbar y barra de filtros. */
+const MAP_HEIGHT = 'h-[68vh] min-h-[420px] lg:h-[calc(100vh-11rem)]';
+
+/* En la vista dividida el mapa queda fijo mientras la lista se desplaza al lado.
+   8rem = navbar (4rem) + barra de filtros sticky (~3.9rem). */
+const SPLIT_MAP_STICKY = 'top-[8rem]';
+const SPLIT_MAP_HEIGHT = 'h-[calc(100vh-9rem)] min-h-[460px]';
+
+/* Leaflet toca `window` al importarse, así que el mapa nunca se renderiza en el
+   servidor. Además así solo lo descarga quien abre la vista de mapa. */
+const CourtsMap = dynamic(() => import('@/components/map/CourtsMap'), {
+  ssr: false,
+  loading: () => <div className={`${MAP_HEIGHT} rounded-2xl bg-gray-100 animate-pulse`} />,
+});
+
+/** Vista de resultados: cuadrícula, lista + mapa al lado, o mapa completo. */
+type ResultView = 'lista' | 'split' | 'mapa';
 
 /** Debe coincidir con la duración de `.rtc-search-out` en globals.css */
 const SEARCH_EXIT_MS = 260;
@@ -97,6 +116,9 @@ export default function EmpresasPageClient() {
   const [maxPrice, setMaxPrice] = useState(PRICE_MAX);
   const [sort, setSort] = useState<(typeof SORT_ORDER)[number]>('destacados');
   const [clientPage, setClientPage] = useState(1);
+  const [view, setView] = useState<ResultView>('lista');
+  /* Cancha bajo el cursor en la vista dividida: resalta su pin en el mapa. */
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   /* Sheet de filtros en móvil (una sección abierta a la vez). El bloqueo del
      scroll del body lo hace MobileStackSheet mientras está montado. */
@@ -181,6 +203,31 @@ export default function EmpresasPageClient() {
   const dropCls = 'rtc-drop absolute top-[calc(100%+8px)] left-0 z-50 bg-white rounded-2xl overflow-hidden';
   const dropStyle = { border: '1.5px solid #e5e7eb', boxShadow: '0 20px 48px rgba(0,0,0,.14)' };
 
+  /* Conmutador de vista. Se reusa en la barra de escritorio y en la de móvil.
+     "Dividido" solo aparece en pantallas anchas: abajo de lg no caben las dos
+     columnas y esa vista se degrada a la lista sola. */
+  const VIEWS: { key: ResultView; label: string; Icon: typeof MapIcon; wideOnly?: boolean }[] = [
+    { key: 'lista', label: 'Lista',    Icon: LayoutGrid },
+    { key: 'split', label: 'Dividido', Icon: Columns2, wideOnly: true },
+    { key: 'mapa',  label: 'Mapa',     Icon: MapIcon },
+  ];
+  const viewToggle = (
+    <div className="inline-flex items-center bg-gray-100 rounded-full p-0.5 flex-none">
+      {VIEWS.map(({ key, label, Icon, wideOnly }) => (
+        <button key={key} type="button" onClick={() => setView(key)}
+          aria-pressed={view === key}
+          className={`${wideOnly ? 'hidden lg:inline-flex' : 'inline-flex'} items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-bold transition-all ${
+            view === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+          }`}>
+          <Icon className="h-3.5 w-3.5" />
+          {/* Entre md y lg la barra va justa de ancho: ahí el toggle queda solo
+              con iconos. En móvil y en pantallas anchas sí caben las etiquetas. */}
+          <span className="hidden max-md:inline lg:inline">{label}</span>
+        </button>
+      ))}
+    </div>
+  );
+
   // ── Contenidos compartidos entre los dropdowns de desktop y el sheet móvil ──
   const precioInner = (
     <>
@@ -245,6 +292,75 @@ export default function EmpresasPageClient() {
       {sort === s && <Check className="h-3.5 w-3.5 text-green-600 check-in" />}
     </button>
   ));
+
+  /* ── Bloques de resultados, compartidos por la vista de lista y la dividida ──
+     `cols` cambia porque en la dividida las tarjetas viven en media pantalla. */
+  const skeletonGrid = (cols: string) => (
+    <div className={`grid ${cols} gap-x-5 gap-y-8`}>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="animate-pulse">
+          <div className="aspect-[4/3] bg-gray-200 rounded-2xl" />
+          <div className="pt-3 space-y-2">
+            <div className="h-4 bg-gray-200 rounded w-3/4" />
+            <div className="h-3 bg-gray-100 rounded w-1/2" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const emptyState = (
+    <div className="text-center py-20 bg-gray-50 rounded-2xl border border-gray-100">
+      <Search className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+      <p className="text-lg font-semibold text-gray-900">Sin canchas para estos filtros</p>
+      <p className="text-gray-500 text-sm mt-1">Prueba quitando alguna amenidad o cambiando de deporte o ciudad.</p>
+      <button onClick={clearAll}
+        className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-green-700 hover:text-green-800">
+        <X className="h-4 w-4" /> Limpiar filtros
+      </button>
+    </div>
+  );
+
+  const courtsGrid = (cols: string) => (
+    <div className={`grid ${cols} gap-x-5 gap-y-8`}>
+      {visible.map((court, i) => (
+        <div key={court._id} className="rtc-fade" style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}
+          onMouseEnter={() => setHoveredId(court._id)}
+          onMouseLeave={() => setHoveredId(null)}>
+          <CourtCard court={court} query={carryQuery} />
+        </div>
+      ))}
+    </div>
+  );
+
+  const pagination = pageCount > 1 && (
+    <div className="flex justify-center items-center gap-2 mt-12">
+      <button disabled={safePage <= 1} onClick={() => setClientPage(safePage - 1)}
+        className="text-sm font-medium border border-gray-200 hover:border-gray-400 text-gray-700 px-4 py-2 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+        ← Anterior
+      </button>
+      <div className="flex items-center gap-1">
+        {Array.from({ length: pageCount }, (_, i) => i + 1).map((p) => (
+          <button key={p} onClick={() => setClientPage(p)}
+            className={`w-9 h-9 text-sm font-semibold rounded-xl transition-all ${
+              p === safePage ? 'bg-gray-900 text-white' : 'border border-gray-200 hover:border-gray-400 text-gray-700'
+            }`}>
+            {p}
+          </button>
+        ))}
+      </div>
+      <button disabled={safePage >= pageCount} onClick={() => setClientPage(safePage + 1)}
+        className="text-sm font-medium border border-gray-200 hover:border-gray-400 text-gray-700 px-4 py-2 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+        Siguiente →
+      </button>
+    </div>
+  );
+
+  /** Lista de tarjetas con su paginación, resolviendo carga y vacío. */
+  const resultsColumn = (cols: string) =>
+    isLoading ? skeletonGrid(cols)
+      : filtered.length === 0 ? emptyState
+      : <>{courtsGrid(cols)}{pagination}</>;
 
   return (
     <main className="min-h-screen bg-white">
@@ -405,6 +521,8 @@ export default function EmpresasPageClient() {
                   </div>
                 )}
               </div>
+
+              {viewToggle}
             </div>
           </div>
 
@@ -422,9 +540,10 @@ export default function EmpresasPageClient() {
               <SlidersHorizontal className="h-3.5 w-3.5" />
               Filtros {activeFilters > 0 && `(${activeFilters})`}
             </button>
-            <span className="text-gray-500 text-[13px] whitespace-nowrap">
+            <span className="text-gray-500 text-[13px] whitespace-nowrap hidden min-[400px]:inline">
               <span className="font-semibold text-gray-900">{filtered.length}</span> {filtered.length === 1 ? 'cancha' : 'canchas'}
             </span>
+            {viewToggle}
           </div>
         </div>
       </div>
@@ -502,21 +621,6 @@ export default function EmpresasPageClient() {
           </p>
         )}
 
-        {/* Loading */}
-        {isLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-5 gap-y-8">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="aspect-[4/3] bg-gray-200 rounded-2xl" />
-                <div className="pt-3 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-3/4" />
-                  <div className="h-3 bg-gray-100 rounded w-1/2" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
         {/* Error */}
         {isError && (
           <div className="text-center py-20">
@@ -524,66 +628,29 @@ export default function EmpresasPageClient() {
           </div>
         )}
 
-        {/* Vacío */}
-        {!isLoading && !isError && filtered.length === 0 && (
-          <div className="text-center py-20 bg-gray-50 rounded-2xl border border-gray-100">
-            <Search className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-            <p className="text-lg font-semibold text-gray-900">Sin canchas para estos filtros</p>
-            <p className="text-gray-500 text-sm mt-1">Prueba quitando alguna amenidad o cambiando de deporte o ciudad.</p>
-            <button
-              onClick={clearAll}
-              className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-green-700 hover:text-green-800"
-            >
-              <X className="h-4 w-4" /> Limpiar filtros
-            </button>
+        {/* Lista — cuadrícula a todo el ancho */}
+        {view === 'lista' && !isError && resultsColumn('grid-cols-1 sm:grid-cols-2 xl:grid-cols-3')}
+
+        {/* Dividido — tarjetas a la izquierda, mapa fijo a la derecha.
+            Abajo de lg no caben las dos columnas: queda solo la lista. */}
+        {view === 'split' && !isError && (
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] gap-6 items-start">
+            {/* Una tarjeta por fila hasta xl: en lg la columna izquierda ronda
+                los 500px y dos tarjetas quedarían apretadas. */}
+            <div>{resultsColumn('grid-cols-1 xl:grid-cols-2')}</div>
+            <div className={`hidden lg:block sticky ${SPLIT_MAP_STICKY}`}>
+              {isLoading
+                ? <div className={`${SPLIT_MAP_HEIGHT} rounded-2xl bg-gray-100 animate-pulse`} />
+                : <CourtsMap courts={filtered} query={carryQuery} highlightId={hoveredId} className={SPLIT_MAP_HEIGHT} />}
+            </div>
           </div>
         )}
 
-        {/* Grid */}
-        {!isLoading && !isError && visible.length > 0 && (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-5 gap-y-8">
-              {visible.map((court, i) => (
-                <div key={court._id} className="rtc-fade" style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}>
-                  <CourtCard court={court} query={carryQuery} />
-                </div>
-              ))}
-            </div>
-
-            {pageCount > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-12">
-                <button
-                  disabled={safePage <= 1}
-                  onClick={() => setClientPage(safePage - 1)}
-                  className="text-sm font-medium border border-gray-200 hover:border-gray-400 text-gray-700 px-4 py-2 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  ← Anterior
-                </button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: pageCount }, (_, i) => i + 1).map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => setClientPage(p)}
-                      className={`w-9 h-9 text-sm font-semibold rounded-xl transition-all ${
-                        p === safePage
-                          ? 'bg-gray-900 text-white'
-                          : 'border border-gray-200 hover:border-gray-400 text-gray-700'
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  disabled={safePage >= pageCount}
-                  onClick={() => setClientPage(safePage + 1)}
-                  className="text-sm font-medium border border-gray-200 hover:border-gray-400 text-gray-700 px-4 py-2 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  Siguiente →
-                </button>
-              </div>
-            )}
-          </>
+        {/* Mapa — muestra todos los resultados filtrados, no solo la página actual */}
+        {view === 'mapa' && !isError && (
+          isLoading
+            ? <div className={`${MAP_HEIGHT} rounded-2xl bg-gray-100 animate-pulse`} />
+            : <CourtsMap courts={filtered} query={carryQuery} className={MAP_HEIGHT} />
         )}
       </section>
     </main>
