@@ -34,6 +34,45 @@ function formatPrice(price: number): string {
   return `$${price?.toLocaleString('es-CO')} COP`;
 }
 
+// ─── Correos transaccionales ────────────────────────────────────────────────
+
+/**
+ * Estilos de la tarjeta transaccional (reserva creada, recordatorio, aviso al
+ * club, cuenta de pagos...). Van en un <style> del <head>, que es donde Gmail
+ * respeta las media queries.
+ *
+ * La tarjeta estaba clavada en 450px: en pantalla de PC quedaba como una app
+ * móvil rodeada de vacío. Ahora llega a 620px y en móvil vuelve a ocupar todo
+ * el ancho.
+ *
+ * Se declara SOLO CLARO igual que el correo de novedades: sin esto Gmail en
+ * modo oscuro invierte unos colores y otros no, y queda a medio camino.
+ */
+const CARD_STYLES = `
+  :root { color-scheme: light; supported-color-schemes: light; }
+
+  body, table, td, p, a, h1 { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+  img { border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+
+  @media only screen and (max-width: 640px) {
+    .rtc-card  { width: 100% !important; }
+    .rtc-frame { padding: 24px 12px !important; }
+  }
+`;
+
+/** Cabecera del documento; el cierre correspondiente va tras el pie de la tarjeta. */
+const CARD_DOC_OPEN = `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="x-apple-disable-message-reformatting">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <style>${CARD_STYLES}</style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6;">`;
+
 // ─── Template base (solo para emails NUEVOS) ────────────────────────────────
 
 interface EmailTemplateOptions {
@@ -87,8 +126,9 @@ function buildEmailHtml(opts: EmailTemplateOptions): string {
   ` : '';
 
   return `
-    <div style="background-color: #f3f4f6; padding: 40px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-      <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 450px; background-color: #111827; border-radius: 32px; overflow: hidden; border-collapse: separate;">
+    ${CARD_DOC_OPEN}
+    <div class="rtc-frame" style="background-color: #f3f4f6; padding: 40px 16px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+      <table class="rtc-card" align="center" border="0" cellpadding="0" cellspacing="0" width="620" style="width: 620px; max-width: 100%; background-color: #111827; border-radius: 32px; overflow: hidden; border-collapse: separate;">
         <tr>
           <td align="center" style="padding: 40px 30px;">
             <div style="background-color: ${opts.iconBg}; width: 64px; height: 64px; border-radius: 50%; margin-bottom: 24px; display: table;">
@@ -114,6 +154,8 @@ function buildEmailHtml(opts: EmailTemplateOptions): string {
         Enviado por <strong>ReservaTuCancha</strong>
       </div>
     </div>
+</body>
+</html>
   `;
 }
 
@@ -130,6 +172,7 @@ function escapeHtml(text: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
+
 
 interface ChangelogBlock { heading?: string; body: string }
 
@@ -465,8 +508,9 @@ export class NotificationsService {
       from: this.fromEmail,
       subject: `Gracias por tu Reserva — #${booking.bookingCode}`,
       html: `
-        <div style="background-color: #f3f4f6; padding: 40px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-          <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 450px; background-color: #111827; border-radius: 32px; overflow: hidden; border-collapse: separate;">
+        ${CARD_DOC_OPEN}
+    <div class="rtc-frame" style="background-color: #f3f4f6; padding: 40px 16px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+          <table class="rtc-card" align="center" border="0" cellpadding="0" cellspacing="0" width="620" style="width: 620px; max-width: 100%; background-color: #111827; border-radius: 32px; overflow: hidden; border-collapse: separate;">
             <tr>
               <td align="center" style="padding: 40px 30px;">
                 <div style="background-color: #a3e635; width: 64px; height: 64px; border-radius: 50%; margin-bottom: 24px; display: table;">
@@ -525,6 +569,8 @@ export class NotificationsService {
              Enviado por <strong>ReservaTuCancha</strong>
           </div>
         </div>
+</body>
+</html>
       `,
     });
   }
@@ -536,8 +582,9 @@ export class NotificationsService {
       from: this.fromEmail,
       subject: `¡Tu solicitud fue aprobada! — #${userData?.id || 'N/A'}`,
       html: `
-        <div style="background-color: #f3f4f6; padding: 40px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-          <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 450px; background-color: #111827; border-radius: 32px; overflow: hidden; border-collapse: separate;">
+        ${CARD_DOC_OPEN}
+    <div class="rtc-frame" style="background-color: #f3f4f6; padding: 40px 16px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+          <table class="rtc-card" align="center" border="0" cellpadding="0" cellspacing="0" width="620" style="width: 620px; max-width: 100%; background-color: #111827; border-radius: 32px; overflow: hidden; border-collapse: separate;">
             <tr>
               <td align="center" style="padding: 40px 30px;">
                 <div style="background-color: #a3e635; width: 64px; height: 64px; border-radius: 50%; margin-bottom: 24px; display: table;">
@@ -588,6 +635,8 @@ export class NotificationsService {
              Enviado por <strong>ReservaTuCancha</strong>
           </div>
         </div>
+</body>
+</html>
       `,
     });
   }
@@ -630,8 +679,9 @@ export class NotificationsService {
       from: this.fromEmail,
       subject: '¿Cómo estuvo tu experiencia? — ReservaTuCancha',
       html: `
-        <div style="background-color: #f3f4f6; padding: 40px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-          <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 450px; background-color: #111827; border-radius: 32px; overflow: hidden; border-collapse: separate;">
+        ${CARD_DOC_OPEN}
+    <div class="rtc-frame" style="background-color: #f3f4f6; padding: 40px 16px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+          <table class="rtc-card" align="center" border="0" cellpadding="0" cellspacing="0" width="620" style="width: 620px; max-width: 100%; background-color: #111827; border-radius: 32px; overflow: hidden; border-collapse: separate;">
             <tr>
               <td align="center" style="padding: 40px 30px;">
                 <div style="background-color: #a3e635; width: 64px; height: 64px; border-radius: 50%; margin-bottom: 24px; display: table;">
@@ -670,6 +720,8 @@ export class NotificationsService {
             Enviado por <strong>ReservaTuCancha</strong>
           </div>
         </div>
+</body>
+</html>
       `,
     });
   }
@@ -749,8 +801,9 @@ export class NotificationsService {
       from: this.fromEmail,
       subject: `Nueva solicitud de acceso — ${data.businessName}`,
       html: `
-        <div style="background-color: #f3f4f6; padding: 40px 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-          <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 450px; background-color: #111827; border-radius: 32px; overflow: hidden; border-collapse: separate;">
+        ${CARD_DOC_OPEN}
+    <div class="rtc-frame" style="background-color: #f3f4f6; padding: 40px 16px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+          <table class="rtc-card" align="center" border="0" cellpadding="0" cellspacing="0" width="620" style="width: 620px; max-width: 100%; background-color: #111827; border-radius: 32px; overflow: hidden; border-collapse: separate;">
             <tr>
               <td align="center" style="padding: 40px 30px;">
                 <div style="background-color: #a3e635; width: 64px; height: 64px; border-radius: 50%; margin-bottom: 24px; display: table;">
@@ -814,6 +867,8 @@ export class NotificationsService {
             Enviado por <strong>ReservaTuCancha</strong>
           </div>
         </div>
+</body>
+</html>
       `,
     });
   }
