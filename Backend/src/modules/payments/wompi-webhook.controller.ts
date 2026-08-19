@@ -16,25 +16,33 @@ export class WompiWebhookController {
     @Body() body: any,
     @Headers('x-event-checksum') checksum: string,
   ) {
-    const { data, event, timestamp } = body;
-    const transaction = data.transaction;
+    const { data, event, timestamp } = body ?? {};
+    const transaction = data?.transaction;
 
-    // 1. Buscar la reserva por la referencia (bookingCode)
-    const booking = await this.bookingsService.findByCode(transaction.reference);
-    if (!booking) {
-      this.logger.error(`Reserva no encontrada para la referencia: ${transaction.reference}`);
-      throw new BadRequestException('Reserva no encontrada');
+    /* La ruta es pública: cualquiera puede golpearla. Sin esta guarda, un
+       cuerpo vacío reventaba con un 500 y su traza en los logs. */
+    if (!transaction?.reference) {
+      throw new BadRequestException('Cuerpo del evento inválido');
     }
 
-    /* 2. La firma se valida con el secreto de eventos de la empresa: todos los
-       cobros entran por la misma cuenta Wompi, ya no por la de cada club. */
+    /* 1. Primero la firma, antes de tocar la base: se valida con el secreto de
+       eventos de la empresa, porque todos los cobros entran por la misma
+       cuenta Wompi y ya no por la de cada club. Validar después permitía
+       averiguar qué códigos de reserva existen sin credencial alguna. */
     if (this.wompiService.eventsSecret) {
       if (!this.wompiService.validateSignature(data, timestamp, checksum)) {
-        this.logger.error(`Firma inválida para la reserva: ${booking.bookingCode}`);
+        this.logger.error(`Firma inválida para la referencia: ${transaction.reference}`);
         throw new BadRequestException('Firma inválida');
       }
     } else {
       this.logger.warn('WOMPI_EVENTS_SECRET sin definir: se acepta el webhook sin validar firma');
+    }
+
+    // 2. Buscar la reserva por la referencia (bookingCode)
+    const booking = await this.bookingsService.findByCode(transaction.reference);
+    if (!booking) {
+      this.logger.error(`Reserva no encontrada para la referencia: ${transaction.reference}`);
+      throw new BadRequestException('Reserva no encontrada');
     }
 
     // 3. Procesar el estado de la transacción
