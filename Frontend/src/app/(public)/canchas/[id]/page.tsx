@@ -19,8 +19,12 @@ async function getCourt(id: string) {
 }
 
 async function getReviews(courtId: string) {
+  /* Sin caché: una reseña recién publicada tiene que verse al volver a la
+     ficha. Con revalidate la calificación (que sale del court, con su propio
+     caché) subía antes de que apareciera el comentario, y parecía que la
+     reseña se había perdido. */
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reviews/court/${courtId}`, {
-    next: { revalidate: 120 },
+    cache: 'no-store',
   });
   if (!res.ok) return [];
   return res.json();
@@ -198,7 +202,7 @@ export default async function CourtDetailPage({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {reviews.slice(0, 5).map((review: any) => (
+                  {reviews.map((review: any) => (
                     <ReviewCard key={review._id} review={review} />
                   ))}
                 </div>
