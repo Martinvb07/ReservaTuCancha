@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import WhatsAppButton from './WhatsAppButton';
-import SupportChat from './SupportChat';
+import SupportChat, { ABRIR_SOPORTE } from './SupportChat';
 
 /* Los flotantes estorban en las pantallas de autenticación (que ocupan
    toda la ventana), así que ahí no se montan.
@@ -12,6 +12,13 @@ import SupportChat from './SupportChat';
 export default function FloatingActions() {
   const pathname = usePathname() || '';
   const [chatAbierto, setChatAbierto] = useState(false);
+
+  /* La página de soporte no monta su propio chat: pide abrir este. */
+  useEffect(() => {
+    const abrir = () => setChatAbierto(true);
+    window.addEventListener(ABRIR_SOPORTE, abrir);
+    return () => window.removeEventListener(ABRIR_SOPORTE, abrir);
+  }, []);
 
   if (pathname.startsWith('/auth')) return null;
 

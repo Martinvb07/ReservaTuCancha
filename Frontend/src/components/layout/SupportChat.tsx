@@ -31,6 +31,9 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
+/** Evento con el que cualquier página pide abrir el asistente. */
+export const ABRIR_SOPORTE = 'rtc:abrir-soporte';
+
 export default function SupportChat({ open, onOpenChange }: Props) {
   const router = useRouter();
 
