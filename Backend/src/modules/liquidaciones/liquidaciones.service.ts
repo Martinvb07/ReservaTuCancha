@@ -66,7 +66,7 @@ export class LiquidacionesService {
       {
         $match: {
           date: { $gte: periodo.inicio, $lt: periodo.fin },
-          status: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] },
+          status: { $in: [BookingStatus.CONFIRMED, BookingStatus.REAGENDADA, BookingStatus.COMPLETED] },
           paymentMethod: 'wompi',
         },
       },

@@ -30,7 +30,7 @@ export class AnalyticsService {
       this.bookingModel.countDocuments({ courtId: { $in: courtIds } }),
       this.bookingModel.countDocuments({ courtId: { $in: courtIds }, status: BookingStatus.CONFIRMED }),
       this.bookingModel.countDocuments({ courtId: { $in: courtIds }, status: BookingStatus.PENDING }),
-      this.bookingModel.countDocuments({ courtId: { $in: courtIds }, status: BookingStatus.CANCELLED }),
+      this.bookingModel.countDocuments({ courtId: { $in: courtIds }, status: BookingStatus.REAGENDADA }),
       this.bookingModel.countDocuments({ courtId: { $in: courtIds }, status: BookingStatus.COMPLETED }),
 
       // Ingresos totales (confirmadas + completadas)
@@ -52,14 +52,14 @@ export class AnalyticsService {
 
       // Reservas por día de semana (0=Dom … 6=Sáb)
       this.bookingModel.aggregate([
-        { $match: { courtId: { $in: courtIds }, status: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED, BookingStatus.PENDING] } } },
+        { $match: { courtId: { $in: courtIds }, status: { $in: [BookingStatus.CONFIRMED, BookingStatus.REAGENDADA, BookingStatus.COMPLETED] } } },
         { $group: { _id: { $dayOfWeek: '$date' }, count: { $sum: 1 } } },
         { $sort: { '_id': 1 } },
       ]),
 
       // Reservas por hora de inicio
       this.bookingModel.aggregate([
-        { $match: { courtId: { $in: courtIds }, status: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED, BookingStatus.PENDING] } } },
+        { $match: { courtId: { $in: courtIds }, status: { $in: [BookingStatus.CONFIRMED, BookingStatus.REAGENDADA, BookingStatus.COMPLETED] } } },
         { $group: { _id: { $substr: ['$startTime', 0, 2] }, count: { $sum: 1 } } },
         { $sort: { '_id': 1 } },
       ]),

@@ -10,9 +10,9 @@ import Link from 'next/link';
 import api from '@/lib/api/axios';
 
 const STATUS_STYLES: Record<string, { pill: string; dot: string; label: string }> = {
-  pending:   { pill: 'bg-yellow-100 text-yellow-700', dot: 'bg-yellow-400', label: 'Pendiente'  },
+  pending:   { pill: 'bg-yellow-100 text-yellow-700', dot: 'bg-yellow-400', label: 'Sin pagar'  },
   confirmed: { pill: 'bg-green-100 text-green-700',   dot: 'bg-green-500',  label: 'Confirmada' },
-  cancelled: { pill: 'bg-red-100 text-red-600',       dot: 'bg-red-400',    label: 'Cancelada'  },
+  reagendada: { pill: 'bg-red-100 text-red-600',       dot: 'bg-red-400',    label: 'Reagendada'  },
   completed: { pill: 'bg-blue-100 text-blue-700',     dot: 'bg-blue-400',   label: 'Completada' },
 };
 
@@ -160,12 +160,13 @@ export default function MisReservasPage() {
 
                   <div className="flex items-center justify-between">
                     <span className="font-black text-green-700 text-lg">${booking.totalPrice?.toLocaleString('es-CO')} COP</span>
-                    {booking.status !== 'cancelled' && booking.cancelToken && (
+                    {/* Ya no se cancela: si el jugador no puede ir, mueve el horario. */}
+                    {booking.status !== 'completed' && booking.cancelToken && (
                       <a
-                        href={`/reservas/cancelar?token=${booking.cancelToken}`}
-                        className="text-xs text-red-500 hover:text-red-700 font-semibold hover:underline transition-colors"
+                        href={`/reservas/reprogramar?token=${booking.cancelToken}`}
+                        className="text-xs text-green-700 hover:text-green-800 font-semibold hover:underline transition-colors"
                       >
-                        Cancelar reserva
+                        Cambiar horario
                       </a>
                     )}
                   </div>

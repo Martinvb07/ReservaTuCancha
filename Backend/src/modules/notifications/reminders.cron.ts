@@ -26,7 +26,7 @@ export class RemindersCron {
 
     // Buscar reservas cuya fecha es mañana (ventana de 1 hora para evitar duplicados)
     const bookings = await this.bookingModel.find({
-      status: { $in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
+      status: { $in: [BookingStatus.CONFIRMED, BookingStatus.REAGENDADA] },
       reminderSent: { $ne: true },
       date: { $gte: in23h, $lte: in24h },
     }).lean();
@@ -57,17 +57,14 @@ export class RemindersCron {
   async expireAbandonedWompiBookings() {
     const cutoff = new Date(Date.now() - 30 * 60 * 1000);
 
-    const result = await this.bookingModel.updateMany(
-      {
+    const result = await this.bookingModel.deleteMany({
         status: BookingStatus.PENDING,
         paymentMethod: 'wompi',
         createdAt: { $lt: cutoff },
-      } as any,
-      { $set: { status: BookingStatus.CANCELLED } },
-    );
+      } as any);
 
-    if (result.modifiedCount > 0) {
-      this.logger.log(`Expiradas ${result.modifiedCount} reservas Wompi abandonadas (>30min sin pago)`);
+    if (result.deletedCount > 0) {
+      this.logger.log(`Expiradas ${result.deletedCount} reservas Wompi abandonadas (>30min sin pago)`);
     }
   }
 }

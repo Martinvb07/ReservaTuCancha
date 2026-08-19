@@ -41,12 +41,6 @@ export class BookingsController {
     return this.bookingsService.reprogramarByToken(token, body);
   }
 
-  @Get('cancel')
-  @ApiOperation({ summary: 'Cancelar reserva con token' })
-  cancelByToken(@Query('token') token: string) {
-    return this.bookingsService.cancelByToken(token);
-  }
-
   @Get('cancel-info')
   @ApiOperation({ summary: 'Info de reserva por cancelToken (sin login)' })
   getCancelInfo(@Query('token') token: string) {

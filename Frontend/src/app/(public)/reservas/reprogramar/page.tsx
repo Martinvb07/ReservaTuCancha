@@ -333,13 +333,6 @@ function ReprogramarContenido() {
                 : <>Confirmar cambio <ArrowRight className="h-5 w-5" /></>}
             </button>
 
-            <p className="text-center text-xs text-gray-500">
-              ¿Ya no vas a jugar?{' '}
-              <Link href={`/reservas/cancelar?token=${token}`} className="text-gray-400 underline hover:text-gray-200">
-                Suelta el horario
-              </Link>{' '}
-              (no se devuelve el dinero).
-            </p>
           </div>
         )}
       </div>

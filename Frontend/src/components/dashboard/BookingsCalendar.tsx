@@ -14,13 +14,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import type { Booking } from '@/types/booking.types';
 
 const STATUS_STYLES: Record<string, { pill: string; dot: string; bg: string }> = {
-  pending:   { pill: 'bg-yellow-100 text-yellow-700', dot: 'bg-yellow-400', bg: 'bg-yellow-400' },
-  confirmed: { pill: 'bg-green-100 text-green-700',   dot: 'bg-green-500',  bg: 'bg-green-500'  },
-  cancelled: { pill: 'bg-red-100 text-red-600',       dot: 'bg-red-400',    bg: 'bg-red-400'    },
-  completed: { pill: 'bg-blue-100 text-blue-700',     dot: 'bg-blue-400',   bg: 'bg-blue-400'   },
+  confirmed:  { pill: 'bg-green-100 text-green-700', dot: 'bg-green-500', bg: 'bg-green-500' },
+  reagendada: { pill: 'bg-amber-100 text-amber-700', dot: 'bg-amber-400', bg: 'bg-amber-400' },
+  completed:  { pill: 'bg-blue-100 text-blue-700',   dot: 'bg-blue-400',  bg: 'bg-blue-400'  },
+  pending:    { pill: 'bg-gray-100 text-gray-500',   dot: 'bg-gray-400',  bg: 'bg-gray-400'  },
 };
 const STATUS_LABELS: Record<string, string> = {
-  pending: 'Pendiente', confirmed: 'Confirmada', cancelled: 'Cancelada', completed: 'Completada',
+  confirmed: 'Confirmada', reagendada: 'Reagendada', completed: 'Completada', pending: 'Sin pagar',
 };
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];

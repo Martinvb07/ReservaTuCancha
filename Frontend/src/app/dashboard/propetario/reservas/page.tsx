@@ -20,13 +20,13 @@ function formatTime12h(time24h: string): string {
 }
 
 const STATUS_STYLES: Record<string, { pill: string; dot: string }> = {
-  pending:   { pill: 'bg-yellow-100 text-yellow-700',  dot: 'bg-yellow-400'  },
-  confirmed: { pill: 'bg-green-100 text-green-700',    dot: 'bg-green-500'   },
-  cancelled: { pill: 'bg-red-100 text-red-600',        dot: 'bg-red-400'     },
-  completed: { pill: 'bg-blue-100 text-blue-700',      dot: 'bg-blue-400'    },
+  confirmed:  { pill: 'bg-green-100 text-green-700',  dot: 'bg-green-500'  },
+  reagendada: { pill: 'bg-amber-100 text-amber-700',  dot: 'bg-amber-400'  },
+  completed:  { pill: 'bg-blue-100 text-blue-700',    dot: 'bg-blue-400'   },
+  pending:    { pill: 'bg-gray-100 text-gray-500',    dot: 'bg-gray-400'   },
 };
 const STATUS_LABELS: Record<string, string> = {
-  pending: 'Pendiente', confirmed: 'Confirmada', cancelled: 'Cancelada', completed: 'Completada',
+  confirmed: 'Confirmada', reagendada: 'Reagendada', completed: 'Completada', pending: 'Sin pagar',
 };
 
 const ITEMS_PER_PAGE = 10;
@@ -72,7 +72,7 @@ export default function ReservasOwnerPage() {
   const endIdx = startIdx + ITEMS_PER_PAGE;
   const paginatedBookings = filtered.slice(startIdx, endIdx);
 
-  const pendientes  = bookings.filter(b => b.status === 'pending').length;
+  const reagendadas = bookings.filter(b => b.status === 'reagendada').length;
   const confirmadas = bookings.filter(b => b.status === 'confirmed').length;
 
   const handleFilterChange = (status: string) => {
@@ -97,7 +97,7 @@ export default function ReservasOwnerPage() {
           <h1 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase">Reservas</h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-1">
             {bookings.length} reservas ·{' '}
-            <span className="text-yellow-600 font-semibold">{pendientes} pendientes</span> ·{' '}
+            <span className="text-yellow-600 font-semibold">{reagendadas} reagendadas</span> ·{' '}
             <span className="text-green-600 font-semibold">{confirmadas} confirmadas</span>
           </p>
         </div>

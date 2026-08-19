@@ -1,4 +1,9 @@
-export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
+/**
+ * Estados que ve el club: confirmada, reagendada y completada.
+ * `pending` es interno y transitorio — la reserva existe pero aún no se paga;
+ * si el pago no llega en 30 minutos, el backend la borra.
+ */
+export type BookingStatus = 'pending' | 'confirmed' | 'reagendada' | 'completed';
 
 export interface Booking {
   _id: string;

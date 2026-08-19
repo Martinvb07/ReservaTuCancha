@@ -69,7 +69,7 @@ export class BookingsService {
   ): Promise<Booking> {
     const { status, wompiTransactionId } = updateData;
 
-    const validStatuses = ['pending', 'confirmed', 'cancelled', 'completed'];
+    const validStatuses = ['confirmed', 'reagendada', 'completed'];
     if (!validStatuses.includes(status))
       throw new BadRequestException('Estado inválido');
 
@@ -180,7 +180,7 @@ export class BookingsService {
         $gte: new Date(localDate).setHours(0, 0, 0, 0),
         $lt: new Date(localDate).setHours(23, 59, 59, 999),
       },
-      status: { $in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
+      status: { $in: [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.REAGENDADA] },
     });
 
     for (const booking of existingBookings) {
@@ -274,8 +274,6 @@ export class BookingsService {
       .populate('courtId', 'name sport location availability pricePerHour')
       .lean();
     if (!booking) throw new NotFoundException('Token inválido o reserva no encontrada');
-    if (booking.status === BookingStatus.CANCELLED)
-      throw new BadRequestException('Esta reserva ya fue cancelada');
     return booking;
   }
 
@@ -306,8 +304,6 @@ export class BookingsService {
   ): Promise<Booking> {
     const booking = await this.bookingModel.findOne({ cancelToken: token });
     if (!booking) throw new NotFoundException('Token de reserva inválido');
-    if (booking.status === BookingStatus.CANCELLED)
-      throw new BadRequestException('Esta reserva está cancelada');
 
     const horasRestantes = this.horasHastaElTurno(booking);
     if (horasRestantes < REPROGRAMAR_HORAS) {
@@ -341,6 +337,7 @@ export class BookingsService {
     booking.date = fechaNueva;
     booking.startTime = nuevo.startTime;
     booking.endTime = nuevo.endTime;
+    booking.status = BookingStatus.REAGENDADA;
     booking.reprogramaciones = (booking.reprogramaciones ?? 0) + 1;
     booking.reminderSent = false;
     const guardada = await booking.save();
@@ -390,7 +387,7 @@ export class BookingsService {
     const ocupadas = await this.bookingModel.find({
       courtId,
       date: rango,
-      status: { $in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
+      status: { $in: [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.REAGENDADA] },
       ...(ignorarBookingId ? { _id: { $ne: ignorarBookingId } } : {}),
     }).lean();
 
@@ -408,41 +405,13 @@ export class BookingsService {
     }
   }
 
-  async cancelByToken(token: string): Promise<{ message: string }> {
-    const booking = await this.bookingModel.findOne({ cancelToken: token });
-    if (!booking) throw new NotFoundException('Token de cancelación inválido');
-    if (booking.status === BookingStatus.CANCELLED)
-      throw new BadRequestException('Esta reserva ya fue cancelada');
-
-    /* Cancelar libera el horario para que el club lo revenda, pero no
-       devuelve el dinero: para eso está la reprogramación. */
-    if (this.horasHastaElTurno(booking) < REPROGRAMAR_HORAS) {
-      throw new BadRequestException(
-        `No se puede cancelar con menos de ${REPROGRAMAR_HORAS} horas de anticipación`,
-      );
-    }
-
-    booking.status = BookingStatus.CANCELLED;
-    await booking.save();
-    await this.notificationsService.sendCancellationConfirmation(booking as any);
-
-    // Notificación en tiempo real al owner
-    try {
-      const court = await this.courtModel.findById(booking.courtId).select('ownerId name').lean();
-      if (court) {
-        this.notificationsGateway.notifyBookingCancelled(court.ownerId.toString(), {
-          ...booking.toObject(),
-          courtId: court,
-        });
-      }
-    } catch (e) {
-      this.logger.error(`Error enviando WS cancel notification: ${e.message}`);
-    }
-
-    return { message: 'Reserva cancelada exitosamente' };
+  /**
+   * Borra una reserva. Se usa cuando el pago se rechaza: ya no hay estado
+   * "cancelada", asi que la reserva desaparece y el horario queda libre.
+   */
+  async eliminar(id: string): Promise<void> {
+    await this.bookingModel.findByIdAndDelete(id);
   }
-
-  // --- CONSULTAS ---
 
   async findByGuestEmail(email: string): Promise<Booking[]> {
     return this.bookingModel
@@ -474,7 +443,7 @@ export class BookingsService {
           $gte: startOfDay,
           $lt: startOfNextDay,
         },
-        status: { $in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
+        status: { $in: [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.REAGENDADA] },
       })
       .select('startTime endTime status')
       .lean();

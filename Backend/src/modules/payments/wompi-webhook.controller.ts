@@ -57,10 +57,9 @@ export class WompiWebhookController {
         });
       } else if (transaction.status === 'DECLINED' || transaction.status === 'ERROR') {
         this.logger.warn(`❌ Pago rechazado/error para reserva: ${booking.bookingCode}`);
-        await this.bookingsService.updateStatus(booking._id.toString(), {
-          status: 'cancelled',
-          wompiTransactionId: transaction.id,
-        });
+        /* Sin estado "cancelada": una reserva que no se pagó se borra y el
+           horario queda libre de inmediato. */
+        await this.bookingsService.eliminar(booking._id.toString());
       }
     }
 

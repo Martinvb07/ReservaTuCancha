@@ -4,9 +4,12 @@ import { Document, Types } from 'mongoose';
 export type BookingDocument = Booking & Document;
 
 export enum BookingStatus {
+  /* Interno y transitorio: la reserva existe pero aún no se ha pagado. No se
+     le muestra al club; si el pago no llega en 30 minutos, el cron la borra. */
   PENDING = 'pending',
   CONFIRMED = 'confirmed',
-  CANCELLED = 'cancelled',
+  /** Se movió de horario. Sigue activa: ocupa el turno nuevo y se liquida. */
+  REAGENDADA = 'reagendada',
   COMPLETED = 'completed',
 }
 
