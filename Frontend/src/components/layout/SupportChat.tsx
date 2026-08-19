@@ -44,6 +44,8 @@ export default function SupportChat({ open, onOpenChange }: Props) {
   const [turno, setTurno]             = useState(0);
   const [chipsSaliendo, setChipsSaliendo] = useState(false);
   const [escribiendo, setEscribiendo] = useState(false);
+  /** Último menú visitado: a él vuelve "Ver otro tema". */
+  const menuActualRef = useRef<string>(tree.meta.nodoInicial);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const timers    = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -63,6 +65,12 @@ export default function SupportChat({ open, onOpenChange }: Props) {
     const nodo = tree.nodos[idNodo];
     if (!nodo) return;
 
+    /* La primera pantalla lista los temas (reservas, pagos, clubes, cuenta) y
+       cada uno abre su propio menú. Al terminar una respuesta, "Ver otro tema"
+       debe devolver a ese submenú y no al arranque, así que se recuerda cuál
+       fue el último menú por el que pasó. */
+    if (idNodo.startsWith('menu-')) menuActualRef.current = idNodo;
+
     programar(() => {
       setEscribiendo(true);
       programar(() => {
@@ -71,7 +79,12 @@ export default function SupportChat({ open, onOpenChange }: Props) {
         setMensajes(prev => [...prev, { id: nuevoId(), autor: 'bot', texto: nodo.mensaje }]);
         setOpciones(
           nodo.esRespuesta
-            ? [...nodo.opciones, ...tree.meta.opcionesFinales]
+            ? [
+                ...nodo.opciones,
+                ...tree.meta.opcionesFinales.map((o) =>
+                  o.destino === 'inicio' ? { ...o, destino: menuActualRef.current } : o,
+                ),
+              ]
             : nodo.opciones,
         );
         setTurno(t => t + 1);
