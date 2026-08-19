@@ -398,6 +398,61 @@ export class NotificationsService {
   // EMAILS ORIGINALES (restaurados tal cual)
   // ═══════════════════════════════════════════════════════════════════════
 
+  /**
+   * Aviso de cambio en la cuenta de pagos del club.
+   *
+   * Va al dueño (para que se entere si alguien mas toco sus datos de cobro) y
+   * a la casilla interna de ADMIN_NOTIFY_EMAIL, porque es el dato con el que
+   * se le transfiere la plata cada lunes.
+   */
+  async sendDatosBancariosActualizados(opts: {
+    clubNombre: string;
+    emailDueno?: string;
+    esPrimeraVez: boolean;
+    resumen: { label: string; value: string }[];
+  }) {
+    const { clubNombre, emailDueno, esPrimeraVez, resumen } = opts;
+
+    const titulo = esPrimeraVez ? 'Cuenta registrada' : 'Cuenta actualizada';
+    const panelUrl = `${this.frontendUrl}/dashboard/propetario/pagos`;
+
+    // ── Al dueño del club ──
+    if (emailDueno) {
+      await this.send({
+        to: emailDueno,
+        from: this.fromEmail,
+        subject: `${titulo} — ${clubNombre}`,
+        html: buildEmailHtml({
+          iconBg: '#dcfce7', iconContent: '🏦',
+          title: titulo,
+          subtitle: esPrimeraVez
+            ? 'Ya podemos girarte tu liquidación de los lunes a esta cuenta.'
+            : 'Cambiaron los datos con los que te transferimos cada lunes.',
+          rows: resumen,
+          alertBox: {
+            bg: '#fef3c7', color: '#92400e',
+            text: '¿No fuiste tú? Escríbenos de inmediato desde el panel.',
+          },
+          ctaText: 'Ver mi cuenta de pagos', ctaUrl: panelUrl, ctaBg: '#16a34a',
+        }),
+      });
+    }
+
+    // ── A la casilla interna ──
+    await this.send({
+      to: this.adminEmail,
+      from: this.fromEmail,
+      subject: `[Cuenta de pagos] ${clubNombre} — ${esPrimeraVez ? 'registró' : 'actualizó'} sus datos`,
+      html: buildEmailHtml({
+        iconBg: '#e0e7ff', iconContent: '🔔',
+        title: 'Cuenta de pagos',
+        subtitle: `${clubNombre} ${esPrimeraVez ? 'registró' : 'actualizó'} los datos para recibir su liquidación.`,
+        rows: [{ label: 'Club', value: clubNombre }, ...resumen],
+        ctaText: 'Abrir liquidación', ctaUrl: `${this.frontendUrl}/dashboard/admin/liquidacion`, ctaBg: '#111827',
+      }),
+    });
+  }
+
   async sendBookingConfirmation(booking: Booking & { _id: any }) {
     const { court, club } = await this.getCourtAndClub(booking);
     const cambiarUrl  = `${this.frontendUrl}/reservas/reprogramar?token=${booking.cancelToken}`;

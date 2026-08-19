@@ -52,12 +52,6 @@ const OWNER_SECTIONS: NavSection[] = [
   ]},
 ];
 
-const PLAN_CHIP: Record<string, { label: string; color: string }> = {
-  basico:      { label: 'Básico',      color: 'bg-slate-200 text-slate-600'   },
-  pro:         { label: 'Pro',         color: 'bg-blue-100 text-blue-700'      },
-  empresarial: { label: 'Empresarial', color: 'bg-purple-100 text-purple-700' },
-};
-
 /* Variantes para la entrada con stagger */
 const navContainer: Variants = {
   hidden: {},
@@ -133,14 +127,6 @@ export default function DashboardSidebar({ role, userName, variant = 'desktop' }
       return next;
     });
 
-  const { data: planInfo } = useQuery<any>({
-    queryKey: ['my-plan'],
-    queryFn: async () => { const { data } = await api.get('/users/my-plan'); return data; },
-    enabled: role === 'owner' && !!token,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const chip = planInfo ? (PLAN_CHIP[planInfo.plan] ?? PLAN_CHIP.basico) : null;
   const isActive = (href: string) => pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
 
   return (
@@ -200,11 +186,6 @@ export default function DashboardSidebar({ role, userName, variant = 'desktop' }
                 <span className="text-[9px] font-bold uppercase tracking-widest text-green-600">
                   {role === 'admin' ? 'Administrador' : 'Propietario'}
                 </span>
-                {chip && (
-                  <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-black ${chip.color}`}>
-                    {chip.label}
-                  </span>
-                )}
               </div>
             </div>
           </div>

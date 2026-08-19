@@ -1,9 +1,45 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Club, ClubDocument } from './schemas/club.schema';
 import { Court, CourtDocument } from '../courts/schemas/court.schema';
 import { Review, ReviewDocument } from '../reviews/schemas/review.schema';
+import { DatosBancariosDto } from './dto/datos-bancarios.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+import { UsersService } from '../users/users.service';
+
+/** Nombre que se le muestra al admin cuando el método no es una cuenta bancaria. */
+const ETIQUETA_METODO: Record<string, string> = {
+  nequi:     'Nequi',
+  daviplata: 'Daviplata',
+  breb:      'Llave Bre-B',
+};
+
+const ETIQUETA_LLAVE: Record<string, string> = {
+  alfanumerica: 'Alfanumérica (@)',
+  celular:      'Celular',
+  correo:       'Correo',
+  documento:    'Documento',
+};
+
+/** Filas del correo de aviso: solo lo que aplica al método elegido. */
+function resumenBanco(banco: Club['banco']): { label: string; value: string }[] {
+  if (!banco) return [];
+  const filas = [
+    { label: 'Método',  value: banco.banco ?? banco.metodo ?? '-' },
+    { label: 'Titular', value: banco.titular ?? '-' },
+    { label: 'Documento', value: banco.documento ?? '-' },
+  ];
+  if (banco.tipoCuenta) {
+    filas.push({ label: 'Tipo de cuenta', value: banco.tipoCuenta === 'ahorros' ? 'Ahorros' : 'Corriente' });
+  }
+  if (banco.numero) filas.push({ label: 'Número', value: banco.numero });
+  if (banco.llave) {
+    filas.push({ label: 'Llave', value: banco.llave });
+    if (banco.tipoLlave) filas.push({ label: 'Tipo de llave', value: ETIQUETA_LLAVE[banco.tipoLlave] ?? banco.tipoLlave });
+  }
+  return filas;
+}
 
 function generateSlug(name: string): string {
   return name
@@ -18,10 +54,16 @@ function generateSlug(name: string): string {
 
 @Injectable()
 export class ClubsService {
+  private readonly logger = new Logger(ClubsService.name);
+
   constructor(
     @InjectModel(Club.name)   private clubModel:   Model<ClubDocument>,
     @InjectModel(Court.name)  private courtModel:  Model<CourtDocument>,
     @InjectModel(Review.name) private reviewModel: Model<ReviewDocument>,
+    private readonly usersService: UsersService,
+    /* NotificationsService ya depende de este servicio, de ahí el forwardRef. */
+    @Inject(forwardRef(() => NotificationsService))
+    private readonly notificaciones: NotificationsService,
   ) {}
 
   async findMyClub(userId: string) {
@@ -151,11 +193,7 @@ export class ClubsService {
    * Reemplaza a la configuración de Wompi por club: ahora todos los cobros
    * entran a la cuenta de ReservaTuCancha y cada lunes se transfiere aquí.
    */
-  async updateDatosBancarios(
-    clubId: string,
-    banco: { titular?: string; documento?: string; banco?: string; tipoCuenta?: string; numero?: string },
-    userId: string,
-  ) {
+  async updateDatosBancarios(clubId: string, dto: DatosBancariosDto, userId: string) {
     // PREVENCIÓN: Validar el ID del club para evitar el crash del server (Error 500)
     if (!Types.ObjectId.isValid(clubId)) {
       throw new NotFoundException('El ID del club no es un formato válido de MongoDB.');
@@ -171,8 +209,36 @@ export class ClubsService {
       throw new ForbiddenException('No tienes permisos para configurar los pagos de este club.');
     }
 
-    club.banco = { ...(club.banco ?? {}), ...banco };
+    const esPrimeraVez = !club.banco?.metodo;
+
+    /* Se reemplaza en bloque, no se mezcla con lo anterior: al cambiar de
+       método quedarían campos del método viejo (un tipoCuenta colgado de
+       cuando era cuenta bancaria, por ejemplo). */
+    club.banco = {
+      metodo:     dto.metodo,
+      titular:    dto.titular,
+      documento:  dto.documento,
+      banco:      dto.metodo === 'bancolombia' ? dto.banco : ETIQUETA_METODO[dto.metodo],
+      tipoCuenta: dto.metodo === 'bancolombia' ? dto.tipoCuenta : undefined,
+      numero:     dto.metodo === 'breb' ? undefined : dto.numero,
+      llave:      dto.metodo === 'breb' ? dto.llave : undefined,
+      tipoLlave:  dto.metodo === 'breb' ? dto.tipoLlave : undefined,
+    };
     await club.save();
+
+    /* El correo no puede tumbar el guardado: si Resend falla, la cuenta ya
+       quedó registrada y lo único que se pierde es el aviso. */
+    try {
+      const dueno = await this.usersService.findById(club.ownerUserId.toString());
+      await this.notificaciones.sendDatosBancariosActualizados({
+        clubNombre: club.name,
+        emailDueno: (dueno as any)?.email ?? club.contactEmail,
+        esPrimeraVez,
+        resumen: resumenBanco(club.banco),
+      });
+    } catch (e) {
+      this.logger.warn(`No se pudo avisar el cambio de cuenta de ${club.name}: ${e?.message}`);
+    }
 
     return {
       message: 'Cuenta de pagos actualizada',

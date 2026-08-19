@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
@@ -13,7 +13,7 @@ import { User, UserSchema } from '../users/schemas/user.schema';
 @Module({
   imports: [
     CourtsModule,
-    ClubsModule,
+    forwardRef(() => ClubsModule),
     /* El schema de User se registra directo (en vez de importar UsersModule)
        para poder buscar los propietarios del changelog sin crear un ciclo
        entre módulos. */

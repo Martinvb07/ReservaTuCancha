@@ -11,6 +11,7 @@ import {
   Request
 } from '@nestjs/common';
 import { ClubsService } from './clubs.service';
+import { DatosBancariosDto } from './dto/datos-bancarios.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -78,9 +79,9 @@ export class ClubsController {
   @Roles(UserRole.OWNER)
   async updateDatosBancarios(
     @Param('id') clubId: string,
-    @Body() banco: { titular?: string; documento?: string; banco?: string; tipoCuenta?: string; numero?: string },
+    @Body() dto: DatosBancariosDto,
     @Request() req,
   ) {
-    return this.clubsService.updateDatosBancarios(clubId, banco, req.user.userId);
+    return this.clubsService.updateDatosBancarios(clubId, dto, req.user.userId);
   }
 }

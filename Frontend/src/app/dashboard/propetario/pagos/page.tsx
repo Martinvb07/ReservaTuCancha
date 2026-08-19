@@ -4,12 +4,13 @@ import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   CreditCard, DollarSign, TrendingUp, Clock, CheckCircle, XCircle,
-  Download, Lock, AlertCircle, Eye, EyeOff, Search, CalendarDays,
+  Download, Search, CalendarDays,
   Banknote, BarChart3, ChevronLeft, ChevronRight, SlidersHorizontal, Landmark, Save, Loader2,
 } from 'lucide-react';
 import { format, isThisWeek, isThisMonth, isToday, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import api from '@/lib/api/axios';
+import CuentaPagosWizard, { type DatosBanco } from '@/components/dashboard/CuentaPagosWizard';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import { toast } from 'sonner';
 
@@ -96,9 +97,6 @@ export default function OwnerPagosPage() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [search, setSearch]             = useState('');
   const [currentPage, setCurrentPage]   = useState(1);
-  const [bancoForm, setBancoForm]       = useState({
-    titular: '', documento: '', banco: '', tipoCuenta: 'ahorros', numero: '',
-  });
 
   // ── Queries ──
   const { data: clubInfo, isLoading: loadingClub, isError } = useQuery({
@@ -112,10 +110,6 @@ export default function OwnerPagosPage() {
     queryFn: async () => { const { data } = await api.get('/bookings/owner'); return data; },
   });
 
-  useEffect(() => {
-    if (clubInfo?.banco) setBancoForm(f => ({ ...f, ...clubInfo.banco }));
-  }, [clubInfo?.banco]);
-
   /* Liquidaciones semanales: lo que ReservaTuCancha le gira al club cada lunes,
      ya con la comision descontada. */
   const { data: liquidaciones, isLoading: loadingLiq } = useQuery({
@@ -125,7 +119,7 @@ export default function OwnerPagosPage() {
 
   // ── Cuenta donde el club recibe su giro semanal ──
   const saveBanco = useMutation({
-    mutationFn: async (formData: typeof bancoForm) => {
+    mutationFn: async (formData: DatosBanco) => {
       const clubId = clubInfo?._id || clubInfo?.id;
       if (!clubId) throw new Error('ID del club no detectado. Recarga la página.');
       return api.patch(`/clubs/${clubId}/banco`, formData);
@@ -452,161 +446,140 @@ export default function OwnerPagosPage() {
       {/* ════════════════════════════════ TAB: WOMPI ════════════════════════════════ */}
       {/* ════════════════ TAB: LIQUIDACIONES ════════════════ */}
       {tab === 'liquidaciones' && (
-        <div className="space-y-4">
-          <div className="bg-green-50 border border-green-200 rounded-2xl p-4 md:p-5 flex items-start gap-3">
-            <Banknote className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
-            <div className="text-sm text-green-900">
-              <p className="font-bold">Te giramos todos los lunes</p>
-              <p className="text-green-800 mt-1">
-                La semana cierra el domingo al mediodía y el lunes a las 2:00 PM transferimos
-                a tu cuenta lo recaudado, con la comisión del {liquidaciones?.comisionPorcentaje ?? 6}% ya descontada.
-                Lo que se agende después del corte entra a la semana siguiente.
-              </p>
-            </div>
-          </div>
-
+        <div className="space-y-5">
           {loadingLiq ? (
-            <div className="space-y-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-16 bg-gray-100 rounded-2xl animate-pulse" />
-              ))}
-            </div>
+            <>
+              <div className="h-40 bg-gray-100 rounded-3xl animate-pulse" />
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-16 bg-gray-100 rounded-2xl animate-pulse" />
+                ))}
+              </div>
+            </>
           ) : !liquidaciones?.semanas?.length ? (
-            <div className="text-center py-16 bg-gray-50 rounded-2xl border border-gray-100">
+            <div className="text-center py-16 bg-gray-50 rounded-3xl border border-gray-100">
               <Banknote className="h-10 w-10 text-gray-300 mx-auto mb-3" />
               <p className="font-semibold text-gray-900">Todavía no hay liquidaciones</p>
               <p className="text-gray-500 text-sm mt-1">Aparecen apenas recibas tu primera reserva pagada en línea.</p>
             </div>
-          ) : (
-            <div className="space-y-2.5">
-              {liquidaciones.semanas.map((sem: any) => (
-                <div key={sem.inicio}
-                  className={`rounded-2xl border p-4 md:p-5 ${sem.enCurso ? 'border-green-300 bg-green-50/40' : 'border-gray-200 bg-white'}`}>
-                  <div className="flex flex-wrap items-center justify-between gap-3">
+          ) : (() => {
+            /* La primera semana es la que está corriendo: va destacada arriba
+               porque es la plata que el club está esperando. El resto es
+               historial y va en filas compactas. */
+            const [proxima, ...anteriores] = liquidaciones.semanas;
+            const comision = liquidaciones.comisionPorcentaje ?? 9;
+
+            return (
+              <>
+                {/* ── Próximo giro ── */}
+                <div className="rounded-3xl bg-gray-900 text-white p-5 md:p-7">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="font-black text-gray-900">
-                        {sem.etiqueta}
-                        {sem.enCurso && <span className="ml-2 text-[11px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full align-middle">En curso</span>}
+                      <p className="text-[11px] font-black uppercase tracking-widest text-green-400">
+                        {proxima.enCurso ? 'Semana en curso' : 'Próximo giro'}
                       </p>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {sem.reservas} {sem.reservas === 1 ? 'reserva' : 'reservas'}
-                        {sem.estado === 'girada'
-                          ? ` · girada el ${format(parseISO(sem.giradaAt), "d 'de' MMM", { locale: es })}${sem.referencia ? ` · ref. ${sem.referencia}` : ''}`
-                          : sem.enCurso
-                            ? ` · se gira el ${format(parseISO(sem.giro), "EEEE d 'de' MMM", { locale: es })}`
-                            : ' · pendiente de giro'}
+                      <p className="text-3xl md:text-5xl font-black mt-1.5">
+                        ${(proxima.neto ?? 0).toLocaleString('es-CO')}
+                      </p>
+                      <p className="text-gray-400 text-sm mt-1.5">
+                        {proxima.etiqueta} · {proxima.reservas} {proxima.reservas === 1 ? 'reserva' : 'reservas'}
                       </p>
                     </div>
 
-                    <div className="text-right shrink-0">
-                      <p className="text-xl md:text-2xl font-black text-gray-900">${(sem.neto ?? 0).toLocaleString('es-CO')}</p>
-                      <p className="text-[11px] text-gray-400">
-                        bruto ${(sem.bruto ?? 0).toLocaleString('es-CO')} − comisión ${(sem.comision ?? 0).toLocaleString('es-CO')}
-                      </p>
+                    <div className="flex items-center gap-2 rounded-2xl bg-white/10 px-3.5 py-2.5 shrink-0">
+                      <CalendarDays className="h-4 w-4 text-green-400 shrink-0" />
+                      <div className="text-xs leading-tight">
+                        <p className="text-gray-400">Te llega el</p>
+                        <p className="font-bold capitalize">
+                          {format(parseISO(proxima.giro), "EEEE d 'de' MMM", { locale: es })}
+                        </p>
+                      </div>
                     </div>
                   </div>
+
+                  <div className="mt-5 pt-4 border-t border-white/10 grid grid-cols-3 gap-3 text-center">
+                    {[
+                      { l: 'Recaudado', v: proxima.bruto ?? 0 },
+                      { l: `Comisión ${comision}%`, v: -(proxima.comision ?? 0) },
+                      { l: 'Te giramos', v: proxima.neto ?? 0 },
+                    ].map((c) => (
+                      <div key={c.l} className="min-w-0">
+                        <p className="text-[10px] uppercase tracking-wider text-gray-400 truncate">{c.l}</p>
+                        <p className={`font-black text-sm md:text-base mt-0.5 ${c.v < 0 ? 'text-red-400' : 'text-white'}`}>
+                          {c.v < 0 ? '−' : ''}${Math.abs(c.v).toLocaleString('es-CO')}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <p className="text-[11px] text-gray-500 mt-4 leading-relaxed">
+                    La semana cierra el domingo al mediodía y giramos el lunes a las 2:00 PM.
+                    Lo que se agende después del corte entra a la semana siguiente.
+                  </p>
                 </div>
-              ))}
-            </div>
-          )}
+
+                {/* ── Historial ── */}
+                {anteriores.length > 0 && (
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-2.5">
+                      Semanas anteriores
+                    </p>
+                    <div className="rounded-2xl border border-gray-200 overflow-hidden divide-y divide-gray-100 bg-white">
+                      {anteriores.map((sem: any) => {
+                        const girada = sem.estado === 'girada';
+                        return (
+                          <div key={sem.inicio} className="flex items-center justify-between gap-3 px-4 py-3.5">
+                            <div className="min-w-0">
+                              <p className="font-bold text-gray-900 text-sm truncate">{sem.etiqueta}</p>
+                              <p className="text-xs text-gray-500 mt-0.5 truncate">
+                                {sem.reservas} {sem.reservas === 1 ? 'reserva' : 'reservas'}
+                                {girada
+                                  ? ` · girada el ${format(parseISO(sem.giradaAt), "d 'de' MMM", { locale: es })}`
+                                  : sem.reservas > 0 ? ' · pendiente de giro' : ' · sin movimiento'}
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-2.5 shrink-0">
+                              <span className="text-right">
+                                <span className="block font-black text-gray-900 text-sm">
+                                  ${(sem.neto ?? 0).toLocaleString('es-CO')}
+                                </span>
+                                <span className="block text-[10px] text-gray-400">
+                                  de ${(sem.bruto ?? 0).toLocaleString('es-CO')}
+                                </span>
+                              </span>
+                              {girada
+                                ? <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                                : <span className="w-4 shrink-0" />}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
 
       {/* ════════════════ TAB: CUENTA DE PAGOS ════════════════ */}
       {tab === 'cuenta' && (
-        <div className="space-y-5 max-w-2xl">
-          <div className={`rounded-2xl p-4 md:p-5 flex items-start gap-3 ${
-            clubInfo?.banco?.numero ? 'bg-green-50 border border-green-200' : 'bg-amber-50 border border-amber-200'
-          }`}>
-            <span className={`w-9 h-9 rounded-xl grid place-items-center shrink-0 ${
-              clubInfo?.banco?.numero ? 'bg-green-600' : 'bg-amber-500'
-            }`}>
-              {clubInfo?.banco?.numero ? <CheckCircle className="h-5 w-5 text-white" /> : <AlertCircle className="h-5 w-5 text-white" />}
-            </span>
-            <div className="text-sm">
-              <p className="font-bold text-gray-900">
-                {clubInfo?.banco?.numero ? 'Cuenta registrada' : 'Falta tu cuenta de pagos'}
-              </p>
-              <p className="text-gray-600 mt-1">
-                {clubInfo?.banco?.numero
-                  ? 'Acá te transferimos tu liquidación cada lunes. Mantenla al día.'
-                  : 'Sin estos datos no podemos girarte lo recaudado. Llénalos para recibir tu primer pago.'}
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-white border border-gray-200 rounded-2xl p-5 md:p-6 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Titular de la cuenta" placeholder="Nombre como aparece en el banco" type="text"
-                value={bancoForm.titular} onChange={v => setBancoForm(f => ({ ...f, titular: v }))} />
-              <FormField label="Cédula o NIT" placeholder="1.234.567.890" type="text"
-                value={bancoForm.documento} onChange={v => setBancoForm(f => ({ ...f, documento: v }))} />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Banco o billetera" placeholder="Bancolombia, Nequi, Daviplata..." type="text"
-                value={bancoForm.banco} onChange={v => setBancoForm(f => ({ ...f, banco: v }))} />
-              <div>
-                <label className="block text-sm font-bold text-gray-900 mb-1">Tipo de cuenta</label>
-                <select
-                  value={bancoForm.tipoCuenta}
-                  onChange={e => setBancoForm(f => ({ ...f, tipoCuenta: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 text-sm bg-white"
-                >
-                  <option value="ahorros">Ahorros</option>
-                  <option value="corriente">Corriente</option>
-                  <option value="nequi">Nequi</option>
-                  <option value="daviplata">Daviplata</option>
-                </select>
-              </div>
-            </div>
-
-            <FormField label="Número de cuenta" hint="o el celular, si es Nequi o Daviplata" placeholder="000-000000-00" type="text"
-              value={bancoForm.numero} onChange={v => setBancoForm(f => ({ ...f, numero: v }))} />
-
-            <button
-              onClick={() => saveBanco.mutate(bancoForm)}
-              disabled={saveBanco.isPending || !bancoForm.numero.trim()}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-black px-8 py-3.5 rounded-2xl transition-colors"
-            >
-              {saveBanco.isPending
-                ? <><Loader2 className="h-5 w-5 animate-spin" /> Guardando...</>
-                : <><Save className="h-5 w-5" /> Guardar cuenta</>}
-            </button>
-          </div>
+        <div className="max-w-2xl">
+          {loadingClub ? (
+            <div className="h-64 bg-gray-100 rounded-3xl animate-pulse" />
+          ) : (
+            <CuentaPagosWizard
+              key={clubInfo?.banco?.metodo ?? 'sin-cuenta'}
+              actual={clubInfo?.banco}
+              guardando={saveBanco.isPending}
+              onGuardar={(datos) => saveBanco.mutate(datos)}
+            />
+          )}
         </div>
       )}
 
-    </div>
-  );
-}
-
-// ─── Sub-componente campo formulario ─────────────────────────────────────────
-function FormField({ label, hint, placeholder, value, onChange, type, toggleShow, showPassword }: {
-  label: string; hint?: string; placeholder: string; value: string;
-  onChange: (v: string) => void; type: string;
-  toggleShow?: () => void; showPassword?: boolean;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-bold text-gray-900 mb-1">
-        {label}
-        {hint && <span className="ml-2 text-xs font-normal text-gray-400">{hint}</span>}
-      </label>
-      <div className="relative">
-        <input
-          type={type}
-          placeholder={placeholder}
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 text-sm pr-10"
-        />
-        {toggleShow && (
-          <button type="button" onClick={toggleShow} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </button>
-        )}
-      </div>
     </div>
   );
 }

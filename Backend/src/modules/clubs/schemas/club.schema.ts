@@ -3,8 +3,20 @@ import { Document, Types } from 'mongoose';
 
 export type ClubDocument = Club & Document;
 
+/** Por dónde le giramos a un club su liquidación semanal. */
+export const METODOS_PAGO = ['bancolombia', 'nequi', 'daviplata', 'breb'] as const;
+
+/** Cómo identifica el titular su llave Bre-B. */
+export const TIPOS_LLAVE = ['alfanumerica', 'celular', 'correo', 'documento'] as const;
+
 @Schema({ _id: false })
 export class DatosBancarios {
+  /* Qué campos vienen llenos depende del método: una cuenta bancaria usa
+     tipoCuenta + numero, las billeteras solo numero (el celular) y Bre-B
+     reemplaza el número por la llave. */
+  @Prop({ enum: METODOS_PAGO, trim: true })
+  metodo?: string;
+
   @Prop({ trim: true })
   titular?: string;
 
@@ -12,15 +24,24 @@ export class DatosBancarios {
   @Prop({ trim: true })
   documento?: string;
 
-  /** Bancolombia, Nequi, Daviplata... */
+  /** Nombre visible del banco o billetera, para el panel de liquidación */
   @Prop({ trim: true })
   banco?: string;
 
-  @Prop({ enum: ['ahorros', 'corriente', 'nequi', 'daviplata'], trim: true })
+  /** Solo en cuentas bancarias */
+  @Prop({ enum: ['ahorros', 'corriente'], trim: true })
   tipoCuenta?: string;
 
+  /** Número de cuenta, o el celular en Nequi y Daviplata */
   @Prop({ trim: true })
   numero?: string;
+
+  /** Llave Bre-B: puede ser @alias, celular, correo o documento */
+  @Prop({ trim: true })
+  llave?: string;
+
+  @Prop({ enum: TIPOS_LLAVE, trim: true })
+  tipoLlave?: string;
 }
 
 @Schema({ timestamps: true })
