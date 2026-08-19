@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import {
-  MessageSquare, Mail, Phone, ChevronDown, CalendarDays, CreditCard,
-  RefreshCw, Star, ArrowRight,
+  MessageSquare, Mail, Phone, ArrowRight,
 } from 'lucide-react';
 import { ABRIR_SOPORTE } from '@/components/layout/SupportChat';
+import PillTabs from '@/components/ui/PillTabs';
+import FaqAccordion from '@/components/ui/FaqAccordion';
 
 const WHATSAPP = 'https://wa.me/573124352786';
 const EMAIL    = 'soporte@reservatucancha.site';
@@ -48,7 +49,6 @@ const CANALES = [
 const FAQ = [
   {
     cat: 'Reservar',
-    icon: CalendarDays,
     items: [
       { q: '¿Necesito crear una cuenta?', a: 'No. Eliges la cancha, el día y la hora, y solo pones tu nombre, correo y teléfono. Sin contraseñas ni registro.' },
       { q: '¿Cómo sé que mi reserva quedó lista?', a: 'Apenas se aprueba el pago te llega un correo con el código de tu reserva. Si no lo ves, revisa la carpeta de spam: llega desde notificaciones@reservatucancha.site.' },
@@ -58,7 +58,6 @@ const FAQ = [
   },
   {
     cat: 'Pagos',
-    icon: CreditCard,
     items: [
       { q: '¿Cómo puedo pagar?', a: 'Con tarjeta de crédito o débito, PSE, Nequi o Daviplata. El pago se procesa con Wompi, la pasarela de Bancolombia.' },
       { q: '¿Puedo pagar en efectivo en la cancha?', a: 'No. Todas las reservas se pagan en línea al momento de reservar; así el horario te queda apartado de verdad y nadie más lo puede tomar.' },
@@ -68,7 +67,6 @@ const FAQ = [
   },
   {
     cat: 'Cambios',
-    icon: RefreshCw,
     items: [
       { q: '¿Puedo cambiar el horario de mi reserva?', a: 'Sí. En el correo de confirmación tienes el botón "Cambiar mi horario": eliges otro día y hora entre los turnos libres del club, sin costo adicional.' },
       { q: '¿Hasta cuándo puedo cambiarlo?', a: 'Hasta 24 horas antes de tu turno. Después de ese momento el club ya no alcanza a revender el horario, así que el cambio se cierra.' },
@@ -78,7 +76,6 @@ const FAQ = [
   },
   {
     cat: 'Canchas',
-    icon: Star,
     items: [
       { q: '¿Ustedes son dueños de las canchas?', a: 'No. Cada cancha pertenece a un club independiente que la administra y la opera. Nosotros somos la plataforma que te conecta con ellos y maneja la reserva y el pago.' },
       { q: '¿Cómo llego a la cancha?', a: 'En la página de cada cancha hay un mapa con su ubicación y un botón "Cómo llegar" que te abre la ruta en Google Maps.' },
@@ -90,7 +87,6 @@ const FAQ = [
 
 export default function SoportePage() {
   const [cat, setCat] = useState(FAQ[0].cat);
-  const [abierta, setAbierta] = useState<string | null>(null);
 
   const activas = FAQ.find((c) => c.cat === cat)?.items ?? [];
 
@@ -159,41 +155,17 @@ export default function SoportePage() {
         <div className="max-w-4xl mx-auto px-4">
           <h2 className="text-2xl md:text-3xl font-black text-gray-900 uppercase text-center">Preguntas frecuentes</h2>
 
-          {/* Categorías: en móvil se deslizan en horizontal */}
-          <div className="flex gap-2 overflow-x-auto mt-6 md:mt-8 pb-2 md:justify-center -mx-4 px-4 md:mx-0 md:px-0">
-            {FAQ.map((c) => {
-              const activa = cat === c.cat;
-              return (
-                <button key={c.cat} type="button"
-                  onClick={() => { setCat(c.cat); setAbierta(null); }}
-                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-bold whitespace-nowrap border-2 transition-all ${
-                    activa ? 'bg-gray-900 border-gray-900 text-white' : 'bg-white border-gray-200 text-gray-600 hover:border-green-400'
-                  }`}>
-                  <c.icon className="h-4 w-4" /> {c.cat}
-                </button>
-              );
-            })}
-          </div>
+          {/* PillTabs y FaqAccordion traen la animación (la píldora que se
+              desliza y la respuesta que se despliega): no rehacerlas a mano. */}
+          <PillTabs
+            id="soporte-faq"
+            tabs={FAQ.map((c) => c.cat)}
+            active={cat}
+            onChange={setCat}
+            className="mt-6 md:mt-8 mb-6"
+          />
 
-          <div className="mt-6 space-y-2.5">
-            {activas.map((f) => {
-              const abierto = abierta === f.q;
-              return (
-                <div key={f.q} className={`bg-white border rounded-2xl overflow-hidden transition-colors ${abierto ? 'border-green-400' : 'border-gray-200'}`}>
-                  <button type="button"
-                    onClick={() => setAbierta(abierto ? null : f.q)}
-                    aria-expanded={abierto}
-                    className="w-full flex items-center justify-between gap-4 text-left p-4 md:p-5">
-                    <span className="font-bold text-gray-900 text-sm md:text-[15px]">{f.q}</span>
-                    <ChevronDown className={`h-4 w-4 text-gray-400 shrink-0 transition-transform ${abierto ? 'rotate-180' : ''}`} />
-                  </button>
-                  {abierto && (
-                    <p className="px-4 md:px-5 pb-4 md:pb-5 -mt-1 text-sm text-gray-600 leading-relaxed">{f.a}</p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <FaqAccordion items={activas} resetKey={cat} />
         </div>
       </section>
 
