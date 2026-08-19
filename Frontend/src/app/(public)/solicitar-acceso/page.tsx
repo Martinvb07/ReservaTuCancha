@@ -371,9 +371,10 @@ export default function SolicitarAccesoPage() {
             </ul>
 
             <div className="flex items-center gap-3 rounded-2xl bg-green-50 border border-green-100 px-4 py-3">
-              <span className="text-lg font-black text-green-700 shrink-0">100%</span>
+              <span className="text-lg font-black text-green-700 shrink-0">9%</span>
               <p className="text-xs text-green-800 leading-snug">
-                <span className="font-bold">Gratis para empezar.</span> Sin suscripción ni comisión por reserva.
+                <span className="font-bold">Solo pagas cuando te reservan.</span> Sin mensualidad ni contrato:
+                si una semana no hay reservas, no pagas nada.
               </p>
             </div>
 
