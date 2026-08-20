@@ -55,7 +55,7 @@ export default function StepWizard({ steps, step, dir, onGoTo, children, classNa
                   type="button"
                   onClick={() => done && onGoTo?.(i)}
                   disabled={!done || !onGoTo}
-                  className={`flex items-center gap-2.5 shrink-0 ${done && onGoTo ? 'cursor-pointer group' : 'cursor-default'}`}
+                  className={`flex items-center gap-2 shrink-0 ${done && onGoTo ? 'cursor-pointer group' : 'cursor-default'}`}
                 >
                   <motion.span
                     animate={{ scale: current ? 1.1 : 1 }}
@@ -88,7 +88,7 @@ export default function StepWizard({ steps, step, dir, onGoTo, children, classNa
                 </button>
 
                 {i < last && (
-                  <div className="flex-1 h-0.5 mx-3 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="flex-1 min-w-[0.75rem] h-0.5 mx-2 bg-gray-200 rounded-full overflow-hidden">
                     <motion.div
                       className="h-full bg-green-600 origin-left"
                       initial={false}

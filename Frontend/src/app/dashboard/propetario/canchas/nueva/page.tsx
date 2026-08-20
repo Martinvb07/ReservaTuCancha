@@ -24,6 +24,7 @@ import SelectField from '@/components/ui/SelectField';
 import AvailabilityEditor, { DAYS, type AvailabilitySlot } from '@/components/dashboard/AvailabilityEditor';
 import type { ResolvedAddress } from '@/components/map/LocationPicker';
 import type { LatLng } from '@/lib/geo';
+import { AMENITIES } from '@/lib/constants';
 
 /* Leaflet toca `window` al importarse: el selector nunca se renderiza en servidor. */
 const LocationPicker = dynamic(() => import('@/components/map/LocationPicker'), {
@@ -61,11 +62,6 @@ const FUTBOL_MODALIDADES = [
   { value: 'futbol_11', label: 'Fútbol 11', players: '22 jug.', desc: 'Cancha reglamentaria' },
 ];
 
-const AMENITIES_OPTIONS = [
-  'Luz nocturna', 'Parqueadero', 'Duchas', 'Vestiarios',
-  'Cafetería', 'Graderías', 'Wi-Fi', 'Alquiler de equipos',
-];
-
 const CURRENCIES = [
   { value: 'COP', label: 'COP' },
   { value: 'USD', label: 'USD' },
@@ -79,7 +75,10 @@ const STEPS: (WizardStep & { fields: (keyof FormValues)[] })[] = [
   { title: 'Datos',    hint: 'Nombre y dónde queda',           fields: ['name', 'address', 'city', 'department'] },
   { title: 'Precio',   hint: 'Tarifa y horarios de atención',  fields: ['pricePerHour'] },
   { title: 'Fotos',    hint: 'Lo primero que ve el jugador',   fields: [] },
-  { title: 'Publicar', hint: 'Comodidades y revisión final',   fields: [] },
+  /* Las comodidades tienen paso propio: escondidas dentro de "Publicar" nadie
+     las veía, porque ese paso se lee como el botón final y no como uno más. */
+  { title: 'Comodidades', hint: 'Qué ofrece tu cancha',        fields: [] },
+  { title: 'Publicar', hint: 'Revisión final',                 fields: [] },
 ];
 
 const LAST = STEPS.length - 1;
@@ -248,6 +247,7 @@ export default function AdminNuevaCanchaPage() {
     { label: 'Precio',   value: values.pricePerHour ? `$${Number(values.pricePerHour).toLocaleString('es-CO')} ${values.currency || 'COP'} / hora` : '', step: 2 },
     { label: 'Días',     value: availability.length ? availability.map(s => DAYS[s.dayOfWeek]).join(', ') : '', step: 2 },
     { label: 'Fotos',    value: photos.length ? `${photos.length} seleccionada${photos.length > 1 ? 's' : ''}` : 'Ninguna', step: 3 },
+    { label: 'Comodidades', value: amenities.length ? amenities.join(', ') : 'Ninguna',                        step: 4 },
   ];
 
   return (
@@ -269,7 +269,7 @@ export default function AdminNuevaCanchaPage() {
           <span>✦</span> Nueva cancha
         </p>
         <h1 className="text-3xl font-black text-gray-900 uppercase">Publicar cancha</h1>
-        <p className="text-gray-500 text-sm mt-1">Son 4 pasos cortos. Puedes volver atrás cuando quieras.</p>
+        <p className="text-gray-500 text-sm mt-1">Son {STEPS.length} pasos cortos. Puedes volver atrás cuando quieras.</p>
       </div>
 
       <form onSubmit={handleFormSubmit} className="bg-gray-50 rounded-3xl border border-gray-100 p-6 md:p-8">
@@ -487,13 +487,13 @@ export default function AdminNuevaCanchaPage() {
             </>
           )}
 
-          {/* ── PASO 5: comodidades + resumen ────────────────────── */}
+          {/* ── PASO 5: comodidades ──────────────────────────────── */}
           {step === 4 && (
             <>
               <div>
                 <label className={lbl}>Comodidades <span className="text-gray-400 font-normal normal-case">(opcional)</span></label>
                 <div className="flex flex-wrap gap-2">
-                  {AMENITIES_OPTIONS.map(a => {
+                  {AMENITIES.map(a => {
                     const active = amenities.includes(a);
                     return (
                       <motion.button
@@ -511,8 +511,17 @@ export default function AdminNuevaCanchaPage() {
                     );
                   })}
                 </div>
+                <p className="text-xs text-gray-400 mt-3">
+                  Aparecen en la ficha de tu cancha. Puedes cambiarlas después desde
+                  <span className="font-semibold text-gray-500"> Editar cancha</span>.
+                </p>
               </div>
+            </>
+          )}
 
+          {/* ── PASO 6: revisión final ───────────────────────────── */}
+          {step === 5 && (
+            <>
               <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100 overflow-hidden">
                 <p className="px-4 py-3 text-xs font-black text-gray-900 uppercase tracking-widest bg-gray-50">
                   Resumen de la cancha
