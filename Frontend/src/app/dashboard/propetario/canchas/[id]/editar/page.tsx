@@ -9,7 +9,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ArrowLeft, Building2, MapPin, DollarSign, Clock, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, Building2, MapPin, DollarSign, Clock, Loader2, Save, Sparkles, CheckCircle2 } from 'lucide-react';
+import { AMENITIES } from '@/lib/constants';
 import { getSportIcon } from '@/components/ui/SportIcons';
 import SettingsTabs, { type SettingsSection } from '@/components/ui/SettingsTabs';
 import AvailabilityEditor, { type AvailabilitySlot } from '@/components/dashboard/AvailabilityEditor';
@@ -45,6 +46,7 @@ const SECTION_FIELDS: Record<string, (keyof FormValues)[]> = {
   ubicacion:     ['address', 'city', 'department'],
   precio:        ['pricePerHour'],
   disponibilidad: [],
+  comodidades:   [],
 };
 
 export default function EditarCanchaPage() {
@@ -58,6 +60,17 @@ export default function EditarCanchaPage() {
      y sin él el aviso de "cambios sin guardar" se quedaría corto. */
   const [pin, setPin]                   = useState<LatLng | null>(null);
   const [pinDirty, setPinDirty]         = useState(false);
+  /* Comodidades marcadas del catálogo. `extras` guarda lo que la cancha ya
+     tenía y no está en el catálogo —el wizard de creación mete ahí la modalidad
+     de fútbol, "Fútbol 7"—: sin separarlas, guardar desde acá la borraría. */
+  const [amenities, setAmenities]       = useState<string[]>([]);
+  const [extras, setExtras]             = useState<string[]>([]);
+  const [amenitiesDirty, setAmenitiesDirty] = useState(false);
+
+  const toggleAmenity = (a: string) => {
+    setAmenitiesDirty(true);
+    setAmenities(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a]);
+  };
 
   const { data: court, isLoading } = useQuery({
     queryKey: ['court', id],
@@ -86,6 +99,10 @@ export default function EditarCanchaPage() {
       if (court.availability && Array.isArray(court.availability)) {
         setAvailability(court.availability);
       }
+      const guardadas: string[] = Array.isArray(court.amenities) ? court.amenities : [];
+      setAmenities(guardadas.filter(a => AMENITIES.includes(a)));
+      setExtras(guardadas.filter(a => !AMENITIES.includes(a)));
+      setAmenitiesDirty(false);
       // El backend las guarda [lng, lat]; el mapa las quiere al revés.
       const c = court.location?.coordinates;
       if (Array.isArray(c) && c.length === 2 && Number.isFinite(c[0]) && Number.isFinite(c[1])) {
@@ -107,6 +124,8 @@ export default function EditarCanchaPage() {
       },
       pricePerHour: values.pricePerHour,
       availability,
+      // Los extras van primero, igual que al crear: la modalidad encabeza la lista.
+      amenities: [...extras, ...amenities],
     }),
     onSuccess: () => {
       toast.success('¡Cancha actualizada correctamente!');
@@ -135,6 +154,7 @@ export default function EditarCanchaPage() {
     { id: 'ubicacion',      title: 'Ubicación',      hint: 'Dónde queda la cancha',               icon: MapPin,      alert: SECTION_FIELDS.ubicacion.some(f => errors[f]) },
     { id: 'precio',         title: 'Precio',         hint: 'Tarifa por hora de juego',            icon: DollarSign,  alert: SECTION_FIELDS.precio.some(f => errors[f]) },
     { id: 'disponibilidad', title: 'Disponibilidad', hint: 'Días y horarios en los que atiendes', icon: Clock },
+    { id: 'comodidades',    title: 'Comodidades',    hint: 'Qué ofrece tu cancha',                icon: Sparkles },
   ];
 
   if (isLoading) {
@@ -253,6 +273,34 @@ export default function EditarCanchaPage() {
           {section === 'disponibilidad' && (
             <AvailabilityEditor value={availability} onChange={setAvailability} />
           )}
+
+          {section === 'comodidades' && (
+            <div>
+              <label className={lbl}>Comodidades <span className="text-gray-400 font-normal normal-case">(opcional)</span></label>
+              <div className="flex flex-wrap gap-2">
+                {AMENITIES.map(a => {
+                  const active = amenities.includes(a);
+                  return (
+                    <button
+                      key={a}
+                      type="button"
+                      onClick={() => toggleAmenity(a)}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold border-2 transition-colors duration-200 ${
+                        active ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 bg-white text-gray-500 hover:border-green-300'
+                      }`}
+                    >
+                      {active && <CheckCircle2 className="h-3 w-3" />}
+                      {a}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-gray-400 mt-3">
+                Se muestran en la ficha pública de tu cancha.
+                {extras.length > 0 && ` La modalidad (${extras.join(', ')}) se conserva aparte.`}
+              </p>
+            </div>
+          )}
         </SettingsTabs>
 
         {/* Botones: fijos abajo para no perderlos al cambiar de sección */}
@@ -270,7 +318,7 @@ export default function EditarCanchaPage() {
                 : <><Save className="h-5 w-5" /> Guardar cambios</>}
             </button>
           </div>
-          {(isDirty || pinDirty) && (
+          {(isDirty || pinDirty || amenitiesDirty) && (
             <p className="text-xs text-gray-400 text-center mt-2">Tienes cambios sin guardar</p>
           )}
         </div>
