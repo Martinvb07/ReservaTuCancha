@@ -118,6 +118,15 @@ export default function MisReservasPage() {
               {bookings.length} reserva{bookings.length !== 1 ? 's' : ''} encontrada{bookings.length !== 1 ? 's' : ''} para <strong className="text-gray-900">{query}</strong>
             </p>
 
+            {/* Buscando por correo el backend no entrega el cancelToken: con el,
+                cualquiera que supiera un correo ajeno podia moverle el turno. */}
+            {query.includes('@') && (
+              <p className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+                Para cambiar el horario, busca por tu <strong>codigo de reserva</strong> o abre
+                el enlace que te llego al correo.
+              </p>
+            )}
+
             {bookings.map((booking: any) => {
               const court = typeof booking.courtId === 'object' ? booking.courtId : null;
               const st    = STATUS_STYLES[booking.status] ?? STATUS_STYLES.pending;

@@ -2,6 +2,8 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Re
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CourtsService, CourtFilters } from './courts.service';
 import { CreateCourtDto } from './dto/create-court.dto';
+import { UpdateCourtDto } from './dto/update-court.dto';
+import { PhotoDto } from './dto/photo.dto';
 import { BlockSlotDto } from './dto/block-slot.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -74,7 +76,7 @@ export class CourtsController {
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Editar cancha' })
-  update(@Param('id') id: string, @Request() req, @Body() dto: Partial<CreateCourtDto>) {
+  update(@Param('id') id: string, @Request() req, @Body() dto: UpdateCourtDto) {
     return this.courtsService.update(id, req.user.userId, dto);
   }
 
@@ -94,9 +96,8 @@ export class CourtsController {
   @Roles(UserRole.OWNER)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Agregar foto a cancha (owner)' })
-  addPhoto(@Param('id') id: string, @Request() req, @Body('url') url: string) {
-    if (!url) throw new BadRequestException('url es requerida');
-    return this.courtsService.addPhoto(id, req.user.userId, url);
+  addPhoto(@Param('id') id: string, @Request() req, @Body() dto: PhotoDto) {
+    return this.courtsService.addPhoto(id, req.user.userId, dto.url);
   }
 
   @Delete(':id/photos')
@@ -104,9 +105,8 @@ export class CourtsController {
   @Roles(UserRole.OWNER)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Eliminar foto de cancha (owner)' })
-  removePhoto(@Param('id') id: string, @Request() req, @Body('url') url: string) {
-    if (!url) throw new BadRequestException('url es requerida');
-    return this.courtsService.removePhoto(id, req.user.userId, url);
+  removePhoto(@Param('id') id: string, @Request() req, @Body() dto: PhotoDto) {
+    return this.courtsService.removePhoto(id, req.user.userId, dto.url);
   }
 
   // ─── BLOQUEO DE HORARIOS ──────────────────────────────────────────────

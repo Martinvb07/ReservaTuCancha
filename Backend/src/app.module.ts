@@ -2,7 +2,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 
 import { AuthModule } from './modules/auth/auth.module';
@@ -29,7 +30,10 @@ import { ChangelogModule } from './modules/changelog/changelog.module';
       }),
       inject: [ConfigService],
     }),
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    /* Un solo throttler con nombre: si se declara mas de uno aca, todos
+       aplican a todas las rutas. Los limites finos van por ruta con
+       @Throttle({ default: { ... } }). */
+    ThrottlerModule.forRoot([{ name: 'default', ttl: 60000, limit: 100 }]),
     ScheduleModule.forRoot(),
     DatabaseModule,
     AuthModule,
@@ -44,6 +48,11 @@ import { ChangelogModule } from './modules/changelog/changelog.module';
     ClubsModule,
     ChangelogModule,   // ← nuevo
     LiquidacionesModule,
+  ],
+  providers: [
+    /* Sin este provider el ThrottlerModule no hace nada: estaba importado pero
+       nunca registrado, asi que /api/auth/login aceptaba intentos ilimitados. */
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
 export class AppModule {}

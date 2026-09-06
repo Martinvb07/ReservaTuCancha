@@ -64,14 +64,17 @@ export class Booking {
   paymentMethod: string;
 
   // ─── Tokens para acciones sin login ──────────────────────────────────
-  @Prop({ required: true, unique: true })
+  /* select:false a proposito: la busqueda publica por correo devolvia este
+     token, y con el cualquiera movia la reserva de otro. Solo lo entregan las
+     consultas que lo piden explicito con +cancelToken. */
+  @Prop({ required: true, unique: true, select: false })
   cancelToken: string; // UUID — enviado por email para cancelar sin login
 
   // Código corto y único para mostrar al usuario
   @Prop({ required: true, unique: true, uppercase: true, trim: true, length: 8 })
   bookingCode: string;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, unique: true, select: false })
   reviewToken: string; // UUID — enviado post-reserva para dejar reseña
 
   @Prop({ default: false })

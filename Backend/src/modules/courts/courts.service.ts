@@ -4,6 +4,8 @@ import { Model, Types } from 'mongoose';
 import { Court, CourtDocument, SportType } from './schemas/court.schema';
 import { BlockedSlot, BlockedSlotDocument } from './schemas/blocked-slot.schema';
 import { CreateCourtDto } from './dto/create-court.dto';
+import { UpdateCourtDto } from './dto/update-court.dto';
+import { aObjectId } from '../../common/utils/objectid.util';
 import { BlockSlotDto } from './dto/block-slot.dto';
 import { Club, ClubDocument } from '../clubs/schemas/club.schema';
 import { WompiService } from '../wompi/wompi.service';
@@ -78,7 +80,7 @@ export class CourtsService {
     return court.save();
   }
 
-  async update(id: string, ownerId: string, dto: Partial<CreateCourtDto>): Promise<Court> {
+  async update(id: string, ownerId: string, dto: UpdateCourtDto): Promise<Court> {
     const court = await this.courtModel.findById(id);
     if (!court) throw new NotFoundException('Cancha no encontrada');
     if (court.ownerId.toString() !== ownerId) throw new ForbiddenException('No tienes permiso');
@@ -164,7 +166,7 @@ export class CourtsService {
   }
 
   async getBlockedSlots(courtId: string, date?: string) {
-    const filter: any = { courtId: new Types.ObjectId(courtId) };
+    const filter: any = { courtId: aObjectId(courtId, 'Cancha no encontrada') };
     if (date) {
       const [year, month, day] = date.split('-').map(Number);
       const start = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));

@@ -5,6 +5,20 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 // En prod/dev el backend corre en el mismo host que Next.
 const BACKEND_INTERNAL_URL = process.env.BACKEND_INTERNAL_URL || 'http://127.0.0.1:4000';
 
+/**
+ * El IP de quien esta intentando entrar.
+ *
+ * Next llama al backend desde el mismo servidor, asi que sin reenviar esto
+ * todos los logins le llegan a Nest desde 127.0.0.1 y su limite por IP no
+ * frena nada: un atacante y un vecino cuentan como el mismo cliente.
+ */
+function ipDelCliente(req: any): string | undefined {
+  const reenviado = req?.headers?.['x-forwarded-for'];
+  const crudo = Array.isArray(reenviado) ? reenviado[0] : reenviado;
+  const primero = typeof crudo === 'string' ? crudo.split(',')[0]?.trim() : undefined;
+  return primero || req?.headers?.['x-real-ip'] || undefined;
+}
+
 async function refreshAccessToken(token: any) {
   try {
     const res = await fetch(`${BACKEND_INTERNAL_URL}/api/auth/refresh`, {
@@ -35,13 +49,16 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Contrasena', type: 'password' },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) return null;
 
         try {
           const res = await fetch(`${BACKEND_INTERNAL_URL}/api/auth/login`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              ...(ipDelCliente(req) ? { 'x-forwarded-for': ipDelCliente(req)! } : {}),
+            },
             body: JSON.stringify({
               email: credentials.email,
               password: credentials.password,

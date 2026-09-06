@@ -12,6 +12,8 @@ import {
 } from '@nestjs/common';
 import { ClubsService } from './clubs.service';
 import { DatosBancariosDto } from './dto/datos-bancarios.dto';
+import { UpdateClubProfileDto } from './dto/update-club-profile.dto';
+import { PhotoDto } from '../courts/dto/photo.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -53,25 +55,22 @@ export class ClubsController {
   @Patch('my-club/profile')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.OWNER)
-  async updateProfile(@Request() req, @Body() body: {
-    name?: string; description?: string; address?: string;
-    city?: string; contactPhone?: string; contactEmail?: string; logo?: string;
-  }) {
+  async updateProfile(@Request() req, @Body() body: UpdateClubProfileDto) {
     return this.clubsService.updateProfile(req.user.userId, body);
   }
 
   @Post('my-club/photos')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.OWNER)
-  async addClubPhoto(@Request() req, @Body('url') url: string) {
-    return this.clubsService.addClubPhoto(req.user.userId, url);
+  async addClubPhoto(@Request() req, @Body() dto: PhotoDto) {
+    return this.clubsService.addClubPhoto(req.user.userId, dto.url);
   }
 
   @Delete('my-club/photos')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.OWNER)
-  async removeClubPhoto(@Request() req, @Body('url') url: string) {
-    return this.clubsService.removeClubPhoto(req.user.userId, url);
+  async removeClubPhoto(@Request() req, @Body() dto: PhotoDto) {
+    return this.clubsService.removeClubPhoto(req.user.userId, dto.url);
   }
 
   @Patch(':id/banco')

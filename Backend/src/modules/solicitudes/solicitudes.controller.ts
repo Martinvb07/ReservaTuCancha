@@ -1,6 +1,8 @@
 import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { SolicitudesService } from './solicitudes.service';
 import { CreateSolicitudDto } from './dto/create-solicitud.dto';
+import { AprobarSolicitudDto } from './dto/aprobar-solicitud.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -11,6 +13,9 @@ export class SolicitudesController {
   constructor(private readonly solicitudesService: SolicitudesService) {}
 
   @Post()
+  /* Cada solicitud manda correos. Sin freno es un grifo abierto contra la
+     cuota de Resend. */
+  @Throttle({ default: { limit: 3, ttl: 3600000 } })
   async create(@Body() body: CreateSolicitudDto) {
     await this.solicitudesService.crearSolicitud(body);
     return { message: 'Solicitud recibida' };
@@ -28,7 +33,7 @@ export class SolicitudesController {
   @Roles(UserRole.ADMIN)
   async aprobar(
     @Param('id') id: string,
-    @Body() approvalData?: { name?: string; email?: string; password?: string; userId?: string; nit?: string; businessName?: string }
+    @Body() approvalData?: AprobarSolicitudDto
   ) {
     return this.solicitudesService.aprobar(id, approvalData);
   }

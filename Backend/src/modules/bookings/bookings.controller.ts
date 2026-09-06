@@ -3,8 +3,10 @@ import {
   Param, UseGuards, Request,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { ReprogramarBookingDto } from './dto/reprogramar-booking.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -16,6 +18,10 @@ export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
 
   @Get('public')
+  /* Buscar por correo no devuelve el cancelToken (ver booking.schema): con el
+     bastaba saber el correo de alguien para moverle el turno. Por codigo si,
+     porque el codigo solo lo tiene quien reservo. */
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @ApiOperation({ summary: 'Reservas por email o código de reserva (público)' })
   getByEmailPublic(
     @Query('guestEmail') guestEmail?: string,
@@ -27,6 +33,7 @@ export class BookingsController {
   }
 
   @Post()
+  @Throttle({ default: { limit: 10, ttl: 600000 } })
   @ApiOperation({ summary: 'Crear reserva (sin login)' })
   create(@Body() dto: CreateBookingDto) {
     return this.bookingsService.create(dto);
@@ -36,7 +43,7 @@ export class BookingsController {
   @ApiOperation({ summary: 'Mover una reserva de horario (sin login, con el token del email)' })
   reprogramarByToken(
     @Query('token') token: string,
-    @Body() body: { date: string; startTime: string; endTime: string },
+    @Body() body: ReprogramarBookingDto,
   ) {
     return this.bookingsService.reprogramarByToken(token, body);
   }

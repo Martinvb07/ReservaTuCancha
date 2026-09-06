@@ -18,15 +18,9 @@ import { Court, CourtDocument } from '../courts/schemas/court.schema';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { BlockedSlot, BlockedSlotDocument } from '../courts/schemas/blocked-slot.schema';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
-
-function generateBookingCode(length = 8) {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < length; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
-}
+import { generarCodigoReserva } from '../../common/utils/random.util';
+import { escaparRegex } from '../../common/utils/regex.util';
+import { aObjectId } from '../../common/utils/objectid.util';
 
 /**
  * Cuántas horas antes del turno se puede mover o soltar una reserva.
@@ -92,7 +86,7 @@ export class BookingsService {
       id,
       { $set: updatePayload },
       { new: true }
-    ).populate('courtId', 'name sport');
+    ).select('+cancelToken +reviewToken').populate('courtId', 'name sport');
 
     if (!updated) throw new NotFoundException('Reserva no encontrada');
 
@@ -126,12 +120,45 @@ export class BookingsService {
     const checkoutUrl = this.wompiService.generateCheckoutUrl(
       booking.totalPrice,
       booking.bookingCode,
-      redirectUrl,
+      this.resolverRedirect(bookingId, redirectUrl),
     );
 
     return {
       redirectUrl: checkoutUrl,
     };
+  }
+
+  /**
+   * A donde vuelve el navegador cuando termina de pagar.
+   *
+   * El destino lo propone el cliente, asi que se acepta solo si apunta a un
+   * origen nuestro o al esquema de la app. Sin este filtro nuestro propio
+   * enlace de pago, firmado y legitimo, terminaba mandando a donde quisiera
+   * el que armo la reserva.
+   */
+  private resolverRedirect(bookingId: string, propuesta?: string): string {
+    const frontend = process.env.FRONTEND_URL ?? 'https://reservatucancha.site';
+    const pordefecto = `${frontend.replace(/\/+$/, '')}/reservas/confirmacion?bookingId=${bookingId}`;
+    if (!propuesta) return pordefecto;
+
+    let url: URL;
+    try {
+      url = new URL(propuesta);
+    } catch {
+      return pordefecto;
+    }
+
+    /* La app movil vuelve por su propio esquema; el navegador, por el sitio. */
+    if (url.protocol === 'reservatucancha:') return propuesta;
+
+    const permitidos = new Set<string>();
+    try { permitidos.add(new URL(frontend).origin); } catch { /* env mal puesta */ }
+    permitidos.add('https://www.reservatucancha.site'); // el CORS ya lo acepta
+    permitidos.add('http://localhost:3000');
+    if (permitidos.has(url.origin)) return propuesta;
+
+    this.logger.warn(`Redirect de pago rechazado: ${url.origin}`);
+    return pordefecto;
   }
 
   // --- GESTIÓN DE RESERVAS ---
@@ -140,6 +167,13 @@ export class BookingsService {
     const courtId = typeof createBookingDto.courtId === 'string'
       ? new Types.ObjectId(createBookingDto.courtId)
       : createBookingDto.courtId;
+
+    /* La cancha manda el precio. Antes el total venia en el body y cualquiera
+       podia crear la reserva por un peso y pagar eso en el checkout. */
+    const cancha = await this.courtModel.findById(courtId).lean();
+    if (!cancha || cancha.isActive === false) {
+      throw new NotFoundException('Cancha no encontrada');
+    }
 
     let localDate: Date;
     if (typeof createBookingDto.date === 'string' && createBookingDto.date.length === 10) {
@@ -153,6 +187,12 @@ export class BookingsService {
     const [reqEndHour, reqEndMin] = createBookingDto.endTime.split(':').map(Number);
     const reqStartMins = reqStartHour * 60 + reqStartMin;
     const reqEndMins = reqEndHour * 60 + reqEndMin;
+
+    const duracionMins = reqEndMins - reqStartMins;
+    if (duracionMins <= 0) {
+      throw new BadRequestException('La hora de fin debe ser posterior a la de inicio');
+    }
+    const totalPrice = Math.round((cancha.pricePerHour * duracionMins) / 60);
 
     // Validar que la reserva no sea en el pasado (hora Colombia)
     const fmt = new Intl.DateTimeFormat('en-CA', {
@@ -216,13 +256,14 @@ export class BookingsService {
     let bookingCode;
     let exists = true;
     while (exists) {
-      bookingCode = generateBookingCode(8);
+      bookingCode = generarCodigoReserva(8);
       exists = !!(await this.bookingModel.exists({ bookingCode }));
     }
 
     const booking = new this.bookingModel({
       ...createBookingDto,
       courtId,
+      totalPrice,
       date: localDate,
       cancelToken: uuidv4(),
       reviewToken: uuidv4(),
@@ -236,7 +277,7 @@ export class BookingsService {
 
     // Notificación en tiempo real + email al owner
     try {
-      const court = await this.courtModel.findById(courtId).select('ownerId name').lean();
+      const court = cancha;
       if (court) {
         this.notificationsGateway.notifyNewBooking(court.ownerId.toString(), {
           ...saved.toObject(),
@@ -302,7 +343,9 @@ export class BookingsService {
     token: string,
     nuevo: { date: string; startTime: string; endTime: string },
   ): Promise<Booking> {
-    const booking = await this.bookingModel.findOne({ cancelToken: token });
+    const booking = await this.bookingModel
+      .findOne({ cancelToken: token })
+      .select('+cancelToken');
     if (!booking) throw new NotFoundException('Token de reserva inválido');
 
     const horasRestantes = this.horasHastaElTurno(booking);
@@ -423,14 +466,18 @@ export class BookingsService {
   async findByBookingCode(code: string): Promise<Booking[]> {
     const normalized = code.trim().replace(/#/g, '').toUpperCase();
     if (!normalized) return [];
+    /* Con el codigo en la mano si se entrega el cancelToken: el codigo solo lo
+       tiene quien hizo la reserva. La busqueda por correo, en cambio, no lo
+       devuelve, y por eso el boton de reprogramar no aparece ahi. */
     return this.bookingModel
       .find({ bookingCode: normalized })
+      .select('+cancelToken')
       .populate('courtId', 'name sport location')
       .lean();
   }
 
   async findByCourtAndDate(courtId: string, date: string): Promise<any[]> {
-    const courtObjectId = new Types.ObjectId(courtId);
+    const courtObjectId = aObjectId(courtId, 'Cancha no encontrada');
     const [year, month, day] = date.split('-').map(Number);
     
     const startOfDay = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
@@ -471,7 +518,7 @@ export class BookingsService {
   async findAll(page = 1, limit = 20, guestEmail?: string) {
     const skip = (page - 1) * limit;
     const filter: any = {};
-    if (guestEmail) filter.guestEmail = { $regex: guestEmail, $options: 'i' };
+    if (guestEmail) filter.guestEmail = { $regex: escaparRegex(guestEmail), $options: 'i' };
 
     const [data, total] = await Promise.all([
       this.bookingModel.find(filter)

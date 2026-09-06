@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { CastErrorFilter } from './common/filters/cast-error.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -32,6 +33,9 @@ async function bootstrap() {
     allowedHeaders: 'Content-Type, Accept, Authorization',
   });
 
+  // 3.5 FILTRO DE IDS INVALIDOS: un ObjectId mal formado es 404, no 500
+  app.useGlobalFilters(new CastErrorFilter());
+
   // 4. GLOBAL VALIDATION PIPE
   app.useGlobalPipes(
     new ValidationPipe({
@@ -41,15 +45,19 @@ async function bootstrap() {
     }),
   );
 
-  // 5. SWAGGER DOCS
-  const config = new DocumentBuilder()
-    .setTitle('ReservaTuCancha API')
-    .setDescription('API para reserva de canchas deportivas — Fútbol, Pádel, Voley Playa')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  // 5. SWAGGER DOCS — solo fuera de produccion.
+  /* En el servidor le entregaba a cualquiera el mapa completo de la API:
+     cada ruta, cada DTO y cada campo, sin pedir nada. */
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('ReservaTuCancha API')
+      .setDescription('API para reserva de canchas deportivas — Fútbol, Pádel, Voley Playa')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
   // WebSocket adapter para Socket.io
   app.useWebSocketAdapter(new IoAdapter(app));

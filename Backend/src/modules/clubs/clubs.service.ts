@@ -1,4 +1,5 @@
 import { Injectable, Logger, NotFoundException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
+import { escaparRegex } from '../../common/utils/regex.util';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Club, ClubDocument } from './schemas/club.schema';
@@ -91,7 +92,7 @@ export class ClubsService {
     let clubQuery: any = {};
     
     if (ciudad && ciudad !== 'all') {
-      clubQuery.city = { $regex: `^${ciudad.trim()}$`, $options: 'i' };
+      clubQuery.city = { $regex: `^${escaparRegex(ciudad.trim())}$`, $options: 'i' };
     }
 
     let clubs: ClubDocument[];

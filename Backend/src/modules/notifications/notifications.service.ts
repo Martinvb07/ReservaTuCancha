@@ -8,6 +8,7 @@ import { Booking } from '../bookings/schemas/booking.schema';
 import { CourtsService } from '../courts/courts.service';
 import { ClubsService } from '../clubs/clubs.service';
 import { User, UserDocument, UserRole } from '../users/schemas/user.schema';
+import { escapeHtml } from '../../common/utils/html.util';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -93,14 +94,14 @@ function buildEmailHtml(opts: EmailTemplateOptions): string {
   const rowsHtml = opts.rows.map(r => `
     <tr style="height: ${r.highlight ? '65px' : '45px'};">
       <td style="color: #6b7280; font-size: 14px;${r.highlight ? ' border-top: 1px solid #f3f4f6;' : ''}">${r.label}</td>
-      <td align="right" style="color: ${r.highlight ? '#059669' : '#111827'}; font-size: ${r.highlight ? '18px' : '14px'}; font-weight: ${r.highlight ? '800' : '700'};${r.highlight ? ' border-top: 1px solid #f3f4f6;' : ''}">${r.value}</td>
+      <td align="right" style="color: ${r.highlight ? '#059669' : '#111827'}; font-size: ${r.highlight ? '18px' : '14px'}; font-weight: ${r.highlight ? '800' : '700'};${r.highlight ? ' border-top: 1px solid #f3f4f6;' : ''}">${escapeHtml(r.value)}</td>
     </tr>
   `).join('');
 
   const badgeHtml = opts.badgeCode ? `
     <div style="background-color: #1f2937; border-radius: 20px; padding: 20px; margin-top: 28px; border: 1px solid #374151;">
       <span style="color: #9ca3af; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">${opts.badgeLabel || 'Código de Reserva'}</span>
-      <span style="color: ${badgeColor}; font-size: 30px; font-weight: 800; letter-spacing: 2px;">#${opts.badgeCode}</span>
+      <span style="color: ${badgeColor}; font-size: 30px; font-weight: 800; letter-spacing: 2px;">#${escapeHtml(opts.badgeCode)}</span>
     </div>
   ` : '';
 
@@ -163,15 +164,6 @@ function buildEmailHtml(opts: EmailTemplateOptions): string {
 
 const LOGO_URL = 'https://res.cloudinary.com/doio3695p/image/upload/e_trim/f_auto,q_auto,w_128/v1786851027/ReservaTuCanchaLOGO_nqvonv.png';
 
-/** El título y la descripción los escribe el admin: se escapan antes de
- *  interpolarlos para que un `<` no rompa el correo. */
-function escapeHtml(text: string): string {
-  return (text ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
 
 
 interface ChangelogBlock { heading?: string; body: string }
@@ -489,7 +481,7 @@ export class NotificationsService {
       html: buildEmailHtml({
         iconBg: '#e0e7ff', iconContent: '🔔',
         title: 'Cuenta de pagos',
-        subtitle: `${clubNombre} ${esPrimeraVez ? 'registró' : 'actualizó'} los datos para recibir su liquidación.`,
+        subtitle: `${escapeHtml(clubNombre)} ${esPrimeraVez ? 'registró' : 'actualizó'} los datos para recibir su liquidación.`,
         rows: [{ label: 'Club', value: clubNombre }, ...resumen],
         ctaText: 'Abrir liquidación', ctaUrl: `${this.frontendUrl}/dashboard/admin/liquidacion`, ctaBg: '#111827',
       }),
@@ -518,7 +510,7 @@ export class NotificationsService {
                 </div>
                 <h1 style="color: #ffffff; font-size: 26px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">¡RESERVA CREADA!</h1>
                 <p style="color: #9ca3af; font-size: 14px; margin-top: 10px; line-height: 20px;">
-                  Gracias por reservar con nosotros, <strong>${booking.guestName}</strong>. Tu reserva fue creada exitosamente. Aquí tienes los detalles de tu reserva:
+                  Gracias por reservar con nosotros, <strong>${escapeHtml(booking.guestName)}</strong>. Tu reserva fue creada exitosamente. Aquí tienes los detalles de tu reserva:
                 </p>
                 <div style="background-color: #1f2937; border-radius: 20px; padding: 20px; margin-top: 28px; border: 1px solid #374151;">
                   <span style="color: #9ca3af; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">Código de Reserva</span>
@@ -531,11 +523,11 @@ export class NotificationsService {
                 <table width="100%" border="0" cellpadding="0" cellspacing="0">
                   <tr style="height: 45px;">
                     <td style="color: #6b7280; font-size: 14px;">Club</td>
-                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${club?.name || '-'}</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${escapeHtml(club?.name || '-')}</td>
                   </tr>
                   <tr style="height: 45px;">
                     <td style="color: #6b7280; font-size: 14px;">Dirección</td>
-                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${club?.address || '-'}</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${escapeHtml(club?.address || '-')}</td>
                   </tr>
                   <tr style="height: 45px;">
                     <td style="color: #6b7280; font-size: 14px;">Deporte</td>
@@ -592,7 +584,7 @@ export class NotificationsService {
                 </div>
                 <h1 style="color: #ffffff; font-size: 26px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">¡BIENVENIDO!</h1>
                 <p style="color: #9ca3af; font-size: 14px; margin-top: 10px; line-height: 20px;">
-                  Tu solicitud fue aprobada, <strong>${name}</strong>. Tu cuenta está lista para usar. Aquí tienes tus credenciales de acceso:
+                  Tu solicitud fue aprobada, <strong>${escapeHtml(name)}</strong>. Tu cuenta está lista para usar. Aquí tienes tus credenciales de acceso:
                 </p>
                 <div style="background-color: #1f2937; border-radius: 20px; padding: 20px; margin-top: 28px; border: 1px solid #374151;">
                   <span style="color: #9ca3af; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">ID de Propietario</span>
@@ -646,7 +638,7 @@ export class NotificationsService {
       to: email,
       from: this.fromEmail,
       subject: 'Actualización sobre tu solicitud — ReservaTuCancha',
-      html: `<p>Hola ${name}, revisamos tu solicitud y no pudimos aprobarla en este momento.</p>`,
+      html: `<p>Hola ${escapeHtml(name)}, revisamos tu solicitud y no pudimos aprobarla en este momento.</p>`,
     });
   }
 
@@ -658,7 +650,7 @@ export class NotificationsService {
       html: `
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #eee;border-radius:12px;">
           <h2 style="color:#dc2626;">Reserva cancelada</h2>
-          <p>Hola <strong>${booking.guestName}</strong>, tu reserva fue cancelada exitosamente.</p>
+          <p>Hola <strong>${escapeHtml(booking.guestName)}</strong>, tu reserva fue cancelada exitosamente.</p>
           <p>Si realizaste un pago, el reembolso se procesará en 3-5 días hábiles.</p>
           <div style="margin-top:20px;">
             <a href="${this.frontendUrl}/empresas" style="color:#16a34a;font-weight:bold;">Ver otras canchas disponibles →</a>
@@ -689,17 +681,17 @@ export class NotificationsService {
                 </div>
                 <h1 style="color: #ffffff; font-size: 24px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">¿Cómo estuvo la cancha?</h1>
                 <p style="color: #9ca3af; font-size: 14px; margin-top: 12px; line-height: 22px;">
-                  Hola <strong style="color: #ffffff;">${booking.guestName}</strong>, gracias por jugar en <strong style="color: #a3e635;">${courtName}</strong>. Tu opinión nos ayuda a mejorar y ayuda a otros jugadores a elegir.
+                  Hola <strong style="color: #ffffff;">${escapeHtml(booking.guestName)}</strong>, gracias por jugar en <strong style="color: #a3e635;">${escapeHtml(courtName)}</strong>. Tu opinión nos ayuda a mejorar y ayuda a otros jugadores a elegir.
                 </p>
                 <div style="background-color: #1f2937; border-radius: 20px; padding: 20px; margin-top: 28px; border: 1px solid #374151;">
                   <table width="100%" border="0" cellpadding="0" cellspacing="0">
                     <tr style="height: 35px;">
                       <td style="color: #9ca3af; font-size: 13px;">Cancha</td>
-                      <td align="right" style="color: #ffffff; font-size: 13px; font-weight: 700;">${courtName}</td>
+                      <td align="right" style="color: #ffffff; font-size: 13px; font-weight: 700;">${escapeHtml(courtName)}</td>
                     </tr>
                     <tr style="height: 35px;">
                       <td style="color: #9ca3af; font-size: 13px;">Club</td>
-                      <td align="right" style="color: #ffffff; font-size: 13px; font-weight: 700;">${clubName}</td>
+                      <td align="right" style="color: #ffffff; font-size: 13px; font-weight: 700;">${escapeHtml(clubName)}</td>
                     </tr>
                     <tr style="height: 35px;">
                       <td style="color: #9ca3af; font-size: 13px;">Fecha</td>
@@ -888,7 +880,7 @@ export class NotificationsService {
       html: buildEmailHtml({
         iconBg: '#3b82f6', iconContent: '🔔', iconColor: '#ffffff',
         title: '¡TU RESERVA ES MAÑANA!',
-        subtitle: `Hola <strong>${booking.guestName}</strong>, te recordamos que tienes una reserva programada para mañana. ¡No olvides llegar a tiempo!`,
+        subtitle: `Hola <strong>${escapeHtml(booking.guestName)}</strong>, te recordamos que tienes una reserva programada para mañana. ¡No olvides llegar a tiempo!`,
         badgeCode: booking.bookingCode,
         badgeLabel: 'Código de Reserva',
         badgeColor: '#3b82f6',
@@ -917,7 +909,7 @@ export class NotificationsService {
       html: buildEmailHtml({
         iconBg: '#a3e635', iconContent: '📅', iconColor: '#111827',
         title: 'NUEVA RESERVA',
-        subtitle: `<strong>${booking.guestName}</strong> acaba de reservar en tu cancha. Aquí tienes los detalles:`,
+        subtitle: `<strong>${escapeHtml(booking.guestName)}</strong> acaba de reservar en tu cancha. Aquí tienes los detalles:`,
         badgeCode: booking.bookingCode,
         badgeColor: '#a3e635',
         rows: [

@@ -1,10 +1,17 @@
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    
+
+    /* Sin reenviar el IP, el backend ve todos los intentos como 127.0.0.1 y
+       su freno por IP deja de servir. */
+    const ip = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip');
+
     const res = await fetch(`http://127.0.0.1:4000/api/auth/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(ip ? { 'x-forwarded-for': ip } : {}),
+      },
       body: JSON.stringify(body),
     });
     

@@ -29,7 +29,10 @@ export class RemindersCron {
       status: { $in: [BookingStatus.CONFIRMED, BookingStatus.REAGENDADA] },
       reminderSent: { $ne: true },
       date: { $gte: in23h, $lte: in24h },
-    }).lean();
+    })
+      // el recordatorio lleva el enlace para mover el turno
+      .select('+cancelToken')
+      .lean();
 
     if (bookings.length === 0) return;
 

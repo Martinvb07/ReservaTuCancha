@@ -8,6 +8,9 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from './schemas/user.schema';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 
 @ApiTags('Usuarios')
 @Controller('users')
@@ -32,13 +35,13 @@ export class UsersController {
 
   @Post('register')
   @ApiOperation({ summary: 'Crear usuario (admin)' })
-  register(@Body() body: { name: string; email: string; phone?: string; role: string; password: string }) {
+  register(@Body() body: CreateUserDto) {
     return this.usersService.createUser(body);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Editar usuario' })
-  update(@Param('id') id: string, @Body() body: { name?: string; phone?: string; role?: string; password?: string }) {
+  update(@Param('id') id: string, @Body() body: UpdateUserDto) {
     return this.usersService.updateUser(id, body);
   }
 
@@ -50,7 +53,7 @@ export class UsersController {
 
   @Patch(':id/subscription')
   @ApiOperation({ summary: 'Cambiar plan de suscripción' })
-  updateSubscription(@Param('id') id: string, @Body() body: { plan: string; estado: string }) {
+  updateSubscription(@Param('id') id: string, @Body() body: UpdateSubscriptionDto) {
     return this.usersService.updateSubscription(id, body);
   }
 

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createHash } from 'crypto';
+import { createHash, timingSafeEqual } from 'crypto';
 
 /**
  * Pasarela de pagos.
@@ -35,17 +35,30 @@ export class WompiService {
   /**
    * Valida que el webhook venga realmente de Wompi.
    * Fórmula del checksum: id + status + amount_in_cents + timestamp + events_secret
+   *
+   * Sin secreto devuelve false y el webhook se rechaza. Antes se aceptaba el
+   * evento igual, asi que una env sin poner alcanzaba para que cualquiera
+   * confirmara reservas sin pagar o borrara las ajenas mandando DECLINED.
    */
   validateSignature(data: any, timestamp: number, checksum: string): boolean {
     if (!this.eventsSecret) {
-      this.logger.warn('WOMPI_EVENTS_SECRET sin definir: no se puede validar la firma del webhook');
+      this.logger.error('WOMPI_EVENTS_SECRET sin definir: se rechaza el webhook');
       return false;
     }
+    if (!checksum || typeof checksum !== 'string') return false;
 
-    const transaction = data.transaction;
+    const transaction = data?.transaction;
+    if (!transaction) return false;
+
     const chain = `${transaction.id}${transaction.status}${transaction.amount_in_cents}${timestamp}${this.eventsSecret}`;
+    const esperado = createHash('sha256').update(chain).digest('hex');
 
-    return createHash('sha256').update(chain).digest('hex') === checksum;
+    /* Comparacion de tiempo constante: un `===` sobre el hash filtra, en el
+       tiempo que tarda, cuantos caracteres iniciales coincidian. */
+    const a = Buffer.from(esperado, 'utf8');
+    const b = Buffer.from(checksum.toLowerCase(), 'utf8');
+    if (a.length !== b.length) return false;
+    return timingSafeEqual(a, b);
   }
 
   /**

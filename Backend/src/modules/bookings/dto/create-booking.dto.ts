@@ -10,6 +10,7 @@ import {
   Min,
   Max,
   Matches,
+  MaxLength,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -20,6 +21,7 @@ export class CreateBookingDto {
 
   @ApiProperty({ example: 'Juan Pérez' })
   @IsString()
+  @MaxLength(80)
   guestName: string;
 
   @ApiProperty({ example: 'juan@email.com' })
@@ -28,6 +30,7 @@ export class CreateBookingDto {
 
   @ApiProperty({ example: '+573001234567' })
   @IsString()
+  @MaxLength(20)
   guestPhone: string;
 
   @ApiProperty({ example: '2025-08-15' })
@@ -52,12 +55,19 @@ export class CreateBookingDto {
   @ApiProperty({ example: 'Venimos con camisetas azules', required: false })
   @IsOptional()
   @IsString()
+  @MaxLength(500)
   notes?: string;
 
-  @ApiProperty({ example: 80000 })
+  /**
+   * Se ignora: el total lo calcula el servidor con el precio de la cancha por
+   * la duracion del turno. Se sigue aceptando para no romper a los clientes
+   * que ya lo mandan, pero el valor que llegue aca no se usa nunca.
+   */
+  @ApiProperty({ example: 80000, required: false, deprecated: true })
+  @IsOptional()
   @IsInt()
   @Min(0)
-  totalPrice: number;
+  totalPrice?: number;
 
   @ApiProperty({ example: 'wompi', required: false })
   @IsOptional()

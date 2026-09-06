@@ -1,5 +1,6 @@
 import { Controller, Post, Get, Body, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { ReviewsService, CreateReviewDto } from './reviews.service';
 
 @ApiTags('Reseñas')
@@ -9,6 +10,7 @@ export class ReviewsController {
 
   // Sin login — usa reviewToken del email
   @Post()
+  @Throttle({ default: { limit: 5, ttl: 600000 } })
   @ApiOperation({ summary: 'Enviar reseña con token único (sin login)' })
   create(@Body() dto: CreateReviewDto) {
     return this.reviewsService.create(dto);

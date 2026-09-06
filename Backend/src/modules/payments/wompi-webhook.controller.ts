@@ -1,7 +1,11 @@
 import { Controller, Post, Body, Headers, BadRequestException, Logger } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { BookingsService } from '../bookings/bookings.service';
 import { WompiService } from '../wompi/wompi.service';
 
+/* Lo llama Wompi, no un navegador, y puede venir en rafagas al reintentar.
+   La firma ya es la reja de esta ruta. */
+@SkipThrottle()
 @Controller('webhooks/wompi')
 export class WompiWebhookController {
   private readonly logger = new Logger(WompiWebhookController.name);
@@ -28,14 +32,15 @@ export class WompiWebhookController {
     /* 1. Primero la firma, antes de tocar la base: se valida con el secreto de
        eventos de la empresa, porque todos los cobros entran por la misma
        cuenta Wompi y ya no por la de cada club. Validar después permitía
-       averiguar qué códigos de reserva existen sin credencial alguna. */
-    if (this.wompiService.eventsSecret) {
-      if (!this.wompiService.validateSignature(data, timestamp, checksum)) {
-        this.logger.error(`Firma inválida para la referencia: ${transaction.reference}`);
-        throw new BadRequestException('Firma inválida');
-      }
-    } else {
-      this.logger.warn('WOMPI_EVENTS_SECRET sin definir: se acepta el webhook sin validar firma');
+       averiguar qué códigos de reserva existen sin credencial alguna.
+
+       Falla cerrado: si WOMPI_EVENTS_SECRET no está puesta, validateSignature
+       devuelve false y el evento se rechaza. Antes se procesaba igual, y con
+       esa env vacía cualquiera confirmaba reservas sin pagar o borraba las
+       ajenas mandando un DECLINED. */
+    if (!this.wompiService.validateSignature(data, timestamp, checksum)) {
+      this.logger.error(`Firma inválida para la referencia: ${transaction.reference}`);
+      throw new BadRequestException('Firma inválida');
     }
 
     // 2. Buscar la reserva por la referencia (bookingCode)
@@ -48,6 +53,18 @@ export class WompiWebhookController {
     // 3. Procesar el estado de la transacción
     if (event === 'transaction.updated') {
       if (transaction.status === 'APPROVED') {
+        /* Lo cobrado tiene que coincidir con lo que vale el turno. La firma ya
+           garantiza que el evento es de Wompi, pero esto ademas deja constancia
+           si alguna vez el monto del checkout deja de calzar con la reserva. */
+        const esperado = Math.round(booking.totalPrice * 100);
+        const recibido = Number(transaction.amount_in_cents);
+        if (recibido !== esperado) {
+          this.logger.error(
+            `Monto distinto en ${booking.bookingCode}: se esperaban ${esperado} centavos y llegaron ${recibido}. No se confirma.`,
+          );
+          throw new BadRequestException('El monto pagado no corresponde a la reserva');
+        }
+
         this.logger.log(`✅ Pago aprobado para reserva: ${booking.bookingCode}`);
 
         // Actualizamos la reserva a CONFIRMED y guardamos el ID de Wompi

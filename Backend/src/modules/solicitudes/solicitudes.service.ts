@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
+import { generarPasswordTemporal } from '../../common/utils/random.util';
 import { Solicitud } from './solicitudes.schema';
 import { User } from '../users/schemas/user.schema';
 import { Club } from '../clubs/schemas/club.schema';
@@ -47,7 +48,10 @@ export class SolicitudesService {
     // Usar datos proporcionados o generar nuevos
     const userName = approvalData?.name || `${solicitud.firstName} ${solicitud.lastName}`;
     const userEmail = approvalData?.email || solicitud.email.toLowerCase();
-    const tempPassword = approvalData?.password || (Math.random().toString(36).slice(-8) + 'A1!');
+    /* Math.random no sirve para esto: los codigos de reserva salian del mismo
+       generador y son publicos, asi que con unos cuantos se reconstruye su
+       estado y se predice la clave que le toca al proximo club. */
+    const tempPassword = approvalData?.password || generarPasswordTemporal();
     const nit = approvalData?.nit || solicitud.nit || 'N/A';
     const businessName = approvalData?.businessName || solicitud.businessName || solicitud.firstName;
 
@@ -118,7 +122,7 @@ export class SolicitudesService {
       throw new NotFoundException('La solicitud no está aprobada');
 
     // Generar nueva contraseña temporal
-    const tempPassword = Math.random().toString(36).slice(-8) + 'B2!';
+    const tempPassword = generarPasswordTemporal();
     const passwordHash = await bcrypt.hash(tempPassword, 10);
 
     // Actualizar contraseña del usuario

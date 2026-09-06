@@ -5,6 +5,7 @@ import { IsString, IsNumber, IsOptional, Min, Max } from 'class-validator';
 import { Review, ReviewDocument } from './schemas/review.schema';
 import { Booking, BookingDocument } from '../bookings/schemas/booking.schema';
 import { CourtsService } from '../courts/courts.service';
+import { aObjectId } from '../../common/utils/objectid.util';
 
 export class CreateReviewDto {
   @IsString()
@@ -60,7 +61,7 @@ export class ReviewsService {
 
   async findByCourt(courtId: string): Promise<Review[]> {
     return this.reviewModel
-      .find({ courtId: new Types.ObjectId(courtId), isVisible: true })
+      .find({ courtId: aObjectId(courtId, 'Cancha no encontrada'), isVisible: true })
       .sort({ createdAt: -1 })
       .limit(50)
       .lean();
