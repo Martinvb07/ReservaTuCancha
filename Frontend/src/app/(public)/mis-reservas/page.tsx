@@ -118,12 +118,14 @@ export default function MisReservasPage() {
               {bookings.length} reserva{bookings.length !== 1 ? 's' : ''} encontrada{bookings.length !== 1 ? 's' : ''} para <strong className="text-gray-900">{query}</strong>
             </p>
 
-            {/* Buscando por correo el backend no entrega el cancelToken: con el,
-                cualquiera que supiera un correo ajeno podia moverle el turno. */}
+            {/* Por correo solo se muestra el resumen. El codigo y el enlace para
+                mover el turno no salen de aca porque un correo no autentica a
+                nadie: quien lo sepa llegaria a la reserva ajena. */}
             {query.includes('@') && (
               <p className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
-                Para cambiar el horario, busca por tu <strong>codigo de reserva</strong> o abre
-                el enlace que te llego al correo.
+                Por seguridad, buscando por correo solo mostramos el resumen. Tu
+                <strong> código de reserva</strong> y el enlace para cambiar el horario están
+                en el correo de confirmación — o busca directo por el código.
               </p>
             )}
 
@@ -131,7 +133,7 @@ export default function MisReservasPage() {
               const court = typeof booking.courtId === 'object' ? booking.courtId : null;
               const st    = STATUS_STYLES[booking.status] ?? STATUS_STYLES.pending;
               // Mostrar el código de reserva real
-              const code  = booking.bookingCode || 'N/A';
+              const code  = booking.bookingCode ?? '';
 
               return (
                 <div key={booking._id} className="bg-white rounded-2xl border border-gray-100 hover:border-green-200 hover:shadow-sm transition-all p-5 space-y-4">
@@ -150,10 +152,14 @@ export default function MisReservasPage() {
                         </p>
                       )}
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Código</p>
-                      <p className="font-black text-lime-600 text-sm">#{code}</p>
-                    </div>
+                    {/* La busqueda por correo no devuelve el codigo a proposito
+                        (ver findByGuestEmail): con el se llegaba al cancelToken. */}
+                    {code && (
+                      <div className="text-right shrink-0">
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Código</p>
+                        <p className="font-black text-lime-600 text-sm">#{code}</p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 bg-gray-50 rounded-xl p-4">

@@ -60,7 +60,7 @@ export class BookingsService {
     updateData: { status: string; wompiTransactionId?: string },
     userId?: string,
     userRole?: string,
-  ): Promise<Booking> {
+  ): Promise<Omit<Booking, 'cancelToken' | 'reviewToken'>> {
     const { status, wompiTransactionId } = updateData;
 
     const validStatuses = ['confirmed', 'reagendada', 'completed'];
@@ -99,7 +99,10 @@ export class BookingsService {
       await this.notificationsService.sendReviewRequest(updated as any);
     }
 
-    return updated;
+    /* Los tokens se pidieron para armar los enlaces de esos correos, no para
+       devolverlos: esta respuesta la recibe el panel del club, y con el
+       cancelToken el club podria mover la reserva de su cliente. */
+    return this.sinTokens(updated);
   }
 
   // --- LÓGICA DE PAGOS ---
@@ -295,12 +298,38 @@ export class BookingsService {
       this.logger.error(`Error enviando notification al owner: ${e.message}`);
     }
 
-    return saved;
+    return this.sinTokens(saved);
   }
+
+  /**
+   * Campos que puede ver cualquiera que llegue a una reserva por su
+   * identificador. Sin datos de contacto: un ObjectId lleva dentro el momento
+   * en que se creo y un contador, asi que quien haga una reserva propia puede
+   * tantear las vecinas. Lo que se muestre aca se muestra a quien adivine.
+   */
+  /**
+   * Saca los tokens de una reserva antes de responder.
+   *
+   * La regla es absoluta a proposito: NINGUNA respuesta de la API lleva
+   * cancelToken ni reviewToken, ni siquiera cuando quien pregunta ya los tiene.
+   * Una regla sin excepciones se verifica con un grep; una con excepciones se
+   * erosiona, y fue justo asi que la toma de reservas ajenas sobrevivio a dos
+   * arreglos parciales.
+   */
+  private sinTokens(doc: any) {
+    const plano = typeof doc?.toObject === 'function' ? doc.toObject() : { ...doc };
+    delete plano.cancelToken;
+    delete plano.reviewToken;
+    return plano;
+  }
+
+  private static readonly CAMPOS_PUBLICOS =
+    '_id courtId date startTime endTime status totalPrice bookingCode paymentMethod players createdAt';
 
   async findById(id: string): Promise<Booking> {
     const booking = await this.bookingModel
       .findById(id)
+      .select(BookingsService.CAMPOS_PUBLICOS)
       .populate('courtId', 'name sport location pricePerHour')
       .lean();
     if (!booking) throw new NotFoundException('Reserva no encontrada');
@@ -393,7 +422,7 @@ export class BookingsService {
       this.logger.error(`Error enviando email de reprogramación: ${e.message}`);
     }
 
-    return guardada;
+    return this.sinTokens(guardada);
   }
 
   /** Horas que faltan para que empiece el turno (hora Colombia). */
@@ -457,8 +486,21 @@ export class BookingsService {
   }
 
   async findByGuestEmail(email: string): Promise<Booking[]> {
+    /* Proyeccion explicita, y sin bookingCode a proposito.
+
+       Un correo no es una credencial: cualquiera que lo sepa llega aca. Antes
+       esta consulta devolvia el documento entero, asi que entregaba telefono y
+       nombre, y sobre todo el bookingCode, con el que la busqueda por codigo
+       entrega el cancelToken. Ocultar solo el token no alcanzaba: la toma de
+       la reserva seguia a dos saltos en vez de uno.
+
+       Lo que queda es un resumen que no habilita ninguna accion: sirve para
+       ver si la reserva quedo hecha y nada mas. El codigo y el enlace para
+       mover el turno van por el correo de confirmacion, que solo recibe el
+       dueno de la casilla. */
     return this.bookingModel
       .find({ guestEmail: email })
+      .select('courtId date startTime endTime status totalPrice')
       .populate('courtId', 'name sport location')
       .lean();
   }
@@ -466,12 +508,17 @@ export class BookingsService {
   async findByBookingCode(code: string): Promise<Booking[]> {
     const normalized = code.trim().replace(/#/g, '').toUpperCase();
     if (!normalized) return [];
-    /* Con el codigo en la mano si se entrega el cancelToken: el codigo solo lo
-       tiene quien hizo la reserva. La busqueda por correo, en cambio, no lo
-       devuelve, y por eso el boton de reprogramar no aparece ahi. */
+    /* Tampoco entrega el cancelToken.
+
+       La regla es una sola y se sostiene sola: ninguna consulta por
+       identificador devuelve el token. Viaja unicamente en el correo de
+       confirmacion, que solo le llega al dueno de la casilla. Mientras se
+       entregaba aca, bastaba con encadenar dos o tres consultas publicas para
+       llegar al token de un tercero, y cada vez que se tapaba un salto quedaba
+       otro. Con el token fuera de la API, la cadena no existe. */
     return this.bookingModel
       .find({ bookingCode: normalized })
-      .select('+cancelToken')
+      .select(BookingsService.CAMPOS_PUBLICOS)
       .populate('courtId', 'name sport location')
       .lean();
   }
