@@ -8,16 +8,17 @@ import { User, UserDocument } from './schemas/user.schema';
 export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
+  /** El unico que necesita el hash: lo compara el login. */
   async findByEmail(email: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({ email: email.toLowerCase() });
+    return this.userModel.findOne({ email: email.toLowerCase() }).select('+passwordHash');
   }
 
   async findById(id: string): Promise<UserDocument | null> {
-    return this.userModel.findById(id).select('-passwordHash');
+    return this.userModel.findById(id);
   }
 
   async findByIdWithRefreshToken(id: string): Promise<UserDocument | null> {
-    return this.userModel.findById(id).select('-passwordHash +refreshToken');
+    return this.userModel.findById(id).select('+refreshToken');
   }
 
   async updateLastLogin(id: string) {
@@ -29,7 +30,7 @@ export class UsersService {
   }
 
   async findAll() {
-    return this.userModel.find().select('-passwordHash').sort({ createdAt: -1 }).lean();
+    return this.userModel.find().sort({ createdAt: -1 }).lean();
   }
 
   async createUser(data: { name: string; email: string; phone?: string; role: string; password: string }) {
@@ -57,7 +58,7 @@ export class UsersService {
     if (data.role)  update.role  = data.role;
     if (data.password) update.passwordHash = await bcrypt.hash(data.password, 10);
 
-    const user = await this.userModel.findByIdAndUpdate(id, update, { new: true }).select('-passwordHash');
+    const user = await this.userModel.findByIdAndUpdate(id, update, { new: true });
     if (!user) throw new NotFoundException('Usuario no encontrado');
     return user;
   }
@@ -87,7 +88,7 @@ export class UsersService {
       update.subscriptionEndsAt = null;
     }
 
-    const user = await this.userModel.findByIdAndUpdate(id, update, { new: true }).select('-passwordHash');
+    const user = await this.userModel.findByIdAndUpdate(id, update, { new: true });
     if (!user) throw new NotFoundException('Usuario no encontrado');
     return user;
   }

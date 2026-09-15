@@ -16,7 +16,9 @@ export class User {
   @Prop({ required: true, unique: true, lowercase: true, trim: true })
   email: string;
 
-  @Prop({ required: true })
+  /* Fuera de las consultas por defecto: el hash solo lo necesita el login,
+     que lo pide con +passwordHash. */
+  @Prop({ required: true, select: false })
   passwordHash: string;
 
   @Prop({ enum: UserRole, default: UserRole.OWNER })
@@ -46,7 +48,11 @@ export class User {
   @Prop()
   subscriptionStartedAt?: Date;
 
-  @Prop()
+  /* Tiene que ser select:false para que `+refreshToken` funcione: sobre un
+     campo que ya viene por defecto, Mongoose lo manda como inclusion y Mongo
+     rechaza la proyeccion por mezclarla con una exclusion. Eso era el 500 del
+     refresh que mataba toda sesion a los 15 minutos. */
+  @Prop({ select: false })
   refreshToken?: string;
 }
 
