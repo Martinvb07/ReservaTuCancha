@@ -132,7 +132,12 @@ export class BookingsService {
     }
 
     const cancha = booking.courtId as any;
-    const backend = (process.env.BACKEND_URL ?? 'https://api.reservatucancha.site').replace(/\/+$/, '');
+
+    /* Base pública de la API, con el prefijo /api incluido: no hay subdominio
+       propio para el backend, nginx enruta /api/ del mismo dominio al 4000, y
+       la app monta todo bajo setGlobalPrefix('api'). Si esta URL queda mal,
+       ePayco no puede avisar el resultado y la reserva nunca se confirma. */
+    const backend = (process.env.BACKEND_URL ?? 'https://reservatucancha.site/api').replace(/\/+$/, '');
 
     /* Con pagos divididos la plata no pasa por la empresa: ePayco le consigna
        al club en el mismo cobro, así que hace falta su id de receptor. */
