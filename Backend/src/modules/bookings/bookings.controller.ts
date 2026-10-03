@@ -97,11 +97,14 @@ export class BookingsController {
   }
 
   @Post(':id/payment')
-  @ApiOperation({ summary: 'Iniciar pago con Wompi' })
+  @ApiOperation({ summary: 'Abrir el checkout de ePayco' })
   async initPayment(
     @Param('id') bookingId: string,
     @Body() body: { redirectUrl: string },
+    @Request() req,
   ) {
-    return this.bookingsService.initPayment(bookingId, body.redirectUrl);
+    /* ePayco pide la IP del comprador para su antifraude. Detrás de nginx la
+       real llega en X-Forwarded-For, que es lo que resuelve req.ip. */
+    return this.bookingsService.initPayment(bookingId, body.redirectUrl, req.ip);
   }
 }

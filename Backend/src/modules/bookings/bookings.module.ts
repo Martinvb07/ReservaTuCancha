@@ -8,7 +8,7 @@ import { Court, CourtSchema } from '../courts/schemas/court.schema';
 import { BlockedSlot, BlockedSlotSchema } from '../courts/schemas/blocked-slot.schema';
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
-import { WompiModule } from '../wompi/wompi.module';
+import { EpaycoModule } from '../epayco/epayco.module';
 
 @Module({
   imports: [
@@ -20,7 +20,7 @@ import { WompiModule } from '../wompi/wompi.module';
       { name: User.name, schema: UserSchema },
     ]),
     NotificationsModule,
-    WompiModule,
+    EpaycoModule,
   ],
   controllers: [BookingsController],
   providers: [BookingsService],

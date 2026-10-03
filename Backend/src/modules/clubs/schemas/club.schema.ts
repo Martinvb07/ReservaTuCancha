@@ -67,9 +67,24 @@ export class Club {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   ownerUserId: Types.ObjectId;
 
-  // --- Cuenta donde recibe la liquidación semanal ---
-  // Los cobros entran a la cuenta Wompi de ReservaTuCancha; cada lunes se le
-  // transfiere al club su parte a estos datos.
+  /**
+   * Id del club como receptor en ePayco (su P_CUST_ID_CLIENTE).
+   *
+   * Con pagos divididos la plata ya no pasa por la cuenta de la empresa: ePayco
+   * reparte en el momento del cobro y le consigna directo al club. Para eso el
+   * club tiene que abrir su propia cuenta de ePayco, registrarse como comercio
+   * y como receptor, y agregarnos como comercio asociado.
+   *
+   * Sin este id la cancha no se puede cobrar: no hay a dónde mandarle su parte.
+   */
+  @Prop({ trim: true })
+  epaycoReceptorId?: string;
+
+  /**
+   * Cuenta bancaria del modelo anterior, cuando la empresa retenía el dinero y
+   * giraba cada lunes. Se conserva solo como histórico: ya no se usa para
+   * pagar. Sin ella no se pierde el rastro de a quién se le giró antes.
+   */
   @Prop({ type: DatosBancarios })
   banco?: DatosBancarios;
 

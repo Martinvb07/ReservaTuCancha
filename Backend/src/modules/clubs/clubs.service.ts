@@ -5,6 +5,7 @@ import { Model, Types } from 'mongoose';
 import { Club, ClubDocument } from './schemas/club.schema';
 import { Court, CourtDocument } from '../courts/schemas/court.schema';
 import { Review, ReviewDocument } from '../reviews/schemas/review.schema';
+import { EpaycoReceptorDto } from './dto/epayco-receptor.dto';
 import { DatosBancariosDto } from './dto/datos-bancarios.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { UsersService } from '../users/users.service';
@@ -133,9 +134,9 @@ export class ClubsService {
           contactEmail: club.contactEmail,
           contactPhone: club.contactPhone,
           ownerUserId: club.ownerUserId,
-          // El club ya no configura pasarela; lo que importa es si registró
-          // la cuenta a la que se le gira la liquidación semanal.
-          bancoConfigurado: !!club.banco?.numero,
+          /* Con pagos divididos, lo que habilita a un club a vender es tener
+             su cuenta de ePayco registrada: sin ella no hay a dónde girarle. */
+          epaycoConfigurado: !!club.epaycoReceptorId,
           sports,
           totalCourts: courts.length,
         };
@@ -189,10 +190,55 @@ export class ClubsService {
   }
 
   /**
-   * Cuenta donde el club recibe su liquidación semanal.
+   * Registra la cuenta de ePayco donde el club recibe su parte.
    *
-   * Reemplaza a la configuración de Wompi por club: ahora todos los cobros
-   * entran a la cuenta de ReservaTuCancha y cada lunes se transfiere aquí.
+   * Con pagos divididos ePayco reparte el cobro en el momento y le consigna
+   * directo al club, así que sin este id la cancha no puede vender: no hay a
+   * dónde mandarle su plata.
+   */
+  async updateEpaycoReceptor(clubId: string, dto: EpaycoReceptorDto, userId: string) {
+    if (!Types.ObjectId.isValid(clubId)) {
+      throw new NotFoundException('El ID del club no es un formato válido de MongoDB.');
+    }
+
+    const club = await this.clubModel.findById(clubId);
+    if (!club) throw new NotFoundException('No se encontró el club para actualizar la cuenta.');
+
+    // SEGURIDAD: Validar que el que pide el cambio es el dueño real
+    if (club.ownerUserId.toString() !== userId.toString()) {
+      throw new ForbiddenException('No tienes permisos para configurar los pagos de este club.');
+    }
+
+    const esPrimeraVez = !club.epaycoReceptorId;
+    club.epaycoReceptorId = dto.epaycoReceptorId;
+    await club.save();
+
+    /* El correo no puede tumbar el guardado: si Resend falla, la cuenta ya
+       quedó registrada y lo único que se pierde es el aviso. */
+    try {
+      const dueno = await this.usersService.findById(club.ownerUserId.toString());
+      await this.notificaciones.sendDatosBancariosActualizados({
+        clubNombre: club.name,
+        emailDueno: (dueno as any)?.email ?? club.contactEmail,
+        esPrimeraVez,
+        resumen: [{ label: 'ID de ePayco', value: dto.epaycoReceptorId }],
+      });
+    } catch (e) {
+      this.logger.warn(`No se pudo avisar el cambio de cuenta de ${club.name}: ${e?.message}`);
+    }
+
+    return {
+      message: 'Cuenta de ePayco actualizada',
+      epaycoReceptorId: club.epaycoReceptorId,
+    };
+  }
+
+  /**
+   * Cuenta bancaria del modelo anterior, cuando la empresa retenía el dinero y
+   * giraba cada lunes.
+   *
+   * Ya no mueve plata: se conserva porque la app móvil publicada todavía la
+   * guarda y porque es el histórico de a quién se le giró antes.
    */
   async updateDatosBancarios(clubId: string, dto: DatosBancariosDto, userId: string) {
     // PREVENCIÓN: Validar el ID del club para evitar el crash del server (Error 500)

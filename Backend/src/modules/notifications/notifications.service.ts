@@ -481,9 +481,9 @@ export class NotificationsService {
       html: buildEmailHtml({
         iconBg: '#e0e7ff', iconContent: '🔔',
         title: 'Cuenta de pagos',
-        subtitle: `${escapeHtml(clubNombre)} ${esPrimeraVez ? 'registró' : 'actualizó'} los datos para recibir su liquidación.`,
+        subtitle: `${escapeHtml(clubNombre)} ${esPrimeraVez ? 'registró' : 'actualizó'} su cuenta para recibir los pagos.`,
         rows: [{ label: 'Club', value: clubNombre }, ...resumen],
-        ctaText: 'Abrir liquidación', ctaUrl: `${this.frontendUrl}/dashboard/admin/liquidacion`, ctaBg: '#111827',
+        ctaText: 'Ver clubes', ctaUrl: `${this.frontendUrl}/dashboard/admin/clubes`, ctaBg: '#111827',
       }),
     });
   }
@@ -541,6 +541,15 @@ export class NotificationsService {
                     <td style="color: #6b7280; font-size: 14px;">Horario</td>
                     <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${startAmPm} – ${endAmPm}</td>
                   </tr>
+                  ${booking.tarifaServicio ? `
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px; border-top: 1px solid #f3f4f6;">Cancha</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700; border-top: 1px solid #f3f4f6;">$${booking.precioCancha?.toLocaleString('es-CO')}</td>
+                  </tr>
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px;">Tarifa de servicio</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">$${booking.tarifaServicio?.toLocaleString('es-CO')}</td>
+                  </tr>` : ''}
                   <tr style="height: 65px;">
                     <td style="color: #6b7280; font-size: 14px; border-top: 1px solid #f3f4f6;">Total</td>
                     <td align="right" style="color: #059669; font-size: 18px; font-weight: 800; border-top: 1px solid #f3f4f6;">$${booking.totalPrice?.toLocaleString('es-CO')} COP</td>
@@ -919,8 +928,11 @@ export class NotificationsService {
           { label: 'Cancha', value: court?.name || '-' },
           { label: 'Fecha', value: formatDateCO(booking.date) },
           { label: 'Horario', value: `${toAmPm(booking.startTime)} – ${toAmPm(booking.endTime)}` },
-          { label: 'Método de pago', value: 'Online (Wompi)' },
-          { label: 'Total', value: formatPrice(booking.totalPrice), highlight: true },
+          { label: 'Método de pago', value: 'Online (ePayco)' },
+          /* Al club le importa lo suyo, no lo que pagó el jugador: el total
+             incluye la tarifa de servicio, que no es plata del club. */
+          { label: 'Precio de la cancha', value: formatPrice(booking.precioCancha ?? booking.totalPrice) },
+          { label: 'Te queda', value: formatPrice(booking.netoDueno ?? booking.totalPrice), highlight: true },
         ],
         ctaText: 'Ver en el panel', ctaUrl: `${this.frontendUrl}/dashboard/propetario/reservas`, ctaBg: '#111827',
       }),

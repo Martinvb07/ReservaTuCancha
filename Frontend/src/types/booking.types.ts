@@ -17,7 +17,12 @@ export interface Booking {
   players?: number;
   notes?: string;
   status: BookingStatus;
+  /** Lo que pagó el jugador: precio de la cancha + tarifa de servicio */
   totalPrice: number;
+  /** Precio de lista del turno, sin la tarifa */
+  precioCancha?: number;
+  /** Tarifa fija de la plataforma, cobrada al jugador */
+  tarifaServicio?: number;
   paymentId?: string;
   cancelToken: string;
   bookingCode: string;
@@ -36,7 +41,9 @@ export interface CreateBookingPayload {
   endTime: string;
   players?: number;
   notes?: string;
-  totalPrice: number;
+  /* El total lo calcula el servidor: mandarlo no cambia lo que se cobra. */
+  totalPrice?: number;
+  paymentMethod?: 'epayco';
 }
 
 export interface TimeSlot {

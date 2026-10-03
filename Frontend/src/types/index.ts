@@ -72,8 +72,10 @@ export interface CreateBookingPayload {
   endTime: string;
   players?: number;
   notes?: string;
-  totalPrice: number;
-  paymentMethod?: 'wompi' | 'efectivo';
+  /* El total lo calcula el servidor con el precio de la cancha más la tarifa
+     de servicio: mandarlo desde acá no cambia lo que se cobra. */
+  totalPrice?: number;
+  paymentMethod?: 'epayco';
 }
 
 export interface Booking {
@@ -88,7 +90,12 @@ export interface Booking {
   players: number;
   notes?: string;
   status: BookingStatus;
+  /** Lo que pagó el jugador: precio de la cancha + tarifa de servicio */
   totalPrice: number;
+  /** Precio de lista del turno, sin la tarifa */
+  precioCancha?: number;
+  /** Tarifa fija de la plataforma, cobrada al jugador */
+  tarifaServicio?: number;
   bookingCode: string;
   paymentId?: string;
   cancelToken: string;

@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 
 const BENEFITS = [
   { icon: LayoutDashboard, title: 'Panel en tiempo real', desc: 'Ve tus reservas, ingresos y ocupación al instante desde cualquier dispositivo.' },
-  { icon: CreditCard, title: 'Pagos automáticos', desc: 'Tus clientes pagan online con Nequi, Daviplata, PSE o tarjeta. Te transferimos lo recaudado cada lunes.' },
+  { icon: CreditCard, title: 'Pagos automáticos', desc: 'Tus clientes pagan online con Nequi, Daviplata, PSE o tarjeta, y ePayco te consigna tu parte directo en el momento.' },
   { icon: CalendarCheck, title: 'Cero dobles reservas', desc: 'El sistema bloquea el horario apenas alguien reserva. Se acabaron los cruces.' },
   { icon: Bell, title: 'Notificaciones al instante', desc: 'Te avisamos cada nueva reserva y pago en el momento en que ocurre.' },
   { icon: TrendingUp, title: 'Analytics de tu negocio', desc: 'Conoce tus horas pico, canchas más rentables y tendencias para decidir mejor.' },
@@ -35,8 +35,8 @@ const STEPS = [
 ];
 
 const FAQ = [
-  { q: '¿Cuánto cuesta?', a: 'No hay mensualidad ni contrato. Cobramos una comisión del 9% sobre cada reserva pagada por la plataforma: si nadie reserva, no pagas nada.' },
-  { q: '¿Cómo recibo los pagos?', a: 'Tus clientes pagan a ReservaTuCancha con Nequi, Daviplata, PSE o tarjeta. Cada lunes te transferimos lo recaudado de la semana anterior, ya con la comisión del 9% descontada.' },
+  { q: '¿Cuánto cuesta?', a: 'No hay mensualidad ni contrato. Al jugador se le suma una tarifa de servicio de $2.000 sobre el precio de tu cancha, y de lo recaudado salen la pasarela y nuestra parte: frente a tu precio de lista eso es cerca de un 5%, y menos cuando la cancha es más cara. Si nadie reserva, no pagas nada.' },
+  { q: '¿Cómo recibo los pagos?', a: 'Tus clientes pagan con Nequi, Daviplata, PSE o tarjeta, y ePayco divide el cobro en el momento: tu parte te llega directo a tu cuenta, ya con los costos descontados. No retenemos tu dinero. Solo necesitas conectar tu propia cuenta de ePayco una vez desde el panel.' },
   { q: '¿Puedo bloquear horarios?', a: 'Sí. Bloqueas horarios por mantenimiento, torneos o eventos privados cuando quieras, desde el panel.' },
   { q: '¿Mis clientes necesitan registrarse?', a: 'No. Reservan con su nombre, email y teléfono. Menos fricción, más reservas para ti.' },
 ];

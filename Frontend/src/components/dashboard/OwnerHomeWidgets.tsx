@@ -62,7 +62,7 @@ export function OwnerHomeWidgets() {
     enabled: !!token,
   });
 
-  // ── Club info (Wompi status + slug) ──
+  // ── Club info (cuenta de pagos + slug) ──
   const { data: clubInfo } = useQuery<any>({
     queryKey: ['club-info'],
     queryFn: async () => {
@@ -118,17 +118,21 @@ export function OwnerHomeWidgets() {
     <div className="space-y-5">
 
 
-      {/* ── Alerta Wompi ── */}
-      {clubInfo && !clubInfo.wompiConfigured && (
+      {/* ── Alerta: falta conectar la cuenta de ePayco ──
+          Antes esto miraba `wompiConfigured`, un campo que el backend nunca
+          devolvió: la alerta salía siempre y decía algo falso. Con pagos
+          divididos, lo que de verdad bloquea las ventas es no tener la cuenta
+          de ePayco conectada: sin ella no hay a dónde consignarle al club. */}
+      {clubInfo && !clubInfo.epaycoReceptorId && (
         <Link href="/dashboard/propetario/pagos" className="block group">
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 sm:p-5 flex items-center gap-4 hover:bg-amber-100 hover:border-amber-300 transition-all">
             <div className="w-10 h-10 sm:w-11 sm:h-11 bg-amber-500 rounded-xl flex items-center justify-center shrink-0">
               <AlertCircle className="h-5 w-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-black text-amber-900 text-sm">Wompi no configurado</p>
+              <p className="font-black text-amber-900 text-sm">Conecta tu cuenta de ePayco</p>
               <p className="text-xs text-amber-700 mt-0.5 leading-snug">
-                Tus clientes no pueden pagar online. Agrega tus credenciales para activar los pagos.
+                Sin ella tus canchas no pueden recibir reservas pagadas en línea: no hay a dónde consignarte.
               </p>
             </div>
             <span className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-200 px-3 py-1.5 rounded-full whitespace-nowrap shrink-0 group-hover:bg-amber-300 transition-colors">
@@ -285,7 +289,7 @@ export function OwnerHomeWidgets() {
                         method ? 'bg-amber-200 text-amber-800' : 'bg-blue-100 text-blue-700'
                       }`}>
                         {method ? <Banknote className="h-2.5 w-2.5" /> : <CreditCard className="h-2.5 w-2.5" />}
-                        {method ? 'Efectivo' : 'Wompi'}
+                        {method ? 'Efectivo' : 'ePayco'}
                       </span>
                     </div>
                     <button

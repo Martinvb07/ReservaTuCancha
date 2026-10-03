@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ClubsService } from './clubs.service';
 import { DatosBancariosDto } from './dto/datos-bancarios.dto';
+import { EpaycoReceptorDto } from './dto/epayco-receptor.dto';
 import { UpdateClubProfileDto } from './dto/update-club-profile.dto';
 import { PhotoDto } from '../courts/dto/photo.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -73,6 +74,26 @@ export class ClubsController {
     return this.clubsService.removeClubPhoto(req.user.userId, dto.url);
   }
 
+  /**
+   * Cuenta de ePayco donde el club recibe su parte de cada reserva.
+   *
+   * Reemplaza a `:id/banco`: con pagos divididos la plata ya no pasa por la
+   * cuenta de la empresa, así que lo que hace falta no es un número de cuenta
+   * sino el id del club como receptor en ePayco.
+   */
+  @Patch(':id/epayco')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  async updateEpaycoReceptor(
+    @Param('id') clubId: string,
+    @Body() dto: EpaycoReceptorDto,
+    @Request() req,
+  ) {
+    return this.clubsService.updateEpaycoReceptor(clubId, dto, req.user.userId);
+  }
+
+  /* Histórico: la cuenta bancaria del modelo de giros semanales. Se deja la
+     ruta porque la app móvil publicada todavía la llama; ya no mueve plata. */
   @Patch(':id/banco')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.OWNER)

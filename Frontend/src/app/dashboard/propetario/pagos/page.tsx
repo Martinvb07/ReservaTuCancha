@@ -10,7 +10,7 @@ import {
 import { format, isThisWeek, isThisMonth, isToday, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import api from '@/lib/api/axios';
-import CuentaPagosWizard, { type DatosBanco } from '@/components/dashboard/CuentaPagosWizard';
+import CuentaEpayco from '@/components/dashboard/CuentaEpayco';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import { toast } from 'sonner';
 
@@ -27,8 +27,11 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: 'Cancelada',
   completed: 'Completada',
 };
+/* 'wompi' sigue acá por las reservas anteriores al cambio de pasarela: sin la
+   entrada, el historial las mostraba con el nombre crudo del método. */
 const METHOD_LABEL: Record<string, { label: string; color: string }> = {
-  wompi:    { label: 'Wompi',   color: 'text-blue-600 bg-blue-50'   },
+  epayco:   { label: 'ePayco',   color: 'text-blue-600 bg-blue-50'   },
+  wompi:    { label: 'Wompi',    color: 'text-blue-600 bg-blue-50'   },
   efectivo: { label: 'Efectivo', color: 'text-amber-600 bg-amber-50' },
 };
 
@@ -76,7 +79,7 @@ function downloadCSV(bookings: any[]) {
     b.date ? format(parseISO(b.date), 'dd/MM/yyyy') : '',
     `${b.startTime ? formatTime12h(b.startTime) : ''} – ${b.endTime ? formatTime12h(b.endTime) : ''}`,
     STATUS_LABEL[b.status] ?? b.status,
-    METHOD_LABEL[b.paymentMethod]?.label ?? b.paymentMethod ?? 'Wompi',
+    METHOD_LABEL[b.paymentMethod]?.label ?? b.paymentMethod ?? 'ePayco',
     b.totalPrice ?? 0,
   ]);
   const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
@@ -92,7 +95,7 @@ export default function OwnerPagosPage() {
   const queryClient = useQueryClient();
   useApiAuth();
 
-  const [tab, setTab]                   = useState<'historial' | 'liquidaciones' | 'cuenta'>('historial');
+  const [tab, setTab]                   = useState<'historial' | 'cuenta'>('historial');
   const [period, setPeriod]             = useState<Period>('todo');
   const [filterStatus, setFilterStatus] = useState('all');
   const [search, setSearch]             = useState('');
@@ -110,21 +113,14 @@ export default function OwnerPagosPage() {
     queryFn: async () => { const { data } = await api.get('/bookings/owner'); return data; },
   });
 
-  /* Liquidaciones semanales: lo que ReservaTuCancha le gira al club cada lunes,
-     ya con la comision descontada. */
-  const { data: liquidaciones, isLoading: loadingLiq } = useQuery({
-    queryKey: ['mis-liquidaciones'],
-    queryFn: async () => { const { data } = await api.get('/liquidaciones/mias'); return data; },
-  });
-
-  // ── Cuenta donde el club recibe su giro semanal ──
-  const saveBanco = useMutation({
-    mutationFn: async (formData: DatosBanco) => {
+  // ── Cuenta de ePayco donde el club recibe su parte de cada reserva ──
+  const saveEpayco = useMutation({
+    mutationFn: async (epaycoReceptorId: string) => {
       const clubId = clubInfo?._id || clubInfo?.id;
       if (!clubId) throw new Error('ID del club no detectado. Recarga la página.');
-      return api.patch(`/clubs/${clubId}/banco`, formData);
+      return api.patch(`/clubs/${clubId}/epayco`, { epaycoReceptorId });
     },
-    onSuccess: () => { toast.success('Cuenta de pagos guardada'); queryClient.invalidateQueries({ queryKey: ['club-info'] }); },
+    onSuccess: () => { toast.success('Cuenta de ePayco conectada'); queryClient.invalidateQueries({ queryKey: ['club-info'] }); },
     onError: (e: any) => toast.error(e.response?.data?.message || 'Error al guardar la cuenta'),
   });
 
@@ -164,7 +160,7 @@ export default function OwnerPagosPage() {
             <span>✦</span> Panel Propietario
           </p>
           <h1 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase">Pagos</h1>
-          <p className="text-gray-500 text-sm mt-1">Historial de cobros, liquidaciones semanales y tu cuenta</p>
+          <p className="text-gray-500 text-sm mt-1">Historial de cobros y tu cuenta de ePayco</p>
         </div>
         <button
           onClick={() => downloadCSV(filtered)}
@@ -178,7 +174,6 @@ export default function OwnerPagosPage() {
       <div className="flex gap-2 flex-wrap">
         {[
           { key: 'historial', label: 'Historial de pagos', icon: BarChart3 },
-          { key: 'liquidaciones', label: 'Mis liquidaciones', icon: Banknote },
           { key: 'cuenta',        label: 'Cuenta de pagos',   icon: Landmark },
         ].map(({ key, label, icon: Icon }) => (
           <button
@@ -329,7 +324,7 @@ export default function OwnerPagosPage() {
                 {paginated.map((b: any) => {
                   const isConfirmed  = ['confirmed', 'completed'].includes(b.status);
                   const isPending    = b.status === 'pending';
-                  const method       = METHOD_LABEL[b.paymentMethod] ?? METHOD_LABEL.wompi;
+                  const method       = METHOD_LABEL[b.paymentMethod] ?? METHOD_LABEL.epayco;
                   const court        = typeof b.courtId === 'object' ? b.courtId : null;
 
                   return (
@@ -443,126 +438,7 @@ export default function OwnerPagosPage() {
         </div>
       )}
 
-      {/* ════════════════════════════════ TAB: WOMPI ════════════════════════════════ */}
-      {/* ════════════════ TAB: LIQUIDACIONES ════════════════ */}
-      {tab === 'liquidaciones' && (
-        <div className="space-y-5">
-          {loadingLiq ? (
-            <>
-              <div className="h-40 bg-gray-100 rounded-3xl animate-pulse" />
-              <div className="space-y-2">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-16 bg-gray-100 rounded-2xl animate-pulse" />
-                ))}
-              </div>
-            </>
-          ) : !liquidaciones?.semanas?.length ? (
-            <div className="text-center py-16 bg-gray-50 rounded-3xl border border-gray-100">
-              <Banknote className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-              <p className="font-semibold text-gray-900">Todavía no hay liquidaciones</p>
-              <p className="text-gray-500 text-sm mt-1">Aparecen apenas recibas tu primera reserva pagada en línea.</p>
-            </div>
-          ) : (() => {
-            /* La primera semana es la que está corriendo: va destacada arriba
-               porque es la plata que el club está esperando. El resto es
-               historial y va en filas compactas. */
-            const [proxima, ...anteriores] = liquidaciones.semanas;
-            const comision = liquidaciones.comisionPorcentaje ?? 9;
-
-            return (
-              <>
-                {/* ── Próximo giro ── */}
-                <div className="rounded-3xl bg-gray-900 text-white p-5 md:p-7">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-black uppercase tracking-widest text-green-400">
-                        {proxima.enCurso ? 'Semana en curso' : 'Próximo giro'}
-                      </p>
-                      <p className="text-3xl md:text-5xl font-black mt-1.5">
-                        ${(proxima.neto ?? 0).toLocaleString('es-CO')}
-                      </p>
-                      <p className="text-gray-400 text-sm mt-1.5">
-                        {proxima.etiqueta} · {proxima.reservas} {proxima.reservas === 1 ? 'reserva' : 'reservas'}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2 rounded-2xl bg-white/10 px-3.5 py-2.5 shrink-0">
-                      <CalendarDays className="h-4 w-4 text-green-400 shrink-0" />
-                      <div className="text-xs leading-tight">
-                        <p className="text-gray-400">Te llega el</p>
-                        <p className="font-bold capitalize">
-                          {format(parseISO(proxima.giro), "EEEE d 'de' MMM", { locale: es })}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 pt-4 border-t border-white/10 grid grid-cols-3 gap-3 text-center">
-                    {[
-                      { l: 'Recaudado', v: proxima.bruto ?? 0 },
-                      { l: `Comisión ${comision}%`, v: -(proxima.comision ?? 0) },
-                      { l: 'Te giramos', v: proxima.neto ?? 0 },
-                    ].map((c) => (
-                      <div key={c.l} className="min-w-0">
-                        <p className="text-[10px] uppercase tracking-wider text-gray-400 truncate">{c.l}</p>
-                        <p className={`font-black text-sm md:text-base mt-0.5 ${c.v < 0 ? 'text-red-400' : 'text-white'}`}>
-                          {c.v < 0 ? '−' : ''}${Math.abs(c.v).toLocaleString('es-CO')}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <p className="text-[11px] text-gray-500 mt-4 leading-relaxed">
-                    La semana cierra el domingo al mediodía y giramos el lunes a las 2:00 PM.
-                    Lo que se agende después del corte entra a la semana siguiente.
-                  </p>
-                </div>
-
-                {/* ── Historial ── */}
-                {anteriores.length > 0 && (
-                  <div>
-                    <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-2.5">
-                      Semanas anteriores
-                    </p>
-                    <div className="rounded-2xl border border-gray-200 overflow-hidden divide-y divide-gray-100 bg-white">
-                      {anteriores.map((sem: any) => {
-                        const girada = sem.estado === 'girada';
-                        return (
-                          <div key={sem.inicio} className="flex items-center justify-between gap-3 px-4 py-3.5">
-                            <div className="min-w-0">
-                              <p className="font-bold text-gray-900 text-sm truncate">{sem.etiqueta}</p>
-                              <p className="text-xs text-gray-500 mt-0.5 truncate">
-                                {sem.reservas} {sem.reservas === 1 ? 'reserva' : 'reservas'}
-                                {girada
-                                  ? ` · girada el ${format(parseISO(sem.giradaAt), "d 'de' MMM", { locale: es })}`
-                                  : sem.reservas > 0 ? ' · pendiente de giro' : ' · sin movimiento'}
-                              </p>
-                            </div>
-
-                            <div className="flex items-center gap-2.5 shrink-0">
-                              <span className="text-right">
-                                <span className="block font-black text-gray-900 text-sm">
-                                  ${(sem.neto ?? 0).toLocaleString('es-CO')}
-                                </span>
-                                <span className="block text-[10px] text-gray-400">
-                                  de ${(sem.bruto ?? 0).toLocaleString('es-CO')}
-                                </span>
-                              </span>
-                              {girada
-                                ? <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                                : <span className="w-4 shrink-0" />}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </>
-            );
-          })()}
-        </div>
-      )}
+      
 
       {/* ════════════════ TAB: CUENTA DE PAGOS ════════════════ */}
       {tab === 'cuenta' && (
@@ -570,11 +446,11 @@ export default function OwnerPagosPage() {
           {loadingClub ? (
             <div className="h-64 bg-gray-100 rounded-3xl animate-pulse" />
           ) : (
-            <CuentaPagosWizard
-              key={clubInfo?.banco?.metodo ?? 'sin-cuenta'}
-              actual={clubInfo?.banco}
-              guardando={saveBanco.isPending}
-              onGuardar={(datos) => saveBanco.mutate(datos)}
+            <CuentaEpayco
+              key={clubInfo?.epaycoReceptorId ?? 'sin-cuenta'}
+              actual={clubInfo?.epaycoReceptorId}
+              guardando={saveEpayco.isPending}
+              onGuardar={(id) => saveEpayco.mutate(id)}
             />
           )}
         </div>

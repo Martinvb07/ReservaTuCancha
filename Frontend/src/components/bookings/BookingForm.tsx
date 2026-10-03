@@ -12,7 +12,7 @@ import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   CalendarDays, Clock, User, Mail, Phone, CreditCard, ChevronRight,
-  ArrowLeft, Lock, AlertCircle, Banknote, Pencil, ChevronLeft,
+  ArrowLeft, Lock, AlertCircle, Banknote, Pencil, ChevronLeft, ChevronDown,
 } from 'lucide-react';
 import { bookingsApi } from '@/lib/api/bookings.api';
 import type { AvailabilitySlot } from '@/types/court.types';
@@ -27,6 +27,50 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 const DAYS_ES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+/** Lo que el backend expone sobre el cobro antes de reservar. */
+interface PagosConfig {
+  configured: boolean;
+  /** Tarifa fija que se le suma al jugador, venga de donde venga la cancha */
+  tarifaServicio: number;
+  epaycoPublicKey?: string;
+  test?: boolean;
+  message?: string;
+}
+
+/* Solo para el parpadeo inicial, mientras llega la config real del servidor.
+   El cobro nunca sale de acá: el total lo arma el backend. */
+const TARIFA_SERVICIO_FALLBACK = 2000;
+
+const EPAYCO_SDK = 'https://checkout.epayco.co/checkout-v2.js';
+
+/**
+ * Carga el checkout de ePayco una sola vez y resuelve cuando está listo.
+ *
+ * Se trae bajo demanda, al pulsar "pagar", para no arrastrar un script de
+ * terceros en cada visita a la ficha de una cancha.
+ */
+function cargarEpayco(): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const w = window as any;
+    if (w.ePayco) { resolve(w.ePayco); return; }
+
+    const existente = document.querySelector<HTMLScriptElement>(`script[src="${EPAYCO_SDK}"]`);
+    const script = existente ?? document.createElement('script');
+
+    script.addEventListener('load', () => {
+      if (w.ePayco) resolve(w.ePayco);
+      else reject(new Error('El checkout no cargó bien'));
+    });
+    script.addEventListener('error', () => reject(new Error('No se pudo cargar el checkout')));
+
+    if (!existente) {
+      script.src = EPAYCO_SDK;
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  });
+}
 
 // "HH:mm" → "6:00 AM" (formato 12h, no militar)
 const fmt12 = (t: string) => {
@@ -83,16 +127,22 @@ export default function BookingForm({
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [dateOffset, setDateOffset]     = useState(0);
   /* Ya no hay que elegir: solo se cobra en línea. */
-  const paymentMethod = 'wompi' as const;
   const [processing, setProcessing]     = useState(false);
+  /** Desplegable de '¿De dónde sale el precio?' */
+  const [desglose, setDesglose]         = useState(false);
 
-  const { data: wompiConfig } = useQuery({
-    queryKey: ['wompi-config', courtId],
+  const { data: pagosConfig } = useQuery<PagosConfig>({
+    queryKey: ['pagos-config', courtId],
     queryFn: async () => {
-      const { data } = await api.get(`/courts/${courtId}/wompi-config`);
+      const { data } = await api.get(`/courts/${courtId}/pagos-config`);
       return data;
     },
   });
+
+  /* La tarifa la manda el servidor, que es el que después cobra. Mientras la
+     config carga se asume la de siempre para no pintar un total que cambie
+     solo debajo del dedo del jugador. */
+  const tarifaServicio = pagosConfig?.tarifaServicio ?? TARIFA_SERVICIO_FALLBACK;
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -110,7 +160,10 @@ export default function BookingForm({
     ? (() => { try { return format(addMinutes(parse(selectedSlots[0], 'HH:mm', new Date()), slotDuration * selectedSlots.length), 'HH:mm'); } catch { return ''; } })()
     : '';
 
-  const totalPrice = Math.round(pricePerHour * slotDurationH * (selectedSlots.length || 1));
+  /* La cancha se cobra por hora; la tarifa de servicio es una sola por
+     reserva, no una por hora. Mismo criterio que usa el backend. */
+  const precioCancha = Math.round(pricePerHour * slotDurationH * (selectedSlots.length || 1));
+  const totalPrice   = precioCancha + tarifaServicio;
 
   const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string }[]>({
     queryKey: ['booked-slots', courtId, selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null],
@@ -215,8 +268,8 @@ export default function BookingForm({
     mutationFn: (values: FormValues) => bookingsApi.create({
       courtId, guestName: values.guestName, guestEmail: values.guestEmail,
       guestPhone: values.guestPhone, date: format(selectedDate!, 'yyyy-MM-dd'),
-      startTime: selectedSlots[0], endTime, notes: values.notes, totalPrice,
-      paymentMethod: paymentMethod ?? 'wompi',
+      startTime: selectedSlots[0], endTime, notes: values.notes,
+      paymentMethod: 'epayco',
     }),
   });
 
@@ -224,10 +277,27 @@ export default function BookingForm({
     mutationFn: async (bookingId: string) => {
       const redirectUrl = `${window.location.origin}/reservas/confirmacion?bookingId=${bookingId}`;
       const { data } = await api.post(`/bookings/${bookingId}/payment`, { redirectUrl });
-      return data;
+      return data as { sessionId: string; publicKey?: string; test?: boolean };
     },
-    onSuccess: (data) => { if (data.redirectUrl) window.location.href = data.redirectUrl; },
-    onError: (err: Error) => { setProcessing(false); toast.error(err.message || 'Error al procesar el pago'); },
+    onSuccess: async (data) => {
+      try {
+        /* La sesión ya trae el monto cerrado desde el servidor: acá solo se
+           abre. En "standard" ePayco se lleva la pestaña a su página y la
+           devuelve al redirectUrl, que es el flujo que espera la página de
+           confirmación. */
+        const ePayco = await cargarEpayco();
+        ePayco.checkout
+          .configure({ sessionId: data.sessionId, type: 'standard', test: !!data.test })
+          .open();
+      } catch (e: any) {
+        setProcessing(false);
+        toast.error(e?.message ?? 'No se pudo abrir el checkout');
+      }
+    },
+    onError: (err: any) => {
+      setProcessing(false);
+      toast.error(err?.response?.data?.message || err?.message || 'Error al procesar el pago');
+    },
   });
 
   const goCheckout = () => {
@@ -259,7 +329,7 @@ export default function BookingForm({
         <div className="flex items-baseline justify-between">
           <div>
             <span className="text-2xl font-bold text-gray-900">${pricePerHour.toLocaleString('es-CO')}</span>
-            <span className="text-gray-500 text-sm"> COP / hora</span>
+            <span className="text-gray-500 text-sm whitespace-nowrap"> COP / hora</span>
           </div>
           <span className="text-xs font-medium text-gray-400">
             {step === 'when' ? 'Paso 1 de 2' : 'Paso 2 de 2'}
@@ -353,14 +423,20 @@ export default function BookingForm({
               </div>
             )}
 
-            {/* Resumen vivo */}
+            {/* Resumen vivo — solo lo elegido y el total. El desglose vive en
+                el desplegable de abajo: metido acá, la fecha y la hora se
+                partían en tres líneas y el bloque quedaba ilegible. */}
             {selectedDate && selectedSlots.length > 0 && (
-              <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-2xl px-4 py-3">
+              <div className="flex items-center justify-between gap-3 bg-green-50 border border-green-200 rounded-2xl px-4 py-3">
                 <div className="text-sm min-w-0">
                   <p className="font-semibold text-green-900 capitalize truncate">{dateLabel}</p>
-                  <p className="text-green-700 text-xs">{fmt12(selectedSlots[0])} – {fmt12(endTime)} · {slotDuration * selectedSlots.length} min</p>
+                  <p className="text-green-700 text-xs whitespace-nowrap">
+                    {fmt12(selectedSlots[0])} – {fmt12(endTime)} · {slotDuration * selectedSlots.length} min
+                  </p>
                 </div>
-                <span className="font-bold text-green-800 shrink-0">${totalPrice.toLocaleString('es-CO')}</span>
+                <span className="font-bold text-green-800 text-lg whitespace-nowrap shrink-0">
+                  ${totalPrice.toLocaleString('es-CO')}
+                </span>
               </div>
             )}
 
@@ -368,6 +444,41 @@ export default function BookingForm({
               className={`w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white font-semibold py-3.5 rounded-2xl transition-colors ${selectedDate && selectedSlots.length > 0 ? 'rtc-ready' : ''}`}>
               Continuar <ChevronRight className="h-5 w-5" />
             </button>
+
+            {/* De dónde sale el precio — cerrado por defecto: el que solo
+                quiere reservar no lo necesita, y el que duda del total lo
+                encuentra sin tener que preguntar. */}
+            {selectedDate && selectedSlots.length > 0 && (
+              <div>
+                <button type="button" onClick={() => setDesglose(v => !v)}
+                  aria-expanded={desglose}
+                  className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 py-1 transition-colors">
+                  ¿De dónde sale el precio?
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${desglose ? 'rotate-180' : ''}`} />
+                </button>
+
+                {desglose && (
+                  <div className="mt-2 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 space-y-2">
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <span className="text-gray-500">Cancha · {slotDuration * selectedSlots.length} min</span>
+                      <span className="text-gray-900 font-medium whitespace-nowrap">${precioCancha.toLocaleString('es-CO')}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <span className="text-gray-500">Tarifa de servicio</span>
+                      <span className="text-gray-900 font-medium whitespace-nowrap">${tarifaServicio.toLocaleString('es-CO')}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 pt-2 border-t border-gray-200">
+                      <span className="text-sm font-semibold text-gray-700">Total</span>
+                      <span className="text-base font-bold text-gray-900 whitespace-nowrap">${totalPrice.toLocaleString('es-CO')}</span>
+                    </div>
+                    <p className="text-[11px] text-gray-400 leading-snug pt-0.5">
+                      La tarifa de servicio es fija por reserva, sin importar cuánto dure ni cuánto cueste la cancha.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             <p className="text-xs text-center text-gray-400">Sin registro · Puedes cambiar de horario hasta 24h antes</p>
           </div>
         )}
@@ -415,13 +526,13 @@ export default function BookingForm({
               </div>
             </div>
 
-            {/* Método de pago — solo en línea. El efectivo se retiró: la plata
-                tiene que entrar a la cuenta de ReservaTuCancha para poder
-                retener la comisión y liquidarle al club cada lunes. */}
+            {/* Método de pago — solo en línea. El efectivo se retiró: ePayco
+                divide el cobro en el momento y le consigna al club su parte,
+                cosa que en efectivo no hay forma de hacer. */}
             <div className="space-y-2.5">
               <p className={lbl}><Lock className="h-3.5 w-3.5" /> Método de pago</p>
 
-              {wompiConfig && !wompiConfig.configured ? (
+              {pagosConfig && !pagosConfig.configured ? (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2 text-xs text-amber-800">
                   <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                   <span>El pago en línea no está disponible en este momento. Intenta de nuevo en unos minutos.</span>
@@ -434,7 +545,7 @@ export default function BookingForm({
                     </span>
                     <span>
                       <span className="block font-semibold text-gray-900 text-sm">Pago en línea</span>
-                      <span className="block text-xs text-gray-500">Nequi · Daviplata · PSE · Tarjeta (Wompi)</span>
+                      <span className="block text-xs text-gray-500">Nequi · Daviplata · PSE · Tarjeta (ePayco)</span>
                     </span>
                   </span>
                   <CreditCard className="h-5 w-5 text-gray-400" />
@@ -442,13 +553,24 @@ export default function BookingForm({
               )}
             </div>
 
-            {/* Total + CTA */}
-            <div className="flex items-center justify-between pt-1">
-              <span className="text-sm text-gray-500">Total</span>
-              <span className="text-2xl font-bold text-gray-900">${totalPrice.toLocaleString('es-CO')} <span className="text-sm font-normal text-gray-500">COP</span></span>
+            {/* Total + CTA — el desglose va completo a propósito: la tarifa de
+                servicio se ve antes de pagar, no como una sorpresa en ePayco. */}
+            <div className="border-t border-gray-100 pt-3 space-y-1.5">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">Cancha · {slotDuration * selectedSlots.length} min</span>
+                <span className="text-gray-900 font-medium">${precioCancha.toLocaleString('es-CO')}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">Tarifa de servicio</span>
+                <span className="text-gray-900 font-medium">${tarifaServicio.toLocaleString('es-CO')}</span>
+              </div>
+              <div className="flex items-center justify-between pt-1.5 border-t border-gray-100">
+                <span className="text-sm font-semibold text-gray-700">Total</span>
+                <span className="text-2xl font-bold text-gray-900">${totalPrice.toLocaleString('es-CO')} <span className="text-sm font-normal text-gray-500">COP</span></span>
+              </div>
             </div>
 
-            <button type="submit" disabled={processing || wompiConfig?.configured === false}
+            <button type="submit" disabled={processing || pagosConfig?.configured === false}
               className={`w-full flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-2xl transition-colors bg-green-600 hover:bg-green-700`}>
               <CreditCard className="h-5 w-5" />
               {processing ? 'Procesando…' : 'Confirmar y pagar'}

@@ -53,21 +53,25 @@ export class RemindersCron {
   }
 
   /**
-   * Cada 10 minutos cancela reservas Wompi pending creadas hace más de 30 min.
-   * Pago abandonado: el cliente inició la reserva pero nunca completó el pago.
+   * Cada 10 minutos borra las reservas pendientes creadas hace más de 30 min.
+   * Pago abandonado: el cliente inició la reserva pero nunca completó el pago,
+   * y mientras tanto el horario le queda bloqueado al club.
+   *
+   * No se filtra por pasarela a propósito: solo se cobra en línea, así que una
+   * reserva en pending es siempre un pago que no llegó. Filtrar por el nombre
+   * de la pasarela dejaba vivas para siempre las reservas de la pasarela nueva.
    */
   @Cron('*/10 * * * *')
-  async expireAbandonedWompiBookings() {
+  async expirarReservasAbandonadas() {
     const cutoff = new Date(Date.now() - 30 * 60 * 1000);
 
     const result = await this.bookingModel.deleteMany({
         status: BookingStatus.PENDING,
-        paymentMethod: 'wompi',
         createdAt: { $lt: cutoff },
       } as any);
 
     if (result.deletedCount > 0) {
-      this.logger.log(`Expiradas ${result.deletedCount} reservas Wompi abandonadas (>30min sin pago)`);
+      this.logger.log(`Expiradas ${result.deletedCount} reservas abandonadas (>30min sin pago)`);
     }
   }
 }

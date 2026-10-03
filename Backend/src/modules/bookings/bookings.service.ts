@@ -12,7 +12,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { Booking, BookingDocument, BookingStatus } from './schemas/booking.schema';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { NotificationsService } from '../notifications/notifications.service';
-import { WompiService } from '../wompi/wompi.service';
+import { EpaycoService } from '../epayco/epayco.service';
+import { CobrosService } from '../cobros/cobros.service';
 import { Club, ClubDocument } from '../clubs/schemas/club.schema';
 import { Court, CourtDocument } from '../courts/schemas/court.schema';
 import { User, UserDocument } from '../users/schemas/user.schema';
@@ -39,29 +40,34 @@ export class BookingsService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(BlockedSlot.name) private blockedSlotModel: Model<BlockedSlotDocument>,
     private readonly notificationsService: NotificationsService,
-    private readonly wompiService: WompiService,
+    private readonly epaycoService: EpaycoService,
+    private readonly cobrosService: CobrosService,
     private readonly notificationsGateway: NotificationsGateway,
   ) {}
 
   // --- MÉTODOS PARA EL WEBHOOK ---
 
   /**
-   * Busca una reserva por su código único (referencia de Wompi)
+   * Busca una reserva por su código único (la factura que viaja a ePayco)
    */
   async findByCode(code: string): Promise<BookingDocument | null> {
     return this.bookingModel.findOne({ bookingCode: code }).populate('courtId').exec();
   }
 
   /**
-   * Actualiza el estado y opcionalmente el ID de transacción de Wompi
+   * Actualiza el estado y, si viene del cobro, las referencias de ePayco
    */
   async updateStatus(
     id: string,
-    updateData: { status: string; wompiTransactionId?: string },
+    updateData: {
+      status: string;
+      epaycoRefPayco?: string;
+      epaycoTransactionId?: string;
+    },
     userId?: string,
     userRole?: string,
   ): Promise<Omit<Booking, 'cancelToken' | 'reviewToken'>> {
-    const { status, wompiTransactionId } = updateData;
+    const { status, epaycoRefPayco, epaycoTransactionId } = updateData;
 
     const validStatuses = ['confirmed', 'reagendada', 'completed'];
     if (!validStatuses.includes(status))
@@ -78,9 +84,8 @@ export class BookingsService {
     }
 
     const updatePayload: any = { status };
-    if (wompiTransactionId) {
-      updatePayload.wompiTransactionId = wompiTransactionId;
-    }
+    if (epaycoRefPayco) updatePayload.epaycoRefPayco = epaycoRefPayco;
+    if (epaycoTransactionId) updatePayload.epaycoTransactionId = epaycoTransactionId;
 
     const updated = await this.bookingModel.findByIdAndUpdate(
       id,
@@ -107,27 +112,87 @@ export class BookingsService {
 
   // --- LÓGICA DE PAGOS ---
 
-  async initPayment(bookingId: string, redirectUrl: string) {
+  /**
+   * Abre el cobro en ePayco y devuelve lo mínimo que el navegador necesita.
+   *
+   * Nunca se devuelve el monto para que el cliente lo mande de vuelta: la
+   * sesión ya viene cerrada desde el servidor con el total de la reserva.
+   */
+  async initPayment(bookingId: string, redirectUrl: string, ip?: string) {
     const booking = await this.bookingModel
       .findById(bookingId)
       .populate('courtId');
-      
+
     if (!booking) throw new NotFoundException('Reserva no encontrada');
 
     /* El cobro se recibe a nombre de ReservaTuCancha, no del club: al club se
        le gira su parte en la liquidación semanal, ya sin la comisión. */
-    if (!this.wompiService.configured) {
+    if (!this.epaycoService.configured) {
       throw new BadRequestException('Los pagos en línea no están disponibles en este momento');
     }
 
-    const checkoutUrl = this.wompiService.generateCheckoutUrl(
-      booking.totalPrice,
-      booking.bookingCode,
-      this.resolverRedirect(bookingId, redirectUrl),
-    );
+    const cancha = booking.courtId as any;
+    const backend = (process.env.BACKEND_URL ?? 'https://api.reservatucancha.site').replace(/\/+$/, '');
+
+    /* Con pagos divididos la plata no pasa por la empresa: ePayco le consigna
+       al club en el mismo cobro, así que hace falta su id de receptor. */
+    const split = await this.resolverSplit(booking, cancha);
+
+    const sessionId = await this.epaycoService.crearSesion({
+      total: booking.totalPrice,
+      invoice: booking.bookingCode,
+      nombre: `Reserva ${cancha?.name ?? 'de cancha'}`,
+      descripcion: `${booking.startTime}–${booking.endTime} · código ${booking.bookingCode}`,
+      responseUrl: this.resolverRedirect(bookingId, redirectUrl),
+      confirmationUrl: `${backend}/webhooks/epayco`,
+      cliente: {
+        nombre: booking.guestName,
+        email: booking.guestEmail,
+        telefono: booking.guestPhone,
+      },
+      ip,
+      split,
+    });
 
     return {
-      redirectUrl: checkoutUrl,
+      sessionId,
+      publicKey: this.epaycoService.publicKey,
+      test: this.epaycoService.testMode,
+    };
+  }
+
+  /**
+   * Quién recibe qué en este cobro.
+   *
+   * Si el split no está activo devuelve undefined y el cobro entra entero a la
+   * cuenta de la empresa. Si está activo pero el club no tiene su cuenta de
+   * ePayco lista, se corta acá: cobrarle al jugador sin tener a dónde girarle
+   * al club dejaría la plata represada y la reserva en pie.
+   */
+  private async resolverSplit(booking: BookingDocument, cancha: any) {
+    if (!this.epaycoService.splitActivo) return undefined;
+
+    const club = await this.clubModel
+      .findOne({ ownerUserId: cancha?.ownerId })
+      .select('epaycoReceptorId name')
+      .lean();
+
+    if (!club?.epaycoReceptorId) {
+      this.logger.error(
+        `El club de la cancha ${cancha?._id} no tiene cuenta de ePayco: no se puede cobrar ${booking.bookingCode}`,
+      );
+      throw new BadRequestException(
+        'Esta cancha todavía no puede recibir pagos en línea. Escríbele al club para reservar.',
+      );
+    }
+
+    /* Los montos salen congelados de la reserva, no se recalculan: así lo que
+       reparte ePayco es exactamente lo que se le mostró al jugador. */
+    return {
+      receptorId: club.epaycoReceptorId,
+      netoDueno: booking.netoDueno ?? 0,
+      gananciaPlataforma: booking.gananciaPlataforma ?? 0,
+      costoPasarela: booking.costoPasarela ?? 0,
     };
   }
 
@@ -195,7 +260,11 @@ export class BookingsService {
     if (duracionMins <= 0) {
       throw new BadRequestException('La hora de fin debe ser posterior a la de inicio');
     }
-    const totalPrice = Math.round((cancha.pricePerHour * duracionMins) / 60);
+    /* El precio de lista es por hora; la tarifa de servicio es una sola por
+       reserva, no por hora, así que se suma después de prorratear el turno. */
+    const precioCancha = Math.round((cancha.pricePerHour * duracionMins) / 60);
+    const desglose = this.cobrosService.desglosar(precioCancha);
+    const totalPrice = desglose.totalPagado;
 
     // Validar que la reserva no sea en el pasado (hora Colombia)
     const fmt = new Intl.DateTimeFormat('en-CA', {
@@ -266,7 +335,15 @@ export class BookingsService {
     const booking = new this.bookingModel({
       ...createBookingDto,
       courtId,
+      /* Congelado al crear: la liquidación suma estos campos tal cual, para
+         que un cambio de tarifa no reescriba lo que ya se cobró. */
+      precioCancha:       desglose.precioCancha,
+      tarifaServicio:     desglose.tarifaServicio,
       totalPrice,
+      costoPasarela:      desglose.costoPasarela,
+      gananciaPlataforma: desglose.gananciaPlataforma,
+      netoDueno:          desglose.netoDueno,
+      paymentMethod: 'epayco',
       date: localDate,
       cancelToken: uuidv4(),
       reviewToken: uuidv4(),
@@ -324,7 +401,7 @@ export class BookingsService {
   }
 
   private static readonly CAMPOS_PUBLICOS =
-    '_id courtId date startTime endTime status totalPrice bookingCode paymentMethod players createdAt';
+    '_id courtId date startTime endTime status totalPrice precioCancha tarifaServicio bookingCode paymentMethod players createdAt';
 
   async findById(id: string): Promise<Booking> {
     const booking = await this.bookingModel

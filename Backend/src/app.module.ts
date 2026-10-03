@@ -17,12 +17,15 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { DatabaseModule } from './database/database.module';
 import { SolicitudesModule } from './modules/solicitudes/solicitudes.module';
 import { ClubsModule } from './modules/clubs/clubs.module';
-import { LiquidacionesModule } from './modules/liquidaciones/liquidaciones.module';
 import { ChangelogModule } from './modules/changelog/changelog.module';
+import { CobrosModule } from './modules/cobros/cobros.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    /* Tarifas del cobro: global, porque las leen reservas, canchas,
+       liquidaciones y los correos. */
+    CobrosModule,
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -47,7 +50,6 @@ import { ChangelogModule } from './modules/changelog/changelog.module';
     SolicitudesModule,
     ClubsModule,
     ChangelogModule,   // ← nuevo
-    LiquidacionesModule,
   ],
   providers: [
     /* Sin este provider el ThrottlerModule no hace nada: estaba importado pero

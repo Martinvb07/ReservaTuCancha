@@ -27,7 +27,7 @@ export default function TerminosPage() {
           </div>
           <div className="space-y-3">
             <h2 className="text-lg font-black text-gray-900 uppercase">2. Reservas y pagos</h2>
-            <p>Las reservas son vinculantes una vez confirmadas. Los pagos se procesan de forma segura a través de Wompi y se reciben a nombre de ReservaTuCancha, que liquida al club semanalmente. Puedes soltar tu horario hasta 24 horas antes del turno, pero el pago no se reembolsa; en su lugar puedes mover la reserva a otro horario disponible solicitándolo a soporte.</p>
+            <p>Las reservas son vinculantes una vez confirmadas. Los pagos se procesan de forma segura a través de ePayco y se reciben a nombre de ReservaTuCancha, que liquida al club semanalmente. Sobre el precio de la cancha se cobra al jugador una tarifa de servicio fija de $2.000 por reserva, que se muestra desglosada antes del pago y no es reembolsable. Puedes soltar tu horario hasta 24 horas antes del turno, pero el pago no se reembolsa; en su lugar puedes mover la reserva a otro horario disponible solicitándolo a soporte.</p>
           </div>
           <div className="space-y-3">
             <h2 className="text-lg font-black text-gray-900 uppercase">3. Responsabilidades</h2>

@@ -7,11 +7,16 @@ import {
 } from 'lucide-react';
 import FaqAccordion from '@/components/ui/FaqAccordion';
 
-/* Modelo de cobro: comisión por reserva, no mensualidad. Antes eran tres
-   planes con precio fijo al mes; ahora el club solo paga cuando vende. */
+/* Modelo de cobro: el jugador paga una tarifa fija de servicio sobre el precio
+   de la cancha, y de ahí salen la pasarela y nuestra parte. Al club no se le
+   cobra una tarifa nominal: lo que deja de recibir frente a su precio de lista
+   ronda el 5%, y baja mientras más cara sea la cancha, porque la tarifa del
+   jugador cubre casi todo el costo de ePayco.
+
+   Antes era un 9% plano sobre lo cobrado. */
 const COMISION = {
-  porcentaje: '9%',
-  desc: 'Solo pagas cuando alguien reserva y paga por la plataforma. Sin mensualidad, sin contrato y sin costo de instalación.',
+  porcentaje: '~5%',
+  desc: 'Es lo que, en la práctica, deja de llegarte frente a tu precio de lista. Baja mientras más cara sea la cancha. Sin mensualidad, sin contrato y sin costo de instalación.',
   incluye: [
     'Reservas y pagos online 24/7',
     'Cobro con Nequi, Daviplata, PSE y tarjeta',
@@ -24,12 +29,12 @@ const COMISION = {
   ],
 };
 
-/* Cómo viaja la plata: el cliente le paga a ReservaTuCancha y el club recibe
-   su liquidación semanal. */
+/* Cómo viaja la plata: ePayco divide el cobro en el momento y le consigna a
+   cada quien su parte. La plataforma ya no retiene el dinero del club. */
 const FLUJO_PAGOS = [
-  { t: 'Tu cliente paga', d: 'El cobro se hace a nombre de ReservaTuCancha con la pasarela segura de Wompi.' },
-  { t: 'Descontamos el 9%', d: 'Es lo único que cobramos. No hay cuota mensual ni cobros por instalación.' },
-  { t: 'Te pagamos cada lunes', d: 'Todos los lunes transferimos a tu cuenta lo recaudado durante la semana anterior.' },
+  { t: 'Tu cliente paga', d: 'El cobro se hace a nombre de ReservaTuCancha con la pasarela segura de ePayco. Al precio de tu cancha se le suma una tarifa de servicio fija de $2.000, que paga el jugador.' },
+  { t: 'Descontamos los costos', d: 'De lo recaudado sale la pasarela y nuestra parte. Es lo único que cobramos: no hay cuota mensual ni cobros por instalación.' },
+  { t: 'Recibes al instante', d: 'ePayco te consigna tu parte directo a tu cuenta en el mismo momento del pago. No retenemos tu dinero ni esperas a fin de semana.' },
 ];
 
 const FEATURES = [
@@ -43,7 +48,7 @@ const FEATURES = [
   {
     icon: CreditCard,
     title: 'Pagos online integrados',
-    desc: 'Tus clientes pagan con tarjeta, PSE o Nequi a través de Wompi. Nosotros recibimos el pago y te lo transferimos cada lunes.',
+    desc: 'Tus clientes pagan con tarjeta, PSE o Nequi a través de ePayco, que divide el cobro y te consigna tu parte directo en el momento.',
     color: 'bg-green-50',
     iconColor: 'text-green-600',
   },
@@ -86,11 +91,11 @@ const STATS = [
 
 const FAQ_QO = [
   { q: '¿Cuánto tiempo tarda el proceso de aprobación?', a: 'Una vez enviada tu solicitud, nuestro equipo la revisa en máximo 24–48 horas hábiles. Recibirás un email con tus credenciales de acceso.' },
-  { q: '¿Cobran comisión por reserva?', a: 'Sí: el 9% de cada reserva pagada por la plataforma. No hay mensualidad, contrato ni costo de instalación, así que si un mes no recibes reservas, no pagas nada.' },
-  { q: '¿Cuándo recibo mi dinero?', a: 'Todos los lunes. Transferimos a la cuenta del club lo recaudado durante la semana anterior, ya con el 9% descontado, y te queda el detalle de cada reserva en el panel.' },
-  { q: '¿A nombre de quién se cobra la reserva?', a: 'El pago se recibe a nombre de ReservaTuCancha a través de Wompi. Tú no tienes que abrir ni configurar ninguna pasarela de pagos.' },
+  { q: '¿Cobran comisión por reserva?', a: 'No cobramos una tarifa fija al club. Al jugador se le suma $2.000 de servicio sobre el precio de tu cancha, y de lo recaudado salen el costo de la pasarela y nuestra parte. En la práctica, frente a tu precio de lista deja de llegarte cerca de un 5%, y menos cuando la cancha es más cara. No hay mensualidad, contrato ni costo de instalación: si un mes no recibes reservas, no pagas nada.' },
+  { q: '¿Cuándo recibo mi dinero?', a: 'En el momento del pago. ePayco divide cada reserva y te consigna tu parte directo a tu cuenta, ya con los costos descontados. No retenemos tu dinero. Para esto necesitas tu propia cuenta de ePayco, que conectas una sola vez desde el panel.' },
+  { q: '¿A nombre de quién se cobra la reserva?', a: 'El pago se recibe a nombre de ReservaTuCancha a través de ePayco. Tú no tienes que abrir ni configurar ninguna pasarela de pagos.' },
   { q: '¿Necesito conocimientos técnicos?', a: 'Para nada. El panel es 100% intuitivo. Te guiamos paso a paso desde la configuración de tu primera cancha hasta recibir tu primer pago.' },
-  { q: '¿Qué métodos de pago puede usar mi cliente?', a: 'Tarjeta de crédito y débito, PSE y Nequi, directamente desde la plataforma.' },
+  { q: '¿Qué métodos de pago puede usar mi cliente?', a: 'Tarjeta de crédito y débito, PSE, Nequi y Daviplata, directamente desde la plataforma.' },
 ];
 
 export default function QueOfrecemosPage() {
@@ -259,8 +264,9 @@ export default function QueOfrecemosPage() {
             </ol>
 
             <p className="text-xs text-gray-400 mt-6 pt-5 border-t border-gray-200">
-              Ejemplo: una cancha de $100.000 la hora. El cliente paga $100.000, nosotros
-              retenemos $9.000 y el lunes recibes $91.000.
+              Ejemplo: una cancha de $100.000 la hora. El jugador paga $102.000 ($100.000 de
+              cancha + $2.000 de servicio) y a ti te llegan $95.724 al instante: un 4,28%
+              frente a tu precio de lista.
             </p>
           </div>
         </div>
@@ -308,7 +314,7 @@ export default function QueOfrecemosPage() {
             </Link>
           </div>
           <div className="flex justify-center gap-8 pt-2">
-            {['Sin mensualidad', 'Sin contrato', 'Te pagamos cada lunes'].map(t => (
+            {['Sin mensualidad', 'Sin contrato', 'Recibes al instante'].map(t => (
               <span key={t} className="flex items-center gap-1.5 text-sm text-green-200">
                 <CheckCircle className="h-4 w-4 text-lime-300" /> {t}
               </span>

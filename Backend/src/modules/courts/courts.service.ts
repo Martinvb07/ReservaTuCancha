@@ -8,7 +8,8 @@ import { UpdateCourtDto } from './dto/update-court.dto';
 import { aObjectId } from '../../common/utils/objectid.util';
 import { BlockSlotDto } from './dto/block-slot.dto';
 import { Club, ClubDocument } from '../clubs/schemas/club.schema';
-import { WompiService } from '../wompi/wompi.service';
+import { EpaycoService } from '../epayco/epayco.service';
+import { CobrosService } from '../cobros/cobros.service';
 
 export interface CourtFilters {
   sport?: SportType;
@@ -26,7 +27,8 @@ export class CourtsService {
     @InjectModel(Court.name) private courtModel: Model<CourtDocument>,
     @InjectModel(Club.name)  private clubModel:  Model<ClubDocument>,
     @InjectModel(BlockedSlot.name) private blockedSlotModel: Model<BlockedSlotDocument>,
-    private readonly wompiService: WompiService,
+    private readonly epaycoService: EpaycoService,
+    private readonly cobrosService: CobrosService,
   ) {}
 
   async findAll(filters: CourtFilters = {}) {
@@ -124,24 +126,31 @@ export class CourtsService {
   }
 
   /**
-   * El pago en línea ya no depende del club: se cobra con la cuenta Wompi de
-   * ReservaTuCancha. Se mantiene la ruta porque el formulario de reserva la
-   * consulta para saber si puede cobrar en línea.
+   * El pago en línea no depende del club: se cobra con la cuenta ePayco de
+   * ReservaTuCancha. El formulario de reserva consulta esta ruta para saber si
+   * puede cobrar y para pintar el desglose antes de que el jugador pague.
+   *
+   * La tarifa de servicio viaja acá para que el front no la tenga quemada: el
+   * precio que ve el jugador y el que cobra el servidor salen del mismo lado.
    */
-  async getWompiConfig(courtId: string) {
+  async getPagosConfig(courtId: string) {
     const court = await this.courtModel.findById(courtId).lean();
     if (!court) throw new NotFoundException('Cancha no encontrada');
 
-    if (!this.wompiService.configured) {
+    if (!this.epaycoService.configured) {
       return {
         configured: false,
+        tarifaServicio: this.cobrosService.tarifaServicio,
         message: 'Los pagos en línea no están disponibles en este momento',
       };
     }
 
     return {
       configured: true,
-      wompiPublicKey: this.wompiService.publicKey,
+      tarifaServicio: this.cobrosService.tarifaServicio,
+      /* Solo la pública: la privada y la p_key nunca salen del servidor. */
+      epaycoPublicKey: this.epaycoService.publicKey,
+      test: this.epaycoService.testMode,
     };
   }
 

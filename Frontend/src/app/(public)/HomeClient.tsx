@@ -11,9 +11,9 @@ import { SEARCH_ANCHOR_ID } from '@/hooks/useSearchDock';
 import type { Court } from '@/types';
 
 const SPORT_GALLERY = [
-  { key: 'futbol',      label: 'Futbol',      img: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=1200&q=80', desc: 'La adrenalina y el trabajo en equipo se fusionan.' },
+  { key: 'futbol',      label: 'Futbol',      img: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=1200&h=900&fit=crop&crop=entropy&q=80', desc: 'La adrenalina y el trabajo en equipo se fusionan.' },
   { key: 'padel',       label: 'Padel',       img: 'https://imagenes2.eltiempo.com/files/image_1200_675/uploads/2025/02/08/67a826ea4f6fb.jpeg', desc: 'Canchas diseñadas para jugadores que buscan emocion.' },
-  { key: 'voley_playa', label: 'Voley Playa', img: 'https://lajauladelangel.com.co/vivaenvigado/wp-content/uploads/2025/01/IMG_0146-scaled.jpg', desc: 'Arena profesional para partidos epicos.' },
+  { key: 'voley_playa', label: 'Voley Playa', img: 'https://images.unsplash.com/photo-1519046947096-f43d6481532b?w=1200&h=900&fit=crop&crop=entropy&q=80', desc: 'Arena profesional para partidos epicos.' },
 ];
 
 const STEPS = [
@@ -26,7 +26,7 @@ const STEPS = [
 const FAQ = [
   { q: 'Necesito crear una cuenta para reservar?', a: 'No. Solo ingresas tu nombre, email y telefono al momento de reservar. Sin contrasenas, sin registro.' },
   { q: 'Como cancelo mi reserva?',                 a: 'Recibes un link en tu email para soltar tu horario hasta 24 horas antes del turno. El pago ya quedo procesado, asi que no hacemos devoluciones: si lo que necesitas es jugar otro dia, escribenos a soporte y te movemos la reserva.' },
-  { q: 'Cuales son los metodos de pago?',          a: 'Aceptamos tarjetas de credito/debito, Nequi, Daviplata y PSE a traves de Wompi, la plataforma de pagos mas segura de Colombia.' },
+  { q: 'Cuales son los metodos de pago?',          a: 'Aceptamos tarjetas de credito/debito, Nequi, Daviplata y PSE a traves de ePayco, una de las pasarelas mas usadas de Colombia. Al precio de la cancha se le suma una tarifa de servicio de $2.000 por reserva, que ves antes de pagar.' },
   { q: 'Como recibo la confirmacion?',             a: 'Al instante por email. Incluye los datos de la cancha, horario y el link para cancelar si lo necesitas.' },
 ];
 
@@ -119,10 +119,10 @@ export default function HomeClient({ stats }: Props) {
           </div>
           <div className="flex flex-col gap-3 md:gap-4">
             <div className="rounded-xl overflow-hidden h-[120px] md:h-[180px]">
-              <img src="https://lajauladelangel.com.co/vivaenvigado/wp-content/uploads/2025/01/IMG_0146-scaled.jpg" alt="voley" className="w-full h-full object-cover" />
+              <img src="https://images.unsplash.com/photo-1519046947096-f43d6481532b?w=1200&h=500&fit=crop&crop=entropy&q=80" alt="voley" className="w-full h-full object-cover" />
             </div>
             <div className="rounded-xl overflow-hidden h-[120px] md:h-[180px]">
-              <img src="https://images.unsplash.com/photo-1459865264687-595d652de67e?w=1200&q=80" alt="futbol" className="w-full h-full object-cover" />
+              <img src="https://images.unsplash.com/photo-1459865264687-595d652de67e?w=1200&h=500&fit=crop&crop=entropy&q=80" alt="futbol" className="w-full h-full object-cover" />
             </div>
           </div>
         </div>
@@ -176,7 +176,7 @@ export default function HomeClient({ stats }: Props) {
           <h2 className="text-2xl md:text-4xl font-black text-gray-900 uppercase text-center mb-8 md:mb-12">Por que elegirnos</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { icon: Shield,      title: 'Pago 100% seguro',       desc: 'Procesamos pagos con Wompi, la plataforma mas segura de Colombia. Nequi, Daviplata y tarjetas.' },
+              { icon: Shield,      title: 'Pago 100% seguro',       desc: 'Procesamos pagos con ePayco. Nequi, Daviplata, PSE y tarjetas.' },
               { icon: Users,       title: 'Sin registro',           desc: 'Reserva en segundos sin crear cuenta. Solo nombre, email y telefono. Asi de facil.' },
               { icon: TrendingUp,  title: 'Tienes una cancha?',     desc: 'Publica tu club y administralo desde tu panel: reservas en tiempo real, pagos automaticos y analytics.' },
             ].map((item, i) => (

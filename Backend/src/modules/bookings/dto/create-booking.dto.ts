@@ -69,8 +69,12 @@ export class CreateBookingDto {
   @Min(0)
   totalPrice?: number;
 
-  @ApiProperty({ example: 'wompi', required: false })
+  /**
+   * Se ignora: solo se cobra en linea con ePayco. Se sigue aceptando para no
+   * romper a los clientes que ya lo mandan.
+   */
+  @ApiProperty({ example: 'epayco', required: false, deprecated: true })
   @IsOptional()
-  @IsIn(['wompi'])
-  paymentMethod?: 'wompi';
+  @IsIn(['epayco', 'wompi'])
+  paymentMethod?: 'epayco' | 'wompi';
 }

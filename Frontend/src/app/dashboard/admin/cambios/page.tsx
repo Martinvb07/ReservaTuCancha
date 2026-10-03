@@ -274,7 +274,7 @@ export default function AdminCambiosPage() {
           {/* Título */}
           <div>
             <label className={lbl}>Título <span className="text-red-500">*</span></label>
-            <input className={inp} placeholder="Ej: Nuevo sistema de pagos con Wompi"
+            <input className={inp} placeholder="Ej: Nuevo sistema de pagos con ePayco"
               value={form.titulo} onChange={e => setForm({ ...form, titulo: e.target.value })} />
           </div>
 

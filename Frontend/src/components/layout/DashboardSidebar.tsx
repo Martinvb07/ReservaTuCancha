@@ -25,7 +25,6 @@ const ADMIN_SECTIONS: NavSection[] = [
   ]},
   { label: 'Gestión', items: [
     { href: '/dashboard/admin/usuarios',      label: 'Usuarios',      icon: Users      },
-    { href: '/dashboard/admin/liquidacion',    label: 'Liquidación',   icon: CreditCard },
     { href: '/dashboard/admin/solicitudes',   label: 'Solicitudes',   icon: FileText   },
   ]},
   { label: 'Sistema', items: [

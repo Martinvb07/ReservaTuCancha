@@ -49,18 +49,57 @@ export class Booking {
   @Prop({ enum: BookingStatus, default: BookingStatus.PENDING })
   status: BookingStatus;
 
+  /** Lo que el jugador paga en el checkout: precio de la cancha + tarifa. */
   @Prop({ required: true })
   totalPrice: number;
+
+  /* ── Desglose del cobro ──────────────────────────────────────────────
+     Se congela al crear la reserva. Si manana sube la tarifa de ePayco o
+     cambia la ganancia de la plataforma, lo ya cobrado y lo que se le debe al
+     club no se mueve: el split reparte estos campos, no los recalcula.
+
+     Las reservas viejas (modelo de comision por porcentaje) no los tienen; la
+     liquidacion cae al calculo antiguo cuando faltan. */
+
+  /** Precio de lista del turno, sin la tarifa de servicio */
+  @Prop()
+  precioCancha?: number;
+
+  /** Tarifa fija que paga el jugador por usar la plataforma */
+  @Prop({ default: 0 })
+  tarifaServicio?: number;
+
+  /** Lo que se queda ePayco, con IVA incluido */
+  @Prop({ default: 0 })
+  costoPasarela?: number;
+
+  /** Lo que le queda limpio a ReservaTuCancha */
+  @Prop({ default: 0 })
+  gananciaPlataforma?: number;
+
+  /** Lo que se le gira al club por esta reserva */
+  @Prop({ default: 0 })
+  netoDueno?: number;
 
   @Prop({ type: Types.ObjectId, ref: 'Payment' })
   paymentId?: Types.ObjectId;
 
+  /** Referencia de ePayco (x_ref_payco), la que sirve para rastrear el cobro */
   @Prop({ trim: true })
-  wompiTransactionId?: string; // ID interno de Wompi para seguimiento
+  epaycoRefPayco?: string;
+
+  /** Id de la transaccion en ePayco (x_transaction_id) */
+  @Prop({ trim: true })
+  epaycoTransactionId?: string;
+
+  /** Historico: reservas cobradas con Wompi, antes del cambio a ePayco */
+  @Prop({ trim: true })
+  wompiTransactionId?: string;
 
   /* Solo se cobra en linea. El efectivo se retiro: la plata tiene que pasar
-     por la cuenta de la empresa para poder retener la comision y liquidar. */
-  @Prop({ enum: ['wompi'], default: 'wompi' })
+     por la cuenta de la empresa para poder retener la comision y liquidar.
+     'wompi' sigue en el enum por las reservas anteriores al cambio. */
+  @Prop({ enum: ['epayco', 'wompi'], default: 'epayco' })
   paymentMethod: string;
 
   // ─── Tokens para acciones sin login ──────────────────────────────────
@@ -97,4 +136,5 @@ BookingSchema.index({ cancelToken: 1 });
 BookingSchema.index({ reviewToken: 1 });
 BookingSchema.index({ status: 1 });
 BookingSchema.index({ bookingCode: 1 });
-BookingSchema.index({ wompiTransactionId: 1 }); // Nuevo índice para el Webhook
+BookingSchema.index({ wompiTransactionId: 1 }); // histórico, cobros con Wompi
+BookingSchema.index({ epaycoRefPayco: 1 });     // búsqueda desde la confirmación

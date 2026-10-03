@@ -78,13 +78,17 @@ export default function CourtCard({ court, query }: Props) {
           </div>
         )}
 
-        {/* Precio + CTA */}
-        <div className="flex items-center justify-between mt-auto pt-3.5 border-t border-gray-100">
-          <span className="text-gray-900">
-            <span className="font-bold text-lg">${court.pricePerHour.toLocaleString('es-CO')}</span>
-            <span className="text-gray-400 text-xs font-normal"> COP / hora</span>
+        {/* Precio + CTA — el "COP / hora" va en su propia línea y sin partirse:
+            en una sola línea, un precio de 6 cifras lo envolvía a mitad y cada
+            tarjeta de la grilla quedaba con una altura y un corte distintos. */}
+        <div className="flex items-center justify-between gap-3 mt-auto pt-3.5 border-t border-gray-100">
+          <span className="text-gray-900 min-w-0">
+            <span className="block font-bold text-lg leading-tight whitespace-nowrap">
+              ${court.pricePerHour.toLocaleString('es-CO')}
+            </span>
+            <span className="block text-gray-400 text-xs font-normal whitespace-nowrap">COP / hora</span>
           </span>
-          <span className="inline-flex items-center gap-1 text-sm font-semibold text-green-700 group-hover:gap-1.5 transition-all">
+          <span className="inline-flex items-center gap-1 text-sm font-semibold text-green-700 whitespace-nowrap shrink-0 group-hover:gap-1.5 transition-all">
             Reservar <ArrowRight className="h-4 w-4" />
           </span>
         </div>

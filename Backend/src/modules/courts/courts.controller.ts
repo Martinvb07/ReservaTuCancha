@@ -46,10 +46,19 @@ export class CourtsController {
     return this.courtsService.findById(id);
   }
 
+  @Get(':id/pagos-config')
+  @ApiOperation({ summary: 'Config de pagos para la cancha (público)' })
+  async getPagosConfig(@Param('id') courtId: string) {
+    return this.courtsService.getPagosConfig(courtId);
+  }
+
+  /* Alias de la ruta anterior. La app móvil publicada todavía la consulta y se
+     romperia el checkout en los celulares que no se hayan actualizado; se
+     puede borrar cuando esa versión deje de estar en la tienda. */
   @Get(':id/wompi-config')
-  @ApiOperation({ summary: 'Config de Wompi para la cancha (público)' })
+  @ApiOperation({ summary: 'Obsoleta: usar /pagos-config', deprecated: true })
   async getWompiConfig(@Param('id') courtId: string) {
-    return this.courtsService.getWompiConfig(courtId);
+    return this.courtsService.getPagosConfig(courtId);
   }
 
   // ─── OWNER ────────────────────────────────────────────────────────────
