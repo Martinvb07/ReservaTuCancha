@@ -168,7 +168,7 @@ export default function Navbar() {
                   href="/auth/login"
                   className="whitespace-nowrap px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all"
                 >
-                  Ingresar
+                  Iniciar Sesión
                 </Link>
               )}
             </motion.nav>
