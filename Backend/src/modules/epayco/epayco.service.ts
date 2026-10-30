@@ -104,16 +104,19 @@ export class EpaycoService {
 
     const res = await fetch(`${APIFY}/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Basic ${basic};` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Basic ${basic}` },
       body: '{}',
     });
 
+    const json: any = await res.json().catch(() => null);
+
     if (!res.ok) {
-      this.logger.error(`Login de ePayco rechazado: HTTP ${res.status}`);
+      /* El cuerpo trae el motivo ("Invalid client", IP no autorizada...): sin
+         él el log no dice si fallaron las llaves o la red. */
+      this.logger.error(`Login de ePayco rechazado: HTTP ${res.status} ${JSON.stringify(json)?.slice(0, 300)}`);
       throw new ServiceUnavailableException('No se pudo contactar la pasarela de pagos');
     }
 
-    const json: any = await res.json().catch(() => null);
     const token = json?.bearer_token ?? json?.token ?? json?.data?.bearer_token;
     if (!token) {
       this.logger.error(`Login de ePayco sin token: ${JSON.stringify(json)?.slice(0, 300)}`);
@@ -148,7 +151,9 @@ export class EpaycoService {
       taxBase: '0',
       country: 'CO',
       lang: 'ES',
-      test: this.testMode,
+      /* Como texto: la API rechaza el booleano aunque la documentación lo
+         muestre así. */
+      test: String(this.testMode),
       external: 'false',
       response: datos.responseUrl,
       confirmation: datos.confirmationUrl,
