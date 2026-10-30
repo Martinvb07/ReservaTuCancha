@@ -32,7 +32,7 @@ const COMISION = {
 /* Cómo viaja la plata: ePayco divide el cobro en el momento y le consigna a
    cada quien su parte. La plataforma ya no retiene el dinero del club. */
 const FLUJO_PAGOS = [
-  { t: 'Tu cliente paga', d: 'El cobro se hace a nombre de ReservaTuCancha con la pasarela segura de ePayco. Al precio de tu cancha se le suma una tarifa de servicio fija de $2.000, que paga el jugador.' },
+  { t: 'Tu cliente paga', d: 'El cobro se hace con la pasarela segura de ePayco. Al precio de tu cancha se le suma una tarifa de servicio fija de $2.000, que paga el jugador.' },
   { t: 'Descontamos los costos', d: 'De lo recaudado sale la pasarela y nuestra parte. Es lo único que cobramos: no hay cuota mensual ni cobros por instalación.' },
   { t: 'Recibes al instante', d: 'ePayco te consigna tu parte directo a tu cuenta en el mismo momento del pago. No retenemos tu dinero ni esperas a fin de semana.' },
 ];
@@ -93,7 +93,7 @@ const FAQ_QO = [
   { q: '¿Cuánto tiempo tarda el proceso de aprobación?', a: 'Una vez enviada tu solicitud, nuestro equipo la revisa en máximo 24–48 horas hábiles. Recibirás un email con tus credenciales de acceso.' },
   { q: '¿Cobran comisión por reserva?', a: 'No cobramos una tarifa fija al club. Al jugador se le suma $2.000 de servicio sobre el precio de tu cancha, y de lo recaudado salen el costo de la pasarela y nuestra parte. En la práctica, frente a tu precio de lista deja de llegarte cerca de un 5%, y menos cuando la cancha es más cara. No hay mensualidad, contrato ni costo de instalación: si un mes no recibes reservas, no pagas nada.' },
   { q: '¿Cuándo recibo mi dinero?', a: 'En el momento del pago. ePayco divide cada reserva y te consigna tu parte directo a tu cuenta, ya con los costos descontados. No retenemos tu dinero. Para esto necesitas tu propia cuenta de ePayco, que conectas una sola vez desde el panel.' },
-  { q: '¿A nombre de quién se cobra la reserva?', a: 'El pago se recibe a nombre de ReservaTuCancha a través de ePayco. Tú no tienes que abrir ni configurar ninguna pasarela de pagos.' },
+  { q: '¿A nombre de quién se cobra la reserva?', a: 'El pago se procesa a través de ePayco con pagos divididos: en el mismo momento, tu parte va a tu cuenta y la nuestra a la de ReservaTuCancha. Solo necesitas abrir una cuenta de ePayco, validarla y conectarla una vez desde el panel. Te recomendamos registrar una cuenta Davivienda o DaviPlata: tiene la tarifa más baja y retiros gratis.' },
   { q: '¿Necesito conocimientos técnicos?', a: 'Para nada. El panel es 100% intuitivo. Te guiamos paso a paso desde la configuración de tu primera cancha hasta recibir tu primer pago.' },
   { q: '¿Qué métodos de pago puede usar mi cliente?', a: 'Tarjeta de crédito y débito, PSE, Nequi y Daviplata, directamente desde la plataforma.' },
 ];
@@ -246,7 +246,7 @@ export default function QueOfrecemosPage() {
           <div className="rounded-2xl border-2 border-gray-200 p-6 md:p-8 bg-gray-50">
             <h3 className="font-black text-gray-900 text-lg uppercase">Cómo te pagamos</h3>
             <p className="text-sm text-gray-500 mt-2">
-              No tienes que configurar ninguna pasarela: nosotros cobramos y te liquidamos.
+              Conectas tu cuenta de ePayco una vez y cada pago se reparte solo, al instante.
             </p>
 
             <ol className="mt-6 space-y-5">

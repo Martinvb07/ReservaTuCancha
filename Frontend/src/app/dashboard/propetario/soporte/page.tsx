@@ -6,8 +6,8 @@ import FaqAccordion from '@/components/ui/FaqAccordion';
 
 const FAQ = [
   { q: '¿Cómo activo o desactivo una cancha?', a: 'Ve a Mis Canchas → selecciona la cancha → usa el interruptor de "Estado" para activarla o desactivarla. Los clientes no podrán reservar canchas inactivas.' },
-  { q: '¿Cuándo recibo el dinero de mis reservas?', a: 'Los pagos se procesan en 1-3 días hábiles tras confirmar la reserva. Puedes ver el estado en la sección Pagos.' },
-  { q: '¿Cómo cancelo una reserva de un cliente?', a: 'Ve a Reservas → busca la reserva → haz click en "Cancelar". El cliente recibirá un email automático y el reembolso se procesará en 5-7 días hábiles.' },
+  { q: '¿Cuándo recibo el dinero de mis reservas?', a: 'Al instante. Cuando el pago se aprueba, ePayco te consigna tu parte directo a tu cuenta, ya con los costos descontados. Puedes ver el detalle de cada reserva en la sección Pagos.' },
+  { q: '¿Qué pasa si un cliente no puede ir?', a: 'Las reservas no se reembolsan: el cliente puede mover su reserva a otro horario disponible hasta 24 horas antes del turno, y tu parte se conserva. Si eres tú quien no puede atender un turno ya pagado, escríbenos a soporte: en ese caso se le devuelve el total al cliente y se descuenta tu parte de esa reserva.' },
   { q: '¿Puedo bloquear horarios para mantenimiento?', a: 'Sí. Ve a Disponibilidad → selecciona la cancha → elige el día y horario → márcalo como "No disponible".' },
   { q: '¿Cómo cambio el precio de mi cancha?', a: 'Ve a Mis Canchas → selecciona la cancha → "Editar" → cambia el precio por hora. El cambio aplica para nuevas reservas, no afecta las ya confirmadas.' },
 ];

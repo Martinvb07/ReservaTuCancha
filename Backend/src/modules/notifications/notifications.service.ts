@@ -438,7 +438,7 @@ export class NotificationsService {
    *
    * Va al dueño (para que se entere si alguien mas toco sus datos de cobro) y
    * a la casilla interna de ADMIN_NOTIFY_EMAIL, porque es el dato con el que
-   * se le transfiere la plata cada lunes.
+   * ePayco le consigna al club su parte de cada reserva.
    */
   async sendDatosBancariosActualizados(opts: {
     clubNombre: string;
@@ -461,8 +461,8 @@ export class NotificationsService {
           iconBg: '#dcfce7', iconContent: '🏦',
           title: titulo,
           subtitle: esPrimeraVez
-            ? 'Ya podemos girarte tu liquidación de los lunes a esta cuenta.'
-            : 'Cambiaron los datos con los que te transferimos cada lunes.',
+            ? 'Desde ahora tu parte de cada reserva te llega a esta cuenta.'
+            : 'Cambiaron los datos de la cuenta donde recibes tu parte de cada reserva.',
           rows: resumen,
           alertBox: {
             bg: '#fef3c7', color: '#92400e',
@@ -660,7 +660,7 @@ export class NotificationsService {
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;border:1px solid #eee;border-radius:12px;">
           <h2 style="color:#dc2626;">Reserva cancelada</h2>
           <p>Hola <strong>${escapeHtml(booking.guestName)}</strong>, tu reserva fue cancelada exitosamente.</p>
-          <p>Si realizaste un pago, el reembolso se procesará en 3-5 días hábiles.</p>
+          <p>Tu horario quedó libre. El pago no es reembolsable, pero si quieres jugar otro día escríbenos a soporte y movemos tu reserva a otro horario disponible.</p>
           <div style="margin-top:20px;">
             <a href="${this.frontendUrl}/empresas" style="color:#16a34a;font-weight:bold;">Ver otras canchas disponibles →</a>
           </div>

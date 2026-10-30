@@ -125,8 +125,8 @@ export class BookingsService {
 
     if (!booking) throw new NotFoundException('Reserva no encontrada');
 
-    /* El cobro se recibe a nombre de ReservaTuCancha, no del club: al club se
-       le gira su parte en la liquidación semanal, ya sin la comisión. */
+    /* Sin llaves de ePayco no hay checkout: mejor fallar acá que dejar al
+       jugador frente a una pasarela que no abre. */
     if (!this.epaycoService.configured) {
       throw new BadRequestException('Los pagos en línea no están disponibles en este momento');
     }
@@ -443,9 +443,9 @@ export class BookingsService {
   /**
    * Cambia una reserva de horario sin devolver plata.
    *
-   * Reemplaza al reembolso: el dinero ya entró a la cuenta de la empresa y se
-   * le gira al club en la liquidación de la semana en que efectivamente se
-   * juegue. Se permite hasta REPROGRAMAR_HORAS antes del turno original, que es
+   * Reemplaza al reembolso: el pago ya se repartió entre el club y la
+   * plataforma, y una reversión en ePayco devuelve el total, incluida la
+   * tarifa de servicio. Mover el turno no toca la plata. Se permite hasta REPROGRAMAR_HORAS antes del turno original, que es
    * el plazo en el que el club todavía alcanza a revender ese horario.
    *
    * Se conservan cancha y duración: así el precio ya cobrado sigue siendo el

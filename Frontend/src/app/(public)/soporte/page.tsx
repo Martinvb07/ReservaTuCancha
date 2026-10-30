@@ -61,7 +61,7 @@ const FAQ = [
     items: [
       { q: '¿Cómo puedo pagar?', a: 'Con tarjeta de crédito o débito, PSE, Nequi o Daviplata. El pago se procesa con ePayco. Al precio de la cancha se le suma una tarifa de servicio de $2.000 por reserva, que ves desglosada antes de pagar.' },
       { q: '¿Puedo pagar en efectivo en la cancha?', a: 'No. Todas las reservas se pagan en línea al momento de reservar; así el horario te queda apartado de verdad y nadie más lo puede tomar.' },
-      { q: '¿A nombre de quién aparece el cobro?', a: 'Aparece como ReservaTuCancha, no como el club. Nosotros recibimos el pago y le transferimos al club lo que le corresponde.' },
+      { q: '¿A nombre de quién aparece el cobro?', a: 'El pago lo procesa ePayco a través de ReservaTuCancha. En el mismo momento se reparte: el club recibe su parte y nosotros la tarifa de servicio.' },
       { q: 'Me cobraron pero no me llegó la confirmación', a: 'Espera unos minutos y revisa spam. Si sigue sin llegar, escríbenos por WhatsApp con el número de tu transacción y lo revisamos de inmediato.' },
     ],
   },
