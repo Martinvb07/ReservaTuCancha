@@ -157,10 +157,9 @@ export class EpaycoService {
       taxBase: 0,
       country: 'CO',
       lang: 'ES',
-      /* Como texto: la API rechaza el booleano aunque la documentación lo
-         muestre así. */
-      test: String(this.testMode),
-      external: 'false',
+      /* Booleanos de verdad: la API rechaza "true"/"false" como texto. */
+      test: this.testMode,
+      external: false,
       response: datos.responseUrl,
       confirmation: datos.confirmationUrl,
       ip: datos.ip ?? '127.0.0.1',
