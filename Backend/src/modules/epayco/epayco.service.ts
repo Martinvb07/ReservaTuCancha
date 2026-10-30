@@ -192,12 +192,12 @@ export class EpaycoService {
   /**
    * Parámetros de pagos divididos para la sesión.
    *
-   * El club entra como receptor con el total de la transacción y nos paga su
-   * comisión en `fee`, un valor fijo en pesos (split_type '01') y no un
-   * porcentaje: nuestra ganancia es un monto fijo por reserva, no una tajada
-   * del ticket. ePayco descuenta su propia tarifa aparte, según la comisión
-   * configurada para la cuenta del receptor en su panel; de ahí sale el neto
-   * que termina recibiendo el club.
+   * El club entra como receptor con el total de la transacción y nos paga en
+   * `fee` un valor fijo en pesos (split_type '01'): nuestra ganancia más la
+   * tarifa de ePayco de esa reserva. La pasarela la asume la plataforma, no el
+   * club: ePayco se la cobra al comercio principal, así que el `fee` la trae
+   * incluida para que, después de pagarla, nos queden los $2.250 limpios. Al
+   * club le llega exactamente el `netoDueno` congelado en la reserva.
    *
    * `iva` va en cero y `base_iva` carga el total porque el alquiler de la
    * cancha no discrimina IVA; ePayco valida que `iva + base_iva == total`.
@@ -237,7 +237,7 @@ export class EpaycoService {
           total: String(Math.round(datos.total)),
           iva: '0',
           base_iva: String(Math.round(datos.total)),
-          fee: String(Math.round(split.gananciaPlataforma)),
+          fee: String(Math.round(split.gananciaPlataforma + split.costoPasarela)),
         },
       ],
     };
