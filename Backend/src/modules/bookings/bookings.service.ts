@@ -91,13 +91,17 @@ export class BookingsService {
       id,
       { $set: updatePayload },
       { new: true }
-    ).select('+cancelToken +reviewToken').populate('courtId', 'name sport');
+    ).select('+cancelToken +reviewToken').populate('courtId', 'name sport ownerId');
 
     if (!updated) throw new NotFoundException('Reserva no encontrada');
 
     // Notificaciones automáticas según cambio de estado
     if (status === 'confirmed') {
       await this.notificationsService.sendBookingConfirmation(updated as any);
+      /* Sin userId la confirmación viene de ePayco: es el momento en que la
+         reserva existe de verdad para el club. Si la confirma el propio dueño
+         desde el panel, no tiene sentido avisarle de lo que acaba de hacer. */
+      if (!userId) await this.avisarDueno(updated);
     }
 
     if (status === 'completed') {
@@ -361,27 +365,33 @@ export class BookingsService {
 
     this.logger.log(`Reserva creada: ${saved.bookingCode} | método: ${createBookingDto.paymentMethod ?? 'no especificado'}`);
 
-    // Notificación en tiempo real + email al owner
+    /* Al dueño no se le avisa todavía: la reserva nace pendiente y, si el pago
+       no pasa, se borra. Se le avisa cuando ePayco confirma (updateStatus). */
+    return this.sinTokens(saved);
+  }
+
+  /**
+   * Avisa al dueño de una reserva ya pagada: en el panel en tiempo real y por
+   * correo. Nunca tumba la confirmación: si el aviso falla, el pago sigue
+   * registrado y la reserva confirmada.
+   */
+  private async avisarDueno(booking: any) {
     try {
-      const court = cancha;
-      if (court) {
-        this.notificationsGateway.notifyNewBooking(court.ownerId.toString(), {
-          ...saved.toObject(),
-          courtId: court,
-        });
-        // Email al owner
-        const owner = await this.userModel.findById(court.ownerId).select('email').lean();
-        if (owner?.email) {
-          this.notificationsService.sendOwnerNewBookingNotification(saved as any, owner.email).catch(
-            (e) => this.logger.error(`Error email owner: ${e.message}`),
-          );
-        }
+      const court = booking.courtId;
+      if (!court?.ownerId) return;
+      const ownerId = court.ownerId.toString();
+
+      this.notificationsGateway.notifyNewBooking(ownerId, booking.toObject?.() ?? booking);
+
+      const owner = await this.userModel.findById(ownerId).select('email').lean();
+      if (owner?.email) {
+        this.notificationsService.sendOwnerNewBookingNotification(booking, owner.email).catch(
+          (e) => this.logger.error(`Error email owner: ${e.message}`),
+        );
       }
     } catch (e) {
       this.logger.error(`Error enviando notification al owner: ${e.message}`);
     }
-
-    return this.sinTokens(saved);
   }
 
   /**
