@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { format, isToday, parseISO, subDays, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -15,6 +15,7 @@ import Link from 'next/link';
 import api from '@/lib/api/axios';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import { toast } from 'sonner';
+import { netoDueno } from '@/lib/neto';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 function to12h(time: string) {
@@ -53,7 +54,6 @@ const STATUS_LABEL: Record<string, string> = {
 export function OwnerHomeWidgets() {
   const session = useApiAuth();
   const token = (session as any)?.accessToken;
-  const queryClient = useQueryClient();
 
   // ── Bookings ──
   const { data: bookings = [], isLoading } = useQuery<any[]>({
@@ -80,16 +80,6 @@ export function OwnerHomeWidgets() {
     retry: 1,
   });
 
-  // ── Confirmar reserva ──
-  const confirmMutation = useMutation({
-    mutationFn: (id: string) => api.patch(`/bookings/${id}/status`, { status: 'confirmed' }),
-    onSuccess: () => {
-      toast.success('Reserva confirmada');
-      queryClient.invalidateQueries({ queryKey: ['owner-bookings'] });
-    },
-    onError: () => toast.error('Error al confirmar'),
-  });
-
   // ── Datos derivados ──
   const pending       = bookings.filter(b => b.status === 'pending');
   const todayBookings = bookings
@@ -102,7 +92,7 @@ export function OwnerHomeWidgets() {
     const dayB = bookings.filter(b => { try { return isSameDay(parseISO(b.date), day); } catch { return false; } });
     const revenue = dayB
       .filter(b => ['confirmed', 'completed'].includes(b.status))
-      .reduce((s, b) => s + (b.totalPrice || 0), 0);
+      .reduce((s, b) => s + netoDueno(b), 0);
     return {
       day:      format(day, 'EEE', { locale: es }),
       reservas: dayB.length,
@@ -292,14 +282,8 @@ export function OwnerHomeWidgets() {
                         {method ? 'Efectivo' : 'ePayco'}
                       </span>
                     </div>
-                    <button
-                      onClick={() => confirmMutation.mutate(b._id)}
-                      disabled={confirmMutation.isPending}
-                      title="Confirmar"
-                      className="w-8 h-8 bg-green-500 hover:bg-green-600 active:scale-95 disabled:bg-gray-300 rounded-lg flex items-center justify-center transition-all shrink-0"
-                    >
-                      <CheckCircle className="h-4 w-4 text-white" />
-                    </button>
+                    {/* La confirma ePayco al aprobar el pago, no el club. */}
+                    <span className="text-[10px] font-bold text-amber-700 whitespace-nowrap shrink-0">Esperando pago</span>
                   </div>
                 );
               })}
@@ -364,7 +348,7 @@ export function OwnerHomeWidgets() {
                       {to12h(b.startTime)} – {to12h(b.endTime)}
                     </span>
                     <span className="text-xs font-bold text-gray-500 bg-white/70 px-2 py-0.5 rounded-full">
-                      ${b.totalPrice?.toLocaleString('es-CO')}
+                      ${netoDueno(b).toLocaleString('es-CO')}
                     </span>
                   </div>
 
@@ -399,7 +383,7 @@ export function OwnerHomeWidgets() {
             <p className="text-xs text-gray-400">
               <span className="font-bold text-gray-700">{todayBookings.length}</span> reserva{todayBookings.length !== 1 ? 's' : ''} hoy ·{' '}
               <span className="text-green-600 font-semibold">
-                {fmtCOP(todayBookings.filter(b => ['confirmed', 'completed'].includes(b.status)).reduce((s: number, b: any) => s + (b.totalPrice || 0), 0))} confirmados
+                {fmtCOP(todayBookings.filter(b => ['confirmed', 'completed'].includes(b.status)).reduce((s: number, b: any) => s + netoDueno(b), 0))} confirmados
               </span>
             </p>
             <Link

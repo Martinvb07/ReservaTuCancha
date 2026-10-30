@@ -81,6 +81,12 @@ export class BookingsService {
       if (court?.ownerId?.toString() !== userId) {
         throw new ForbiddenException('No tienes permiso para modificar esta reserva');
       }
+      /* El club solo puede dar por jugado un turno ya pagado. Confirmar le
+         toca a ePayco: si el club pudiera hacerlo, una reserva sin pagar le
+         llegaría al jugador como confirmada. */
+      if (status !== 'completed' || !['confirmed', 'reagendada'].includes(booking.status)) {
+        throw new BadRequestException('Solo puedes marcar como completada una reserva ya pagada');
+      }
     }
 
     const updatePayload: any = { status };

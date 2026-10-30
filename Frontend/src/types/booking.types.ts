@@ -23,6 +23,8 @@ export interface Booking {
   precioCancha?: number;
   /** Tarifa fija de la plataforma, cobrada al jugador */
   tarifaServicio?: number;
+  /** Lo que le llega al club: total menos pasarela y parte de la plataforma */
+  netoDueno?: number;
   paymentId?: string;
   cancelToken: string;
   bookingCode: string;

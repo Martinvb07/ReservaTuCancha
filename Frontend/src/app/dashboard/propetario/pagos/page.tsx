@@ -13,6 +13,7 @@ import api from '@/lib/api/axios';
 import CuentaEpayco from '@/components/dashboard/CuentaEpayco';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import { toast } from 'sonner';
+import { netoDueno } from '@/lib/neto';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 const STATUS_PILL: Record<string, string> = {
@@ -71,7 +72,7 @@ function inPeriod(dateStr: string, period: Period): boolean {
 }
 
 function downloadCSV(bookings: any[]) {
-  const headers = ['Código', 'Cliente', 'Email', 'Fecha', 'Hora', 'Estado', 'Método', 'Total COP'];
+  const headers = ['Código', 'Cliente', 'Email', 'Fecha', 'Hora', 'Estado', 'Método', 'Pagó el cliente COP', 'Te llega COP'];
   const rows = bookings.map(b => [
     b.bookingCode ?? '',
     b.guestName ?? '',
@@ -81,6 +82,7 @@ function downloadCSV(bookings: any[]) {
     STATUS_LABEL[b.status] ?? b.status,
     METHOD_LABEL[b.paymentMethod]?.label ?? b.paymentMethod ?? 'ePayco',
     b.totalPrice ?? 0,
+    netoDueno(b),
   ]);
   const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -139,8 +141,8 @@ export default function OwnerPagosPage() {
   }, [bookings, period, filterStatus, search]);
 
   // ── KPIs del período filtrado ──
-  const revenue     = useMemo(() => filtered.filter((b: any) => ['confirmed', 'completed'].includes(b.status)).reduce((s: number, b: any) => s + (b.totalPrice || 0), 0), [filtered]);
-  const pendingRev  = useMemo(() => filtered.filter((b: any) => b.status === 'pending').reduce((s: number, b: any) => s + (b.totalPrice || 0), 0), [filtered]);
+  const revenue     = useMemo(() => filtered.filter((b: any) => ['confirmed', 'completed'].includes(b.status)).reduce((s: number, b: any) => s + netoDueno(b), 0), [filtered]);
+  const pendingRev  = useMemo(() => filtered.filter((b: any) => b.status === 'pending').reduce((s: number, b: any) => s + netoDueno(b), 0), [filtered]);
   const cancelledCt = useMemo(() => filtered.filter((b: any) => b.status === 'cancelled').length, [filtered]);
   const confirmedCt = useMemo(() => filtered.filter((b: any) => ['confirmed', 'completed'].includes(b.status)).length, [filtered]);
 
@@ -217,7 +219,7 @@ export default function OwnerPagosPage() {
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
             {[
               { label: 'Ingresos confirmados', value: fmtBig(revenue),    sub: `${confirmedCt} reserva${confirmedCt !== 1 ? 's' : ''}`, icon: DollarSign,    color: 'text-emerald-600', bg: 'bg-emerald-50' },
-              { label: 'Pendiente de cobro',   value: fmtBig(pendingRev), sub: `${filtered.filter((b: any) => b.status === 'pending').length} pendiente${filtered.filter((b: any) => b.status === 'pending').length !== 1 ? 's' : ''}`, icon: Clock, color: 'text-amber-600',   bg: 'bg-amber-50'   },
+              { label: 'Esperando pago',   value: fmtBig(pendingRev), sub: `${filtered.filter((b: any) => b.status === 'pending').length} pendiente${filtered.filter((b: any) => b.status === 'pending').length !== 1 ? 's' : ''}`, icon: Clock, color: 'text-amber-600',   bg: 'bg-amber-50'   },
               { label: 'Total reservas',        value: filtered.length,    sub: period === 'todo' ? 'Historial completo' : `En este ${period === 'hoy' ? 'día' : period}`, icon: CalendarDays, color: 'text-blue-600', bg: 'bg-blue-50' },
               { label: 'Canceladas',            value: cancelledCt,        sub: `${confirmedCt > 0 ? Math.round(cancelledCt / (filtered.length || 1) * 100) : 0}% del período`, icon: XCircle, color: 'text-red-500', bg: 'bg-red-50' },
             ].map(k => (
@@ -373,7 +375,7 @@ export default function OwnerPagosPage() {
 
                       {/* Total */}
                       <div className="text-right sm:text-left shrink-0">
-                        <p className="font-black text-gray-900 text-sm">{fmtCOP(b.totalPrice ?? 0)}</p>
+                        <p className="font-black text-gray-900 text-sm">{fmtCOP(netoDueno(b))}</p>
                         <p className="text-[10px] text-gray-400">COP</p>
                       </div>
 

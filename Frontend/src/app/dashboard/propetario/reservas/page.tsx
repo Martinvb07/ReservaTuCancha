@@ -6,11 +6,12 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { CalendarDays, Clock, User, Phone, Mail, Eye, X, CheckCircle, Search, List, ChevronLeft, ChevronRight, LayoutGrid, Trophy } from 'lucide-react';
+import { CalendarDays, Clock, User, Phone, Mail, Eye, Search, List, ChevronLeft, ChevronRight, LayoutGrid, Trophy } from 'lucide-react';
 import api from '@/lib/api/axios';
 import { toast } from 'sonner';
 import type { Booking } from '@/types/booking.types';
 import BookingsCalendar from '@/components/dashboard/BookingsCalendar';
+import { netoDueno } from '@/lib/neto';
 
 function formatTime12h(time24h: string): string {
   const [hours, minutes] = time24h.split(':').map(Number);
@@ -232,22 +233,17 @@ export default function ReservasOwnerPage() {
                           className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all">
                           <Eye className="h-3.5 w-3.5" />
                         </button>
+                        {/* El pago lo confirma ePayco, no el club. */}
                         {booking.status === 'pending' && (
-                          <button onClick={() => changeStatus.mutate({ id: booking._id, status: 'confirmed' })} title="Confirmar"
-                            className="w-8 h-8 rounded-full border border-amber-200 bg-amber-50 flex items-center justify-center text-amber-500 hover:bg-amber-100 transition-all">
-                            <CheckCircle className="h-3.5 w-3.5" />
-                          </button>
+                          <span title="Se confirma sola cuando ePayco apruebe el pago; si no se paga, el horario se libera"
+                              className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full whitespace-nowrap">
+                              Esperando pago
+                            </span>
                         )}
                         {booking.status === 'confirmed' && (
                           <button onClick={() => changeStatus.mutate({ id: booking._id, status: 'completed' })} title="Completar"
                             className="w-8 h-8 rounded-full border border-blue-200 bg-blue-50 flex items-center justify-center text-blue-500 hover:bg-blue-100 transition-all">
                             <Trophy className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                        {(booking.status === 'pending' || booking.status === 'confirmed') && (
-                          <button onClick={() => changeStatus.mutate({ id: booking._id, status: 'cancelled' })} title="Cancelar"
-                            className="w-8 h-8 rounded-full border border-red-200 bg-red-50 flex items-center justify-center text-red-400 hover:bg-red-100 transition-all">
-                            <X className="h-3.5 w-3.5" />
                           </button>
                         )}
                       </div>
@@ -257,7 +253,7 @@ export default function ReservasOwnerPage() {
                         ? <span className="font-mono text-xs font-bold text-gray-400">#{booking.bookingCode}</span>
                         : <span />
                       }
-                      <span className="font-black text-green-700 text-sm">${booking.totalPrice?.toLocaleString('es-CO')} <span className="text-[10px] font-normal text-gray-400">COP</span></span>
+                      <span className="font-black text-green-700 text-sm">${netoDueno(booking).toLocaleString('es-CO')} <span className="text-[10px] font-normal text-gray-400">COP</span></span>
                     </div>
                   </div>
                 );
@@ -347,19 +343,16 @@ export default function ReservasOwnerPage() {
                 </div>
               )}
               <div className="flex items-center justify-between bg-green-50 rounded-xl px-4 py-3">
-                <span className="text-sm text-gray-600 font-semibold">Total</span>
-                <span className="font-black text-green-700 text-lg">${selected.totalPrice?.toLocaleString('es-CO')} COP</span>
+                <span className="text-sm text-gray-600 font-semibold">Te llega</span>
+                <span className="font-black text-green-700 text-lg">${netoDueno(selected).toLocaleString('es-CO')} COP</span>
               </div>
-              {(selected.status === 'pending' || selected.status === 'confirmed') && (
+              {selected.status === 'pending' && (
+                <p className="text-xs text-amber-700 bg-amber-50 rounded-xl px-4 py-3">
+                  Esperando el pago. Se confirma sola cuando ePayco lo apruebe; si no se paga, el horario se libera.
+                </p>
+              )}
+              {selected.status === 'confirmed' && (
                 <div className="flex gap-2">
-                  {selected.status === 'pending' && (
-                    <button
-                      onClick={() => changeStatus.mutate({ id: selected._id, status: 'confirmed' })}
-                      className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold text-sm py-2.5 rounded-xl transition-colors"
-                    >
-                      <CheckCircle className="h-4 w-4" /> Confirmar
-                    </button>
-                  )}
                   {selected.status === 'confirmed' && (
                     <button
                       onClick={() => changeStatus.mutate({ id: selected._id, status: 'completed' })}
@@ -368,12 +361,6 @@ export default function ReservasOwnerPage() {
                       <Trophy className="h-4 w-4" /> Completar
                     </button>
                   )}
-                  <button
-                    onClick={() => changeStatus.mutate({ id: selected._id, status: 'cancelled' })}
-                    className="flex-1 flex items-center justify-center gap-2 border-2 border-red-200 hover:bg-red-50 text-red-500 font-bold text-sm py-2.5 rounded-xl transition-colors"
-                  >
-                    <X className="h-4 w-4" /> Cancelar
-                  </button>
                 </div>
               )}
             </div>

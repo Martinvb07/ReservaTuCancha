@@ -8,10 +8,11 @@ import {
 import { es } from 'date-fns/locale';
 import {
   ChevronLeft, ChevronRight, Clock, User, Mail, Phone,
-  Eye, X, CheckCircle, CalendarDays,
+  Eye, X, CalendarDays,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import type { Booking } from '@/types/booking.types';
+import { netoDueno } from '@/lib/neto';
 
 const STATUS_STYLES: Record<string, { pill: string; dot: string; bg: string }> = {
   confirmed:  { pill: 'bg-green-100 text-green-700', dot: 'bg-green-500', bg: 'bg-green-500' },
@@ -239,7 +240,7 @@ export default function BookingsCalendar({ bookings, onChangeStatus }: Props) {
                           <span className="truncate">{booking.guestName}</span>
                         </span>
                         <span className="font-black text-green-700">
-                          ${booking.totalPrice?.toLocaleString('es-CO')}
+                          ${netoDueno(booking).toLocaleString('es-CO')}
                         </span>
                       </div>
                     </div>
@@ -250,17 +251,13 @@ export default function BookingsCalendar({ bookings, onChangeStatus }: Props) {
                         className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all">
                         <Eye className="h-3.5 w-3.5" />
                       </button>
+                      {/* El pago lo confirma ePayco, no el club: una pendiente es un
+                          checkout en curso y se libera sola si no se paga. */}
                       {booking.status === 'pending' && (
-                        <button onClick={() => onChangeStatus(booking._id, 'confirmed')} title="Confirmar"
-                          className="w-8 h-8 rounded-full border border-amber-200 bg-amber-50 flex items-center justify-center text-amber-500 hover:bg-amber-100 transition-all">
-                          <CheckCircle className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                      {(booking.status === 'pending' || booking.status === 'confirmed') && (
-                        <button onClick={() => onChangeStatus(booking._id, 'cancelled')} title="Cancelar"
-                          className="w-8 h-8 rounded-full border border-red-200 bg-red-50 flex items-center justify-center text-red-400 hover:bg-red-100 transition-all">
-                          <X className="h-3.5 w-3.5" />
-                        </button>
+                        <span title="Se confirma sola cuando ePayco apruebe el pago; si no se paga, el horario se libera"
+                            className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full whitespace-nowrap">
+                            Esperando pago
+                          </span>
                       )}
                     </div>
                   </div>
@@ -298,26 +295,13 @@ export default function BookingsCalendar({ bookings, onChangeStatus }: Props) {
                 </div>
               )}
               <div className="flex items-center justify-between bg-green-50 rounded-xl px-4 py-3">
-                <span className="text-sm text-gray-600 font-semibold">Total</span>
-                <span className="font-black text-green-700 text-lg">${selectedBooking.totalPrice?.toLocaleString('es-CO')} COP</span>
+                <span className="text-sm text-gray-600 font-semibold">Te llega</span>
+                <span className="font-black text-green-700 text-lg">${netoDueno(selectedBooking).toLocaleString('es-CO')} COP</span>
               </div>
-              {(selectedBooking.status === 'pending' || selectedBooking.status === 'confirmed') && (
-                <div className="flex gap-2">
-                  {selectedBooking.status === 'pending' && (
-                    <button
-                      onClick={() => { onChangeStatus(selectedBooking._id, 'confirmed'); setSelectedBooking(null); }}
-                      className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold text-sm py-2.5 rounded-xl transition-colors"
-                    >
-                      <CheckCircle className="h-4 w-4" /> Confirmar
-                    </button>
-                  )}
-                  <button
-                    onClick={() => { onChangeStatus(selectedBooking._id, 'cancelled'); setSelectedBooking(null); }}
-                    className="flex-1 flex items-center justify-center gap-2 border-2 border-red-200 hover:bg-red-50 text-red-500 font-bold text-sm py-2.5 rounded-xl transition-colors"
-                  >
-                    <X className="h-4 w-4" /> Cancelar
-                  </button>
-                </div>
+              {selectedBooking.status === 'pending' && (
+                <p className="text-xs text-amber-700 bg-amber-50 rounded-xl px-4 py-3">
+                  Esperando el pago. Se confirma sola cuando ePayco lo apruebe; si no se paga, el horario se libera.
+                </p>
               )}
             </div>
           )}

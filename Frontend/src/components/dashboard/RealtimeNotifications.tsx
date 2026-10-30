@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useSocket } from '@/hooks/useSocket';
 import { CalendarDays, XCircle, CreditCard } from 'lucide-react';
+import { netoDueno } from '@/lib/neto';
 
 function formatTime12h(time24h: string): string {
   const [hours, minutes] = time24h.split(':').map(Number);
@@ -29,7 +30,7 @@ export default function RealtimeNotifications() {
     const unsub1 = on('new-booking', (data) => {
       const b = data.booking;
       toast.success('Nueva reserva recibida', {
-        description: `${b.guestName} — ${b.courtName} · ${b.date ? formatDateShort(b.date) + ' · ' : ''}${b.startTime ? formatTime12h(b.startTime) : ''} ${b.endTime ? '- ' + formatTime12h(b.endTime) : ''} · $${Number(b.totalPrice).toLocaleString('es-CO')}`,
+        description: `${b.guestName} — ${b.courtName} · ${b.date ? formatDateShort(b.date) + ' · ' : ''}${b.startTime ? formatTime12h(b.startTime) : ''} ${b.endTime ? '- ' + formatTime12h(b.endTime) : ''} · $${netoDueno(b).toLocaleString('es-CO')}`,
         icon: <CalendarDays className="h-5 w-5 text-green-500" />,
         duration: 8000,
       });
@@ -52,7 +53,7 @@ export default function RealtimeNotifications() {
     const unsub3 = on('payment-confirmed', (data) => {
       const b = data.booking;
       toast.success('Pago confirmado', {
-        description: `${b.guestName} — ${b.courtName} · $${Number(b.totalPrice).toLocaleString('es-CO')} · ${b.bookingCode}`,
+        description: `${b.guestName} — ${b.courtName} · $${netoDueno(b).toLocaleString('es-CO')} · ${b.bookingCode}`,
         icon: <CreditCard className="h-5 w-5 text-blue-500" />,
         duration: 8000,
       });
