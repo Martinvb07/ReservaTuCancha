@@ -149,11 +149,12 @@ export class EpaycoService {
       description: datos.descripcion.slice(0, 150),
       invoice: datos.invoice,
       currency: 'COP',
-      amount: String(Math.round(datos.total)),
+      /* Números, no texto: la API valida el tipo y rechaza "52000". */
+      amount: Math.round(datos.total),
       /* La cancha no discrimina IVA: la base es el total y el impuesto va en
          cero. Si alguna vez hay que facturarlo, se parte acá. */
-      tax: '0',
-      taxBase: '0',
+      tax: 0,
+      taxBase: 0,
       country: 'CO',
       lang: 'ES',
       /* Como texto: la API rechaza el booleano aunque la documentación lo
@@ -185,8 +186,12 @@ export class EpaycoService {
       json?.data?.sessionId ?? json?.data?.session_id ?? json?.sessionId ?? json?.session_id;
 
     if (!res.ok || !sessionId) {
+      /* Cada campo rechazado en su propia línea y completo: cortado a 300
+         caracteres el log solo alcanzaba a mostrar el primero. */
+      const errores: string[] = (json?.data?.errors ?? []).map((e: any) => e?.errorMessage ?? JSON.stringify(e));
       this.logger.error(
-        `ePayco no creó la sesión para ${datos.invoice}: HTTP ${res.status} ${JSON.stringify(json)?.slice(0, 300)}`,
+        `ePayco no creó la sesión para ${datos.invoice}: HTTP ${res.status} ${json?.textResponse ?? ''}` +
+          (errores.length ? `\n  - ${errores.join('\n  - ')}` : ` ${JSON.stringify(json)?.slice(0, 500)}`),
       );
       throw new ServiceUnavailableException('No se pudo iniciar el pago, intenta de nuevo');
     }
