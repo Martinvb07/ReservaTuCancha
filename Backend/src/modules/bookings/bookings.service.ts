@@ -198,6 +198,7 @@ export class BookingsService {
       netoDueno: booking.netoDueno ?? 0,
       gananciaPlataforma: booking.gananciaPlataforma ?? 0,
       costoPasarela: booking.costoPasarela ?? 0,
+      brutoPlataforma: this.cobrosService.brutoPlataformaSplit(booking.gananciaPlataforma ?? 0),
     };
   }
 

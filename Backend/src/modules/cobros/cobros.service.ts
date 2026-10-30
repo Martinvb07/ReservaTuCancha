@@ -91,6 +91,25 @@ export class CobrosService {
   }
 
   /**
+   * Lo que la plataforma tiene que recibir en un pago dividido para que le
+   * queden `ganancia` pesos limpios.
+   *
+   * En el split ePayco cobra por separado: al club, porcentaje + fijo sobre lo
+   * que recibe; al comercio principal, solo el porcentaje (con IVA) sobre su
+   * parte. Por eso nuestra parte se infla lo justo para cubrir esa comisión:
+   *
+   *   bruto = ganancia / (1 - porcentaje x (1 + IVA))
+   *
+   * Con los valores por defecto, $2.250 limpios piden $2.323 en bruto. Si el
+   * club tiene cuenta Davivienda, lo que le llega es el mismo neto del
+   * desglose: el fijo se cobra una sola vez, igual que en un cobro normal.
+   */
+  brutoPlataformaSplit(ganancia: number): number {
+    const tasa = (this.pasarelaPorcentaje / 100) * (1 + this.pasarelaIva / 100);
+    return Math.round(ganancia / (1 - tasa));
+  }
+
+  /**
    * Reparte una reserva entre pasarela, plataforma y club.
    *
    * Si la cancha es tan barata que no alcanza a cubrir pasarela + ganancia, la

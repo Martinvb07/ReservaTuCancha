@@ -37,6 +37,11 @@ export interface DatosSplit {
   gananciaPlataforma: number;
   /** Lo que se queda ePayco */
   costoPasarela: number;
+  /**
+   * Lo que la plataforma recibe del split antes de que ePayco le cobre su
+   * comisión: la ganancia más lo justo para pagarla.
+   */
+  brutoPlataforma: number;
 }
 
 /**
@@ -193,11 +198,14 @@ export class EpaycoService {
    * Parámetros de pagos divididos para la sesión.
    *
    * El club entra como receptor con el total de la transacción y nos paga en
-   * `fee` un valor fijo en pesos (split_type '01'): nuestra ganancia más la
-   * tarifa de ePayco de esa reserva. La pasarela la asume la plataforma, no el
-   * club: ePayco se la cobra al comercio principal, así que el `fee` la trae
-   * incluida para que, después de pagarla, nos queden los $2.250 limpios. Al
-   * club le llega exactamente el `netoDueno` congelado en la reserva.
+   * `fee` un valor fijo en pesos (split_type '01'): nuestra parte bruta.
+   *
+   * ePayco cobra cada lado por separado: al club, porcentaje + fijo sobre lo
+   * que le queda; a nosotros, solo el porcentaje sobre el `fee`. Por eso el
+   * `fee` no es la ganancia pelada sino lo justo para que, después de esa
+   * comisión, nos queden los $2.250 limpios. Con cuenta Davivienda al club le
+   * llega el mismo `netoDueno` del desglose; con otro banco ePayco le aplica
+   * su tarifa más alta y le llega un poco menos.
    *
    * `iva` va en cero y `base_iva` carga el total porque el alquiler de la
    * cancha no discrimina IVA; ePayco valida que `iva + base_iva == total`.
@@ -237,7 +245,7 @@ export class EpaycoService {
           total: String(Math.round(datos.total)),
           iva: '0',
           base_iva: String(Math.round(datos.total)),
-          fee: String(Math.round(split.gananciaPlataforma + split.costoPasarela)),
+          fee: String(Math.round(split.brutoPlataforma)),
         },
       ],
     };
