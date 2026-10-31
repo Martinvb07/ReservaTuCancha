@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { Star, CheckCircle, XCircle, Send, Loader2 } from 'lucide-react';
+import { Star, CheckCircle, XCircle, Send, Loader2, Pointer } from 'lucide-react';
 import api from '@/lib/api/axios';
 
 function StarRatingInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -29,11 +29,11 @@ function StarRatingInput({ value, onChange }: { value: number; onChange: (v: num
 }
 
 const RATING_LABELS: Record<number, string> = {
-  1: 'Muy mala 😞',
-  2: 'Regular 😐',
-  3: 'Buena 🙂',
-  4: 'Muy buena 😊',
-  5: '¡Excelente! 🤩',
+  1: 'Muy mala',
+  2: 'Regular',
+  3: 'Buena',
+  4: 'Muy buena',
+  5: '¡Excelente!',
 };
 
 function ResenaContent() {
@@ -137,7 +137,7 @@ function ResenaContent() {
           </button>
 
           {rating === 0 && (
-            <p className="text-xs text-center text-amber-500">👆 Selecciona una calificación para continuar</p>
+            <p className="flex items-center justify-center gap-1 text-xs text-amber-500"><Pointer className="h-3.5 w-3.5" /> Selecciona una calificación para continuar</p>
           )}
         </div>
       </div>

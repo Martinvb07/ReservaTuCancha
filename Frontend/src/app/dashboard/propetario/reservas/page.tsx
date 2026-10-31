@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { CalendarDays, Clock, User, Phone, Mail, Eye, Search, List, ChevronLeft, ChevronRight, LayoutGrid, Trophy } from 'lucide-react';
+import { CalendarDays, Clock, User, Phone, Mail, Eye, Search, List, ChevronLeft, ChevronRight, LayoutGrid, Trophy, StickyNote } from 'lucide-react';
 import api from '@/lib/api/axios';
 import { toast } from 'sonner';
 import type { Booking } from '@/types/booking.types';
@@ -334,7 +334,7 @@ export default function ReservasOwnerPage() {
                 <div className="flex items-center gap-2 text-gray-600"><User className="h-4 w-4 text-green-600" />{selected.guestName}</div>
                 <div className="flex items-center gap-2 text-gray-600"><Mail className="h-4 w-4 text-green-600" />{selected.guestEmail}</div>
                 <div className="flex items-center gap-2 text-gray-600"><Phone className="h-4 w-4 text-green-600" />{selected.guestPhone}</div>
-                {selected.notes && <div className="text-gray-500 pt-1 border-t border-gray-100">📝 {selected.notes}</div>}
+                {selected.notes && <div className="flex items-start gap-2 text-gray-500 pt-1 border-t border-gray-100"><StickyNote className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />{selected.notes}</div>}
               </div>
               {selected.bookingCode && (
                 <div className="flex items-center justify-between bg-gray-100 rounded-xl px-4 py-3">

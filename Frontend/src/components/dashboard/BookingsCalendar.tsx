@@ -8,7 +8,7 @@ import {
 import { es } from 'date-fns/locale';
 import {
   ChevronLeft, ChevronRight, Clock, User, Mail, Phone,
-  Eye, X, CalendarDays,
+  Eye, X, CalendarDays, StickyNote
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import type { Booking } from '@/types/booking.types';
@@ -286,7 +286,7 @@ export default function BookingsCalendar({ bookings, onChangeStatus }: Props) {
                 <div className="flex items-center gap-2 text-gray-600"><User className="h-4 w-4 text-green-600" />{selectedBooking.guestName}</div>
                 <div className="flex items-center gap-2 text-gray-600"><Mail className="h-4 w-4 text-green-600" />{selectedBooking.guestEmail}</div>
                 <div className="flex items-center gap-2 text-gray-600"><Phone className="h-4 w-4 text-green-600" />{selectedBooking.guestPhone}</div>
-                {selectedBooking.notes && <div className="text-gray-500 pt-1 border-t border-gray-100">📝 {selectedBooking.notes}</div>}
+                {selectedBooking.notes && <div className="flex items-start gap-2 text-gray-500 pt-1 border-t border-gray-100"><StickyNote className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />{selectedBooking.notes}</div>}
               </div>
               {selectedBooking.bookingCode && (
                 <div className="flex items-center justify-between bg-gray-100 rounded-xl px-4 py-3">

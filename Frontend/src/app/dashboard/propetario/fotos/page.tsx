@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Image, Upload, Trash2, Star, Plus, CheckCircle, Loader2 } from 'lucide-react';
+import { Image, Upload, Trash2, Star, Plus, CheckCircle, Loader2, Lightbulb } from 'lucide-react';
 import { getSportIcon } from '@/components/ui/SportIcons';
 import { toast } from 'sonner';
 import api from '@/lib/api/axios';
@@ -201,7 +201,7 @@ export default function OwnerFotosPage() {
             {fotos.length} foto{fotos.length !== 1 ? 's' : ''} — {selectedCourt?.name}
           </p>
           {fotos.length > 0 && (
-            <p className="text-xs text-gray-400">⭐ = establecer como foto principal</p>
+            <p className="flex items-center gap-1 text-xs text-gray-400"><Star className="h-3 w-3" /> = establecer como foto principal</p>
           )}
         </div>
 
@@ -260,7 +260,7 @@ export default function OwnerFotosPage() {
 
       {/* Tips */}
       <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 space-y-2">
-        <p className="text-sm font-black text-blue-800">💡 Tips para mejores fotos</p>
+        <p className="flex items-center gap-1.5 text-sm font-black text-blue-800"><Lightbulb className="h-4 w-4" /> Tips para mejores fotos</p>
         <ul className="space-y-1 text-xs text-blue-700">
           <li>• Toma fotos con buena iluminación natural o con la iluminación nocturna encendida</li>
           <li>• Muestra toda la cancha en la foto principal — que se vea el campo completo</li>

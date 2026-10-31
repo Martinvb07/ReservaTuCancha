@@ -9,7 +9,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { solicitudesApi } from '@/lib/api/solicitudes.api';
 import Link from 'next/link';
 import {
-  CheckCircle2, Loader2, ChevronRight, ChevronLeft, Pencil,
+  CheckCircle2, Loader2, ChevronRight, ChevronLeft, Pencil, Mail, KeyRound
 } from 'lucide-react';
 import StepWizard, { WIZARD_EASE, type WizardStep } from '@/components/ui/StepWizard';
 
@@ -170,8 +170,8 @@ export default function SolicitarAccesoPage() {
             </p>
           </div>
           <div className="bg-gray-800 rounded-2xl p-5 text-sm text-gray-400 space-y-1 border border-gray-700">
-            <p>✉️ Revisa tu bandeja de entrada y spam.</p>
-            <p>🔑 Recibirás tus credenciales por email.</p>
+            <p className="flex items-center gap-2"><Mail className="h-4 w-4 shrink-0" /> Revisa tu bandeja de entrada y spam.</p>
+            <p className="flex items-center gap-2"><KeyRound className="h-4 w-4 shrink-0" /> Recibirás tus credenciales por email.</p>
           </div>
           <Link
             href="/"

@@ -27,7 +27,7 @@ interface StatsResponse {
 async function getStats(token: string | undefined, role: string): Promise<StatsResponse | null> {
   try {
     if (!token) {
-      console.error('❌ No token found');
+      console.error('No token found');
       return null;
     }
 
@@ -35,14 +35,14 @@ async function getStats(token: string | undefined, role: string): Promise<StatsR
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     
     if (!apiUrl) {
-      console.error('❌ NEXT_PUBLIC_API_URL not configured');
+      console.error('NEXT_PUBLIC_API_URL not configured');
       return null;
     }
 
     const url = `${apiUrl}${endpoint}`;
     
-    console.log('🔄 Fetching from:', url);
-    console.log('📌 Role:', role);
+    console.log('Fetching from:', url);
+    console.log('Role:', role);
     
     const res = await fetch(url, {
       headers: { 
@@ -52,19 +52,19 @@ async function getStats(token: string | undefined, role: string): Promise<StatsR
       next: { revalidate: 60 },
     });
 
-    console.log('📊 Response status:', res.status);
+    console.log('Response status:', res.status);
     
     if (!res.ok) {
       const errorText = await res.text();
-      console.error(`❌ Error ${res.status}:`, errorText);
+      console.error(`Error ${res.status}:`, errorText);
       return null;
     }
 
     const data = await res.json();
-    console.log('✅ Stats loaded:', data);
+    console.log('Stats loaded:', data);
     return data;
   } catch (error) {
-    console.error('❌ Fetch error:', error);
+    console.error('Fetch error:', error);
     return null;
   }
 }

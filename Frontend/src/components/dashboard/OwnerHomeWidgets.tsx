@@ -5,7 +5,7 @@ import { format, isToday, parseISO, subDays, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
   CheckCircle, Clock, AlertCircle, Calendar, User,
-  TrendingUp, Banknote, CreditCard, ArrowRight, Zap,
+  TrendingUp, Banknote, CreditCard, ArrowRight, Zap, Link2
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -135,8 +135,8 @@ export function OwnerHomeWidgets() {
       {/* ── Mi página pública ── */}
       {clubInfo?.slug && (
         <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-4 sm:p-5 flex items-center gap-4">
-          <div className="w-10 h-10 sm:w-11 sm:h-11 bg-lime-400 rounded-xl flex items-center justify-center shrink-0 text-xl">
-            🔗
+          <div className="w-10 h-10 sm:w-11 sm:h-11 bg-lime-400 rounded-xl flex items-center justify-center shrink-0">
+            <Link2 className="h-5 w-5 text-gray-900" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-black text-white text-sm">Tu página pública</p>
