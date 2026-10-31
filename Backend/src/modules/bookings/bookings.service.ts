@@ -29,6 +29,13 @@ import { aObjectId } from '../../common/utils/objectid.util';
  */
 const REPROGRAMAR_HORAS = 24;
 
+const aMinutos = (hhmm: string) => {
+  const [h, m] = String(hhmm ?? '0:0').split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
+};
+const aHora = (min: number) =>
+  `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+
 @Injectable()
 export class BookingsService {
   private readonly logger = new Logger(BookingsService.name);
@@ -656,6 +663,75 @@ export class BookingsService {
       })
       .select('startTime endTime status')
       .lean();
+  }
+
+  /**
+   * Turnos que quedan libres en cada cancha para una fecha: los del horario
+   * de atención de ese día, menos lo reservado, lo bloqueado y, si la fecha
+   * es hoy, lo que ya pasó (hora de Colombia). Con `desde` ("18:00") solo
+   * cuentan los que empiezan a esa hora o después.
+   */
+  async disponibilidad(ids: string[], fecha: string, desde?: string) {
+    const validos = ids.filter((id) => Types.ObjectId.isValid(id)).slice(0, 40);
+    if (!validos.length || !/^\d{4}-\d{2}-\d{2}$/.test(fecha ?? '')) return {};
+    const minDesde = /^\d{2}:\d{2}$/.test(desde ?? '') ? aMinutos(desde!) : 0;
+
+    const [year, month, day] = fecha.split('-').map(Number);
+    const inicio = new Date(Date.UTC(year, month - 1, day));
+    const fin = new Date(Date.UTC(year, month - 1, day + 1));
+    const diaSemana = inicio.getUTCDay();
+
+    /* Colombia no tiene horario de verano: siempre UTC-5. */
+    const ahora = new Date(Date.now() - 5 * 3600 * 1000);
+    const esHoy = ahora.toISOString().slice(0, 10) === fecha;
+    const minAhora = ahora.getUTCHours() * 60 + ahora.getUTCMinutes();
+
+    const objIds = validos.map((id) => new Types.ObjectId(id));
+    const [canchas, reservas, bloqueos] = await Promise.all([
+      this.courtModel.find({ _id: { $in: objIds }, isActive: { $ne: false } }).select('availability').lean(),
+      this.bookingModel
+        .find({
+          courtId: { $in: objIds },
+          date: { $gte: inicio, $lt: fin },
+          status: { $in: [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.REAGENDADA] },
+        })
+        .select('courtId startTime endTime')
+        .lean(),
+      this.blockedSlotModel
+        .find({ courtId: { $in: objIds }, date: { $gte: inicio, $lt: fin } })
+        .select('courtId startTime endTime')
+        .lean(),
+    ]);
+
+    const ocupados = new Map<string, [number, number][]>();
+    for (const o of [...reservas, ...bloqueos] as any[]) {
+      const k = String(o.courtId);
+      if (!ocupados.has(k)) ocupados.set(k, []);
+      ocupados.get(k)!.push([aMinutos(o.startTime), aMinutos(o.endTime)]);
+    }
+
+    const resultado: Record<string, { libres: number; proximo: string | null }> = {};
+    for (const c of canchas as any[]) {
+      const horario = (c.availability ?? []).find((a: any) => a.dayOfWeek === diaSemana);
+      const libres: number[] = [];
+      if (horario) {
+        const paso = horario.slotDurationMinutes || 60;
+        const abre = aMinutos(horario.openTime);
+        const cierra = aMinutos(horario.closeTime);
+        const tomados = ocupados.get(String(c._id)) ?? [];
+        for (let t = abre; t + paso <= cierra; t += paso) {
+          if (t < minDesde) continue;
+          if (esHoy && t <= minAhora) continue;
+          if (tomados.some(([a, b]) => t < b && t + paso > a)) continue;
+          libres.push(t);
+        }
+      }
+      resultado[String(c._id)] = {
+        libres: libres.length,
+        proximo: libres.length ? aHora(libres[0]) : null,
+      };
+    }
+    return resultado;
   }
 
   async findByOwnerId(ownerId: string): Promise<Booking[]> {

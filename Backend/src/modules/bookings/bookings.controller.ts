@@ -54,6 +54,22 @@ export class BookingsController {
     return this.bookingsService.findByCancelToken(token);
   }
 
+  /* Cuántos turnos quedan libres en varias canchas a la vez, para pintarlo
+     en las tarjetas del listado sin abrir cada ficha. */
+  @Get('disponibilidad')
+  @ApiOperation({ summary: 'Turnos libres por cancha en una fecha (público)' })
+  getDisponibilidad(
+    @Query('ids') ids: string,
+    @Query('fecha') fecha: string,
+    @Query('desde') desde?: string,
+  ) {
+    return this.bookingsService.disponibilidad(
+      String(ids ?? '').split(',').map((s) => s.trim()).filter(Boolean),
+      fecha,
+      desde,
+    );
+  }
+
   @Get('slots')
   @ApiOperation({ summary: 'Horarios ocupados' })
   getSlots(@Query('courtId') courtId: string, @Query('date') date: string) {
