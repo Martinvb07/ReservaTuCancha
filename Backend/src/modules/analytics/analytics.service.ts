@@ -9,6 +9,10 @@ import { Solicitud } from '../solicitudes/solicitudes.schema';
 const MONTH_NAMES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const DAY_NAMES   = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 
+/* Lo que le llega al club por una reserva. Las anteriores a ePayco no
+   guardaron el desglose: para ellas cuenta el total, como antes. */
+const NETO_DUENO = { $ifNull: ['$netoDueno', '$totalPrice'] };
+
 @Injectable()
 export class AnalyticsService {
   constructor(
@@ -36,7 +40,7 @@ export class AnalyticsService {
       // Ingresos totales (confirmadas + completadas)
       this.bookingModel.aggregate([
         { $match: { courtId: { $in: courtIds }, status: { $in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] } } },
-        { $group: { _id: null, total: { $sum: '$totalPrice' } } },
+        { $group: { _id: null, total: { $sum: NETO_DUENO } } },
       ]),
 
       // Stats por cancha
@@ -45,7 +49,7 @@ export class AnalyticsService {
         { $group: {
           _id: '$courtId',
           bookings: { $sum: 1 },
-          revenue:  { $sum: { $cond: [{ $in: ['$status', [BookingStatus.CONFIRMED, BookingStatus.COMPLETED]] }, '$totalPrice', 0] } },
+          revenue:  { $sum: { $cond: [{ $in: ['$status', [BookingStatus.CONFIRMED, BookingStatus.COMPLETED]] }, NETO_DUENO, 0] } },
           confirmed: { $sum: { $cond: [{ $eq: ['$status', BookingStatus.CONFIRMED] }, 1, 0] } },
         }},
       ]),
@@ -115,7 +119,8 @@ export class AnalyticsService {
       { $match: matchStage },
       { $group: {
         _id:      { year: { $year: '$date' }, month: { $month: '$date' } },
-        revenue:  { $sum: '$totalPrice' },
+        /* El dueño ve lo que le llegó; el admin, todo lo que se cobró. */
+        revenue:  { $sum: ownerId ? NETO_DUENO : '$totalPrice' },
         bookings: { $sum: 1 },
       }},
       { $sort: { '_id.year': 1, '_id.month': 1 } },
