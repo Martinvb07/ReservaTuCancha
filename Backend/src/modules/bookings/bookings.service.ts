@@ -169,10 +169,21 @@ export class BookingsService {
       split,
     });
 
+    /* La app no puede cargar el checkout (es un script de navegador): abre en
+       el navegador del teléfono la página /pagar de la web, que lo abre con
+       esta misma sesión. `redirectUrl` repite el link para las versiones de
+       la app que todavía lo leen con ese nombre, de cuando se pagaba con
+       Wompi. */
+    const frontend = (process.env.FRONTEND_URL ?? 'https://reservatucancha.site').replace(/\/+$/, '');
+    const checkoutUrl =
+      `${frontend}/pagar?session=${encodeURIComponent(sessionId)}${this.epaycoService.testMode ? '&test=1' : ''}`;
+
     return {
       sessionId,
       publicKey: this.epaycoService.publicKey,
       test: this.epaycoService.testMode,
+      checkoutUrl,
+      redirectUrl: checkoutUrl,
     };
   }
 

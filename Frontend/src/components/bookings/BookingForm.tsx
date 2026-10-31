@@ -18,6 +18,7 @@ import { bookingsApi } from '@/lib/api/bookings.api';
 import type { AvailabilitySlot } from '@/types/court.types';
 import api from '@/lib/api/axios';
 import MediosPago from './MediosPago';
+import { cargarEpayco } from '@/lib/epayco';
 
 const schema = z.object({
   guestName:  z.string().min(2, 'Nombre muy corto'),
@@ -42,36 +43,6 @@ interface PagosConfig {
 /* Solo para el parpadeo inicial, mientras llega la config real del servidor.
    El cobro nunca sale de acá: el total lo arma el backend. */
 const TARIFA_SERVICIO_FALLBACK = 2000;
-
-const EPAYCO_SDK = 'https://checkout.epayco.co/checkout-v2.js';
-
-/**
- * Carga el checkout de ePayco una sola vez y resuelve cuando está listo.
- *
- * Se trae bajo demanda, al pulsar "pagar", para no arrastrar un script de
- * terceros en cada visita a la ficha de una cancha.
- */
-function cargarEpayco(): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const w = window as any;
-    if (w.ePayco) { resolve(w.ePayco); return; }
-
-    const existente = document.querySelector<HTMLScriptElement>(`script[src="${EPAYCO_SDK}"]`);
-    const script = existente ?? document.createElement('script');
-
-    script.addEventListener('load', () => {
-      if (w.ePayco) resolve(w.ePayco);
-      else reject(new Error('El checkout no cargó bien'));
-    });
-    script.addEventListener('error', () => reject(new Error('No se pudo cargar el checkout')));
-
-    if (!existente) {
-      script.src = EPAYCO_SDK;
-      script.async = true;
-      document.body.appendChild(script);
-    }
-  });
-}
 
 // "HH:mm" → "6:00 AM" (formato 12h, no militar)
 const fmt12 = (t: string) => {
