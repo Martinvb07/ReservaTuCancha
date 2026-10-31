@@ -171,6 +171,11 @@ export class EpaycoService {
         email: datos.cliente?.email ?? '',
         mobilePhone: datos.cliente?.telefono ?? '',
       },
+      /* Fuera efectivo (Efecty, bancos, corresponsales) y SafetyPay: quedan
+         pendientes horas o días, y a los 30 minutos la reserva sin pagar se
+         borra para liberar el horario. El jugador terminaría pagando un turno
+         que ya no existe. El panel de ePayco no deja apagarlos; solo esto. */
+      methodsDisable: ['CASH', 'SP'],
       ...this.parametrosSplit(datos),
     };
 

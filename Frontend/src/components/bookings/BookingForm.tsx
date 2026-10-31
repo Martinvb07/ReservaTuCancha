@@ -17,6 +17,7 @@ import {
 import { bookingsApi } from '@/lib/api/bookings.api';
 import type { AvailabilitySlot } from '@/types/court.types';
 import api from '@/lib/api/axios';
+import MediosPago from './MediosPago';
 
 const schema = z.object({
   guestName:  z.string().min(2, 'Nombre muy corto'),
@@ -531,6 +532,7 @@ export default function BookingForm({
                 cosa que en efectivo no hay forma de hacer. */}
             <div className="space-y-2.5">
               <p className={lbl}><Lock className="h-3.5 w-3.5" /> Método de pago</p>
+              <MediosPago />
 
               {pagosConfig && !pagosConfig.configured ? (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2 text-xs text-amber-800">
@@ -544,8 +546,8 @@ export default function BookingForm({
                       <span className="w-2 h-2 rounded-full bg-white" />
                     </span>
                     <span>
-                      <span className="block font-semibold text-gray-900 text-sm">Pago en línea</span>
-                      <span className="block text-xs text-gray-500">Nequi · Daviplata · PSE · Tarjeta (ePayco)</span>
+                      <span className="block font-semibold text-gray-900 text-sm">Pago seguro con ePayco</span>
+                      <span className="block text-xs text-gray-500">Tarjeta débito o crédito, Nequi, PSE y DaviPlata</span>
                     </span>
                   </span>
                   <CreditCard className="h-5 w-5 text-gray-400" />
