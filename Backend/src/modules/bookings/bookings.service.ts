@@ -387,6 +387,11 @@ export class BookingsService {
     return this.sinTokens(saved);
   }
 
+  /** Ver `NotificationsService.sendPagoHuerfano`. */
+  avisarPagoHuerfano(datos: Parameters<NotificationsService['sendPagoHuerfano']>[0]) {
+    return this.notificationsService.sendPagoHuerfano(datos);
+  }
+
   /**
    * Avisa al dueño de una reserva ya pagada: en el panel en tiempo real y por
    * correo. Nunca tumba la confirmación: si el aviso falla, el pago sigue

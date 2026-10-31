@@ -73,13 +73,29 @@ export class EpaycoConfirmationController {
       throw new BadRequestException('Confirmación sin referencia de reserva');
     }
 
+    const estado = String(datos.x_cod_response ?? datos.x_cod_transaction_state ?? '');
+
     const booking = await this.bookingsService.findByCode(codigo);
     if (!booking) {
-      this.logger.error(`Reserva no encontrada para la referencia: ${codigo}`);
-      throw new BadRequestException('Reserva no encontrada');
+      /* Un pago aprobado sin reserva: se borró por no pagarse a tiempo y el
+         pago llegó tarde. La plata ya entró, así que no se rechaza (ePayco
+         reintentaría para siempre): se avisa para devolverla o reubicar. */
+      if (estado === ACEPTADA) {
+        this.logger.error(`Pago aprobado sin reserva: ${codigo} (ref ${refPayco})`);
+        await this.bookingsService.avisarPagoHuerfano({
+          codigo,
+          refPayco,
+          transaccion: transactionId,
+          monto: amount,
+          cliente: [datos.x_customer_name, datos.x_customer_lastname].filter(Boolean).join(' '),
+          email: datos.x_customer_email,
+          telefono: datos.x_customer_movil || datos.x_customer_phone,
+        });
+        return { status: 'ok' };
+      }
+      this.logger.warn(`Confirmación sin reserva (${estado}) para ${codigo}: se ignora`);
+      return { status: 'ok' };
     }
-
-    const estado = String(datos.x_cod_response ?? datos.x_cod_transaction_state ?? '');
 
     if (estado === ACEPTADA) {
       /* Lo cobrado tiene que coincidir con lo que vale la reserva. La firma ya

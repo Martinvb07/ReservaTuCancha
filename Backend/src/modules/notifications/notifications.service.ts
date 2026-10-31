@@ -651,6 +651,48 @@ export class NotificationsService {
     });
   }
 
+  /**
+   * ePayco aprobó un pago cuya reserva ya no existe: se borró por no pagarse
+   * a tiempo (un PSE que tardó más de 30 minutos, por ejemplo). La plata
+   * entró y el jugador cree que reservó, así que alguien tiene que devolverle
+   * o reubicarlo a mano. Va solo a la casilla interna.
+   */
+  async sendPagoHuerfano(datos: {
+    codigo: string;
+    refPayco: string;
+    transaccion: string;
+    monto: string;
+    cliente?: string;
+    email?: string;
+    telefono?: string;
+  }) {
+    await this.send({
+      to: this.adminEmail,
+      from: this.fromEmail,
+      subject: `[Acción requerida] Pago sin reserva — #${datos.codigo}`,
+      html: buildEmailHtml({
+        iconBg: '#fee2e2', iconContent: '!', iconColor: '#b91c1c',
+        title: 'PAGO SIN RESERVA',
+        subtitle: 'ePayco aprobó un pago, pero la reserva ya se había liberado por no pagarse a tiempo. Hay que devolverle la plata al cliente o reubicarlo en otro horario.',
+        badgeCode: datos.codigo,
+        badgeLabel: 'Código de la reserva',
+        badgeColor: '#f87171',
+        rows: [
+          { label: 'Referencia ePayco', value: datos.refPayco },
+          { label: 'Transacción', value: datos.transaccion },
+          { label: 'Monto', value: `$${datos.monto} COP`, highlight: true },
+          { label: 'Cliente', value: datos.cliente || '-' },
+          { label: 'Email', value: datos.email || '-' },
+          { label: 'Teléfono', value: datos.telefono || '-' },
+        ],
+        alertBox: {
+          bg: '#fef3c7', color: '#92400e',
+          text: 'Búscalo en tu panel de ePayco con la referencia. Si el horario sigue libre, puedes crear la reserva a mano; si no, haz la devolución desde ePayco.',
+        },
+      }),
+    });
+  }
+
   async sendCancellationConfirmation(booking: Booking & { _id: any }) {
     await this.send({
       to: booking.guestEmail,
