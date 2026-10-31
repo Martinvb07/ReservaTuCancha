@@ -7,7 +7,7 @@ import {
   Users, UserCheck, FileText, Zap,
   ArrowUpRight, TrendingUp, TrendingDown, Minus,
   ChevronRight, Clock, CheckCircle, XCircle, Bell, BarChart3,
-  CreditCard, AlertCircle,
+  AlertCircle,
 } from 'lucide-react';
 import {
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
@@ -50,7 +50,7 @@ export function AdminHomeWidgets() {
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
           {[1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-28 rounded-2xl" />)}
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-20 rounded-2xl" />)}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -133,7 +133,6 @@ export function AdminHomeWidgets() {
   const quickActions = [
     { href: '/dashboard/admin/solicitudes',  label: 'Solicitudes',   desc: `${stats.pendingSolicitudes ?? 0} pendientes`,  icon: FileText,  color: 'bg-lime-400',   text: 'text-gray-900', hot: (stats.pendingSolicitudes ?? 0) > 0 },
     { href: '/dashboard/admin/usuarios',     label: 'Usuarios',      desc: `${stats.activeOwners ?? 0} activos`,           icon: Users,     color: 'bg-blue-600',   text: 'text-white',    hot: false },
-    { href: '/dashboard/admin/clubes',label: 'Liquidación',   desc: 'Pagos a los clubes',                               icon: CreditCard,color: 'bg-yellow-500', text: 'text-white',    hot: false },
     { href: '/dashboard/admin/cambios',      label: 'Changelog',     desc: 'Notificar a owners',                           icon: Bell,      color: 'bg-purple-600', text: 'text-white',    hot: false },
     { href: '/dashboard/admin/reportes',     label: 'Reportes',      desc: 'Métricas globales',                            icon: BarChart3, color: 'bg-slate-800',  text: 'text-white',    hot: false },
   ];
