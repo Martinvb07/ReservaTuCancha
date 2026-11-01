@@ -3,6 +3,8 @@ name: CI y Deploy a VPS
 on:
   push:
     branches: [main]
+  # En un pull request solo corre la verificación; el deploy exige main.
+  pull_request:
   workflow_dispatch:
 
 # Nunca dos deploys simultáneos sobre el mismo servidor.
@@ -33,6 +35,12 @@ jobs:
           npm ci
           npm run build
 
+      # Comisiones, confirmación de ePayco y demás lógica con plata: si una
+      # prueba falla, no se despliega.
+      - name: Backend — pruebas
+        working-directory: Backend
+        run: npm test -- --ci
+
       # El build real de Next corre en el VPS (necesita los NEXT_PUBLIC_* de
       # producción); aquí solo se valida que el código tipa bien.
       - name: Frontend — dependencias y typecheck
@@ -44,6 +52,7 @@ jobs:
   desplegar:
     name: Desplegar en VPS
     needs: ci
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: produccion
