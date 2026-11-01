@@ -5,10 +5,13 @@ import { Toaster } from 'sonner';
 import Providers from '@/components/layout/Providers';
 import ProgressBar from '@/components/layout/ProgressBar';
 import { cn } from "@/lib/utils";
+import { SITE_URL } from '@/lib/site';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
+  /* Base para las URLs absolutas de Open Graph y las canónicas. */
+  metadataBase: new URL(SITE_URL),
   title: {
     default: 'ReservaTuCancha — Fútbol, Pádel y Voley Playa',
     template: '%s | ReservaTuCancha',
@@ -20,6 +23,8 @@ export const metadata: Metadata = {
     locale: 'es_CO',
     siteName: 'ReservaTuCancha',
   },
+  twitter: { card: 'summary_large_image' },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

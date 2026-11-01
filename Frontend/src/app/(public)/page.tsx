@@ -1,4 +1,6 @@
 import HomeClient from './HomeClient';
+import JsonLd from '@/components/seo/JsonLd';
+import { jsonLdSitio } from '@/lib/seo';
 
 async function getPublicStats() {
   try {
@@ -20,5 +22,10 @@ async function getPublicStats() {
 
 export default async function HomePage() {
   const stats = await getPublicStats();
-  return <HomeClient stats={stats} />;
+  return (
+    <>
+      <JsonLd data={jsonLdSitio()} />
+      <HomeClient stats={stats} />
+    </>
+  );
 }

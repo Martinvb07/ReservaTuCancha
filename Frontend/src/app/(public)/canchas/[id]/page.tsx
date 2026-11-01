@@ -9,6 +9,8 @@ import SportIcon from '@/components/ui/SportIcon';
 import CourtLocationMap from '@/components/map/CourtLocationMap';
 import { getSport } from '@/lib/constants';
 import { amenityIcon } from '@/lib/amenityIcons';
+import JsonLd from '@/components/seo/JsonLd';
+import { jsonLdCancha } from '@/lib/seo';
 
 async function getCourt(id: string) {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/courts/${id}`, {
@@ -43,9 +45,11 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   return {
     title,
     description,
+    alternates: { canonical: `/canchas/${params.id}` },
     openGraph: {
       title,
       description,
+      url: `/canchas/${params.id}`,
       images: court.photos?.[0] ? [{ url: court.photos[0], width: 1200, height: 630 }] : [],
       type: 'website',
       locale: 'es_CO',
@@ -84,6 +88,7 @@ export default async function CourtDetailPage({
 
   return (
     <main className="min-h-screen bg-white">
+      <JsonLd data={jsonLdCancha(court, reviews)} />
       {/* ── HERO ─────────────────────────────────────────────────── */}
       <section className="relative h-64 md:h-80 overflow-hidden bg-gray-900">
         <Image src={photos[0]} alt={court.name} fill priority className="object-cover opacity-55" />

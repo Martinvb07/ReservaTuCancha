@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { MapPin, Phone, Star, Users, Trophy, Camera, Clock } from 'lucide-react';
 import { getSportIcon } from '@/components/ui/SportIcons';
+import JsonLd from '@/components/seo/JsonLd';
+import { jsonLdClub } from '@/lib/seo';
 
 const API = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ?? 'http://localhost:4000';
 
@@ -20,10 +22,13 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const club = await getClub(params.slug);
   if (!club) return { title: 'Club no encontrado' };
   return {
-    title: `${club.name} — ReservaTuCancha`,
+    /* El template del layout ya agrega "| ReservaTuCancha". */
+    title: club.city ? `${club.name} — Canchas en ${club.city}` : club.name,
+    alternates: { canonical: `/club/${club.slug ?? params.slug}` },
     description: club.description || `Reserva canchas en ${club.name}, ${club.city}. ${club.totalCourts} cancha${club.totalCourts !== 1 ? 's' : ''} disponible${club.totalCourts !== 1 ? 's' : ''}.`,
     openGraph: {
       title: club.name,
+      url: `/club/${club.slug ?? params.slug}`,
       description: club.description || `Reserva en ${club.name}`,
       images: club.courts?.[0]?.photos?.[0] ? [{ url: club.courts[0].photos[0] }] : [],
     },
@@ -64,6 +69,7 @@ export default async function ClubPublicPage({ params }: { params: { slug: strin
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <JsonLd data={jsonLdClub(club)} />
 
       {/* Hero */}
       <div className="bg-gray-900 text-white">

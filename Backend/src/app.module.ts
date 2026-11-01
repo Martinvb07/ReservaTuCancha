@@ -20,6 +20,7 @@ import { ClubsModule } from './modules/clubs/clubs.module';
 import { ChangelogModule } from './modules/changelog/changelog.module';
 import { CobrosModule } from './modules/cobros/cobros.module';
 import { AppMovilModule } from './modules/app-movil/app-movil.module';
+import { SeoModule } from './modules/seo/seo.module';
 
 @Module({
   imports: [
@@ -51,7 +52,8 @@ import { AppMovilModule } from './modules/app-movil/app-movil.module';
     AnalyticsModule,
     SolicitudesModule,
     ClubsModule,
-    ChangelogModule,   // ← nuevo
+    ChangelogModule,
+    SeoModule,
   ],
   providers: [
     /* Sin este provider el ThrottlerModule no hace nada: estaba importado pero
