@@ -32,7 +32,7 @@ export default function OwnerSoportePage() {
       {/* Header */}
       <div>
         <p className="text-lime-600 font-semibold text-sm uppercase tracking-widest flex items-center gap-2 mb-1">
-          <span>✦</span> Panel Propietario
+          Panel Propietario
         </p>
         <h1 className="text-3xl font-black text-gray-900 uppercase">Soporte</h1>
         <p className="text-gray-500 text-sm mt-1">Estamos aquí para ayudarte con cualquier duda</p>
@@ -43,11 +43,11 @@ export default function OwnerSoportePage() {
         {[
           { icon: MessageSquare, title: 'Chat en vivo',      desc: 'Respuesta en menos de 5 min', cta: 'Iniciar chat',   color: 'bg-green-50',  iconColor: 'text-green-600',  badge: 'Más rápido' },
           { icon: Mail,         title: 'Email',              desc: 'Respondemos en 24 horas',      cta: 'Enviar email',  color: 'bg-blue-50',   iconColor: 'text-blue-600',   badge: '' },
-          { icon: Phone,        title: 'WhatsApp',           desc: 'Atención personalizada',       cta: 'Abrir chat',   color: 'bg-emerald-50',iconColor: 'text-emerald-600',badge: '' },
+          { icon: Phone,        title: 'WhatsApp',           desc: 'Atención personalizada',       cta: 'Abrir chat',   color: 'bg-green-50',iconColor: 'text-green-600',badge: '' },
         ].map(c => (
           <div key={c.title} className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-shadow relative">
             {c.badge && (
-              <span className="absolute top-4 right-4 text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+              <span className="absolute top-4 right-4 text-[11px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
                 {c.badge}
               </span>
             )}
@@ -71,7 +71,7 @@ export default function OwnerSoportePage() {
 
       {/* FAQ */}
       <div className="space-y-4">
-        <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest">Preguntas frecuentes</h2>
+        <h2 className="text-sm font-black text-gray-900 tracking-widest">Preguntas frecuentes</h2>
         <FaqAccordion
           items={FAQ}
           questionClassName="font-bold text-gray-800 text-sm"
@@ -81,7 +81,7 @@ export default function OwnerSoportePage() {
 
       {/* Formulario */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
-        <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest">Envíanos un mensaje</h2>
+        <h2 className="text-sm font-black text-gray-900 tracking-widest">Envíanos un mensaje</h2>
 
         {sent ? (
           <div className="text-center py-10 space-y-3">

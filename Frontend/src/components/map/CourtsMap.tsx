@@ -236,7 +236,7 @@ function MapCourtCard({ point, query }: { point: CourtPoint; query?: string }) {
           {court.name}
         </p>
         <p className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
-          <MapPin className="h-3 w-3 shrink-0 text-gray-400" />
+          <MapPin className="h-3 w-3 shrink-0 text-gray-500" />
           <span className="truncate">{court.location?.address || court.location?.city || 'Colombia'}</span>
         </p>
         {point.approx && (
@@ -244,7 +244,7 @@ function MapCourtCard({ point, query }: { point: CourtPoint; query?: string }) {
         )}
         <p className="text-gray-900 mt-2">
           <span className="font-bold">${court.pricePerHour.toLocaleString('es-CO')}</span>
-          <span className="text-gray-400 text-[11px] font-normal"> COP / hora</span>
+          <span className="text-gray-500 text-[11px] font-normal"> COP / hora</span>
         </p>
       </div>
     </Link>

@@ -240,7 +240,7 @@ export default function SupportChat({ open, onOpenChange }: Props) {
               <Bot className="h-5 w-5" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-black uppercase tracking-wide">{tree.meta.titulo}</p>
+              <p className="truncate text-sm font-black tracking-wide">{tree.meta.titulo}</p>
               <p className="flex items-center gap-1.5 text-xs text-gray-400">
                 <span className="h-1.5 w-1.5 rounded-full bg-lime-400" />
                 {tree.meta.subtitulo}
@@ -324,9 +324,9 @@ export default function SupportChat({ open, onOpenChange }: Props) {
                   >
                     {opcion.texto}
                     {opcion.url && !opcion.url.startsWith('/') ? (
-                      <ExternalLink className="h-3.5 w-3.5 shrink-0 text-gray-400 transition-colors group-hover:text-lime-600" />
+                      <ExternalLink className="h-3.5 w-3.5 shrink-0 text-gray-500 transition-colors group-hover:text-lime-600" />
                     ) : (
-                      <ChevronRight className="h-3.5 w-3.5 shrink-0 text-gray-400 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-lime-600" />
+                      <ChevronRight className="h-3.5 w-3.5 shrink-0 text-gray-500 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-lime-600" />
                     )}
                   </button>
                 ))}
@@ -336,7 +336,7 @@ export default function SupportChat({ open, onOpenChange }: Props) {
 
           {/* Pie */}
           <footer className="border-t border-gray-100 bg-white px-4 py-3">
-            <p className="text-center text-[11px] leading-relaxed text-gray-400">
+            <p className="text-center text-[11px] leading-relaxed text-gray-500">
               ¿Prefieres hablar con una persona?{' '}
               <a
                 href={WHATSAPP_URL}

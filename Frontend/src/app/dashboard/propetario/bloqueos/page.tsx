@@ -190,7 +190,7 @@ export default function BloqueosPage() {
               </div>
 
               <div>
-                <label className={lbl}>Motivo <span className="text-gray-400 font-medium normal-case">(opcional)</span></label>
+                <label className={lbl}>Motivo <span className="text-gray-500 font-medium normal-case">(opcional)</span></label>
                 <input type="text" value={reason} onChange={e => setReason(e.target.value)} className={inp}
                   placeholder="Ej: Mantenimiento, Torneo privado..." />
               </div>
@@ -244,7 +244,7 @@ export default function BloqueosPage() {
         <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl">
           <Ban className="h-12 w-12 text-gray-300 mx-auto mb-3" />
           <p className="text-gray-500 font-semibold">No tienes horarios bloqueados</p>
-          <p className="text-gray-400 text-sm mt-1">Los horarios bloqueados no estarán disponibles para reservas</p>
+          <p className="text-gray-500 text-sm mt-1">Los horarios bloqueados no estarán disponibles para reservas</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -261,7 +261,7 @@ export default function BloqueosPage() {
                 className={`flex items-center justify-between gap-4 p-4 rounded-xl border transition-colors ${isPast ? 'border-gray-100 bg-gray-50' : 'border-orange-100 bg-white hover:border-orange-200'}`}>
                 <div className="flex items-center gap-4 flex-1 min-w-0">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isPast ? 'bg-gray-200' : 'bg-orange-100'}`}>
-                    <Ban className={`h-5 w-5 ${isPast ? 'text-gray-400' : 'text-orange-500'}`} />
+                    <Ban className={`h-5 w-5 ${isPast ? 'text-gray-500' : 'text-orange-500'}`} />
                   </div>
                   <div className="min-w-0">
                     <p className="font-bold text-gray-900 text-sm truncate">{block.courtName}</p>
@@ -286,7 +286,7 @@ export default function BloqueosPage() {
                   <button
                     onClick={() => deleteMutation.mutate(block._id)}
                     disabled={deleteMutation.isPending}
-                    className="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition-colors shrink-0"
+                    className="p-2 hover:bg-red-50 rounded-lg text-gray-500 hover:text-red-500 transition-colors shrink-0"
                     title="Eliminar bloqueo"
                   >
                     <Trash2 className="h-4 w-4" />

@@ -160,7 +160,7 @@ function ReprogramarContenido() {
       <Marco>
         <div className="bg-gray-800 rounded-3xl p-8 text-center space-y-3">
           <AlertCircle className="h-12 w-12 text-amber-400 mx-auto" />
-          <h2 className="text-2xl font-black text-white uppercase">Link incompleto</h2>
+          <h2 className="text-2xl font-black text-white">Link incompleto</h2>
           <p className="text-gray-400">Abre el enlace tal como llegó en tu correo de confirmación.</p>
         </div>
       </Marco>
@@ -182,7 +182,7 @@ function ReprogramarContenido() {
       <Marco>
         <div className="bg-gray-800 rounded-3xl p-8 text-center space-y-3">
           <XCircle className="h-12 w-12 text-red-400 mx-auto" />
-          <h2 className="text-2xl font-black text-white uppercase">No se puede cambiar</h2>
+          <h2 className="text-2xl font-black text-white">No se puede cambiar</h2>
           <p className="text-gray-400">El link expiró o la reserva ya fue cancelada.</p>
           <Link href="/" className="inline-block text-green-400 font-semibold hover:underline pt-2">Ir al inicio</Link>
         </div>
@@ -196,7 +196,7 @@ function ReprogramarContenido() {
       <Marco>
         <div className="bg-gray-800 rounded-3xl p-8 text-center space-y-4">
           <CheckCircle2 className="h-14 w-14 text-green-400 mx-auto" />
-          <h2 className="text-2xl font-black text-white uppercase">Horario cambiado</h2>
+          <h2 className="text-2xl font-black text-white">Horario cambiado</h2>
           <p className="text-gray-300">
             Tu reserva en <strong className="text-white">{cancha.name}</strong> quedó para el{' '}
             <strong className="text-white capitalize">
@@ -274,11 +274,11 @@ function ReprogramarContenido() {
                       className={`rounded-xl py-2.5 text-center transition-all border ${
                         activo ? 'bg-green-600 border-green-500 text-white' : 'bg-gray-700/50 border-gray-600 text-gray-300 hover:border-green-500'
                       }`}>
-                      <span className="block text-[10px] uppercase font-bold opacity-70">
+                      <span className="block text-[11px] uppercase font-bold opacity-70">
                         {format(d, 'EEE', { locale: es })}
                       </span>
                       <span className="block text-lg font-black leading-tight">{format(d, 'd')}</span>
-                      <span className="block text-[10px] opacity-70">{format(d, 'MMM', { locale: es })}</span>
+                      <span className="block text-[11px] opacity-70">{format(d, 'MMM', { locale: es })}</span>
                     </button>
                   );
                 })}

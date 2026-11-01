@@ -52,7 +52,7 @@ function EntryCard({ entry, latest }: { entry: Changelog; latest: boolean }) {
           </span>
         )}
         {latest && (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-lime-400 text-gray-900 text-[11.5px] font-black uppercase tracking-wide">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-lime-400 text-gray-900 text-[11.5px] font-black tracking-wide">
             <span className="w-1.5 h-1.5 rounded-full bg-gray-900 rtc-live" /> Último
           </span>
         )}
@@ -66,7 +66,7 @@ function EntryCard({ entry, latest }: { entry: Changelog; latest: boolean }) {
       <h3 className="text-lg md:text-xl font-black text-gray-900 leading-tight">{entry.titulo}</h3>
 
       {date && (
-        <p className="text-xs text-gray-400 mt-1.5 capitalize">
+        <p className="text-xs text-gray-500 mt-1.5 capitalize">
           {format(date, "d 'de' MMMM 'de' yyyy", { locale: es })}
         </p>
       )}
@@ -89,7 +89,7 @@ function StatTile({ icon: Icon, value, label }: {
       </span>
       <div className="min-w-0">
         <p className="text-white font-black text-[15px] leading-tight truncate">{value}</p>
-        <p className="text-gray-400 text-[11.5px] leading-tight">{label}</p>
+        <p className="text-gray-500 text-[11.5px] leading-tight">{label}</p>
       </div>
     </div>
   );
@@ -161,7 +161,7 @@ export default function NovedadesPageClient() {
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 py-14 md:py-20">
           <p className="text-lime-400 font-semibold text-xs md:text-sm uppercase tracking-widest flex items-center gap-2 mb-3">
-            <span>✦</span> Novedades
+            Novedades
           </p>
           <h1 className="text-3xl md:text-5xl font-black text-white uppercase leading-[1.05]">
             Lo nuevo en <span className="text-lime-400">ReservaTuCancha</span>
@@ -216,7 +216,7 @@ export default function NovedadesPageClient() {
                   <span className={`relative z-10 flex items-center gap-1.5 ${isActive ? 'text-white' : 'text-gray-600'}`}>
                     {meta ? <meta.icon className="h-3.5 w-3.5" /> : <Rocket className="h-3.5 w-3.5" />}
                     {meta ? meta.label : 'Todas'}
-                    <span className={`tabular-nums text-[11px] ${isActive ? 'text-white/70' : 'text-gray-400'}`}>{count}</span>
+                    <span className={`tabular-nums text-[11px] ${isActive ? 'text-white/70' : 'text-gray-500'}`}>{count}</span>
                   </span>
                 </motion.button>
               );
@@ -244,7 +244,7 @@ export default function NovedadesPageClient() {
         {/* Error */}
         {isError && (
           <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-            <p className="text-lg font-black text-gray-900 uppercase">No pudimos cargar las novedades</p>
+            <p className="text-lg font-black text-gray-900">No pudimos cargar las novedades</p>
             <p className="text-gray-500 text-sm mt-2">Revisa tu conexión e inténtalo de nuevo.</p>
             <button
               type="button"
@@ -263,7 +263,7 @@ export default function NovedadesPageClient() {
             <span className="w-14 h-14 rounded-2xl bg-gray-50 text-gray-300 grid place-items-center mx-auto mb-4">
               <Inbox className="h-7 w-7" />
             </span>
-            <p className="text-lg font-black text-gray-900 uppercase">
+            <p className="text-lg font-black text-gray-900">
               {entries.length === 0 ? 'Todavía no hay novedades' : 'Nada en esta categoría'}
             </p>
             <p className="text-gray-500 text-sm mt-2">
@@ -281,7 +281,7 @@ export default function NovedadesPageClient() {
             {groups.map(([month, items], gi) => (
               <div key={month}>
                 <FadeIn delay={gi * 60}>
-                  <h2 className="text-[11px] font-black uppercase tracking-[.16em] text-gray-400 mb-4 capitalize">
+                  <h2 className="text-[11px] font-black tracking-[.16em] text-gray-500 mb-4 capitalize">
                     {month}
                   </h2>
                 </FadeIn>

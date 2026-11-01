@@ -51,7 +51,7 @@ export default function SelectField({
         </span>
         <SelectPrimitive.Icon asChild>
           {/* el data-state vive en el trigger, por eso el group- */}
-          <ChevronDown className="h-4 w-4 shrink-0 text-gray-400 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+          <ChevronDown className="h-4 w-4 shrink-0 text-gray-500 transition-transform duration-200 group-data-[state=open]:rotate-180" />
         </SelectPrimitive.Icon>
       </SelectPrimitive.Trigger>
 
@@ -65,7 +65,7 @@ export default function SelectField({
                      data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95
                      data-[side=bottom]:slide-in-from-top-1 data-[side=top]:slide-in-from-bottom-1"
         >
-          <SelectPrimitive.ScrollUpButton className="flex items-center justify-center bg-white py-1 text-gray-400">
+          <SelectPrimitive.ScrollUpButton className="flex items-center justify-center bg-white py-1 text-gray-500">
             <ChevronUp className="h-4 w-4" />
           </SelectPrimitive.ScrollUpButton>
 
@@ -85,7 +85,7 @@ export default function SelectField({
             ))}
           </SelectPrimitive.Viewport>
 
-          <SelectPrimitive.ScrollDownButton className="flex items-center justify-center bg-white py-1 text-gray-400">
+          <SelectPrimitive.ScrollDownButton className="flex items-center justify-center bg-white py-1 text-gray-500">
             <ChevronDown className="h-4 w-4" />
           </SelectPrimitive.ScrollDownButton>
         </SelectPrimitive.Content>

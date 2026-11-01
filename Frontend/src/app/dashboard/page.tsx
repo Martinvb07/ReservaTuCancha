@@ -81,13 +81,13 @@ export default async function DashboardPage() {
     const kpis = [
       { title: 'Reservas totales',  value: stats?.totalBookings ?? 0,    icon: CalendarDays, color: 'text-blue-600',   bg: 'bg-blue-50'    },
       { title: 'Confirmadas',       value: stats?.confirmedBookings ?? 0, icon: CheckCircle,  color: 'text-green-600',  bg: 'bg-green-50'   },
-      { title: 'Ingresos',          value: `$${((stats?.totalRevenue ?? 0)/1000).toFixed(0)}K`, icon: DollarSign, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+      { title: 'Ingresos',          value: `$${((stats?.totalRevenue ?? 0)/1000).toFixed(0)}K`, icon: DollarSign, color: 'text-green-600', bg: 'bg-green-50' },
       { title: 'Mis canchas',       value: stats?.totalCourts ?? 0,       icon: Building2,    color: 'text-purple-600', bg: 'bg-purple-50'  },
     ];
     return (
       <div className="space-y-8 max-w-6xl mx-auto">
         <div>
-          <p className="text-lime-600 font-semibold text-sm uppercase tracking-widest flex items-center gap-2 mb-1"><span>✦</span> Panel Propietario</p>
+          <p className="text-lime-600 font-semibold text-sm uppercase tracking-widest flex items-center gap-2 mb-1">Panel Propietario</p>
           <h1 className="text-3xl font-black text-gray-900 uppercase">Hola, {name}</h1>
           <p className="text-gray-500 text-sm mt-1">Resumen de tus canchas y reservas</p>
         </div>
@@ -108,7 +108,7 @@ export default async function DashboardPage() {
           {kpis.map(k => (
             <div key={k.title} className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{k.title}</p>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">{k.title}</p>
                 <div className={`w-8 h-8 rounded-lg ${k.bg} flex items-center justify-center`}><k.icon className={`h-4 w-4 ${k.color}`} /></div>
               </div>
               <p className="text-2xl font-black text-gray-900">{k.value}</p>
@@ -140,7 +140,7 @@ export default async function DashboardPage() {
     <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto">
       <div>
         <p className="text-lime-600 font-semibold text-xs sm:text-sm uppercase tracking-widest flex items-center gap-2 mb-1">
-          <span>✦</span> Panel Administrador
+          Panel Administrador
         </p>
         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 uppercase tracking-tight">Hola, {name}</h1>
         <p className="text-slate-500 text-xs sm:text-sm mt-1">

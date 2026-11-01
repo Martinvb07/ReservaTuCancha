@@ -188,7 +188,7 @@ export default function DashboardSidebar({ role, userName, variant = 'desktop' }
             <div className="min-w-0">
               <p className="truncate text-sm font-bold text-slate-900">{userName}</p>
               <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                <span className="text-[9px] font-bold uppercase tracking-widest text-green-600">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-green-600">
                   {role === 'admin' ? 'Administrador' : 'Propietario'}
                 </span>
               </div>

@@ -77,7 +77,7 @@ export function AdminHomeWidgets() {
       value: stats.activeOwners ?? 0,
       change: `de ${stats.totalOwners ?? 0} totales`,
       trend: 'neutral',
-      icon: UserCheck, color: 'text-emerald-600', bg: 'bg-emerald-50',
+      icon: UserCheck, color: 'text-green-600', bg: 'bg-green-50',
       href: '/dashboard/admin/usuarios',
     },
     {
@@ -155,8 +155,8 @@ export function AdminHomeWidgets() {
                 <ArrowUpRight className="h-4 w-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
               </div>
               <p className="text-2xl font-black text-slate-900 tracking-tight mt-3">{k.value}</p>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-0.5 leading-tight">{k.title}</p>
-              <p className={`flex items-center gap-1 text-[10px] font-semibold mt-1.5 ${t.cls}`}>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5 leading-tight">{k.title}</p>
+              <p className={`flex items-center gap-1 text-[11px] font-semibold mt-1.5 ${t.cls}`}>
                 <t.icon className="h-3 w-3 shrink-0" />
                 <span className="truncate">{k.change}</span>
               </p>
@@ -206,7 +206,7 @@ export function AdminHomeWidgets() {
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 justify-center">
                 {estadoData.map(d => (
-                  <span key={d.name} className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                  <span key={d.name} className="flex items-center gap-1.5 text-[11px] text-slate-500">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color }} />
                     {d.name} ({d.value})
                   </span>
@@ -268,7 +268,7 @@ export function AdminHomeWidgets() {
                   <p className="text-xs text-slate-700 leading-snug truncate">
                     {s.estado === 'pendiente' ? 'Solicitud' : s.estado === 'aprobada' ? 'Aprobada' : 'Rechazada'}: &quot;{s.businessName}&quot;
                   </p>
-                  <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
+                  <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
                     <Clock className="h-2.5 w-2.5" />{timeAgo(s.createdAt)}
                   </p>
                 </div>

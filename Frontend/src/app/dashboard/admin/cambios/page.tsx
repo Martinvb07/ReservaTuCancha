@@ -79,8 +79,8 @@ function PreviewModal({ cambio, onClose, onSend, loading }: {
         {/* Cabecera fija */}
         <div className="flex items-start justify-between gap-3 p-6 pb-4 border-b border-gray-100 flex-none">
           <div className="min-w-0">
-            <h2 className="text-xl font-black text-gray-900 uppercase">Vista previa</h2>
-            <p className="text-gray-400 text-sm mt-1">Así verán el cambio los propietarios</p>
+            <h2 className="text-xl font-black text-gray-900">Vista previa</h2>
+            <p className="text-gray-500 text-sm mt-1">Así verán el cambio los propietarios</p>
           </div>
           <button type="button" onClick={onClose} aria-label="Cerrar vista previa"
             className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 grid place-items-center text-gray-600 transition-colors flex-none">
@@ -98,7 +98,7 @@ function PreviewModal({ cambio, onClose, onSend, loading }: {
               </div>
               <div className="min-w-0">
                 <p className="text-xs font-bold text-gray-900">ReservaTuCancha</p>
-                <p className="text-[10px] text-gray-400 truncate">notificaciones@reservatucancha.co</p>
+                <p className="text-[11px] text-gray-500 truncate">notificaciones@reservatucancha.co</p>
               </div>
               <TagChip tag={cambio.tag} className="ml-auto shrink-0" />
             </div>
@@ -107,14 +107,14 @@ function PreviewModal({ cambio, onClose, onSend, loading }: {
               {cambio.descripcion || 'Sin descripción'}
             </p>
             {version && (
-              <p className="text-xs text-gray-400 pt-2 border-t border-gray-200">
+              <p className="text-xs text-gray-500 pt-2 border-t border-gray-200">
                 Versión {version} · {new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
             )}
           </div>
 
           <p className="text-xs text-gray-500 text-center flex items-center justify-center gap-1.5">
-            <Users className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+            <Users className="h-3.5 w-3.5 text-gray-500 shrink-0" />
             Se enviará a: <strong className="text-gray-700">{DESTINATARIOS.find(d => d.value === cambio.destinatarios)?.label}</strong>
           </p>
         </div>
@@ -218,7 +218,7 @@ export default function AdminCambiosPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <p className="text-lime-600 font-semibold text-sm uppercase tracking-widest flex items-center gap-2 mb-1">
-            <span>✦</span> Administración
+            Administración
           </p>
           <h1 className="text-3xl font-black text-gray-900 uppercase">Cambios y actualizaciones</h1>
           <p className="text-gray-500 text-sm mt-1">Publica actualizaciones y notifica a tus propietarios por email</p>
@@ -268,7 +268,7 @@ export default function AdminCambiosPage() {
                 );
               })}
             </div>
-            <p className="text-xs text-gray-400 mt-2">{CHANGELOG_TAGS[form.tag].hint}</p>
+            <p className="text-xs text-gray-500 mt-2">{CHANGELOG_TAGS[form.tag].hint}</p>
           </div>
 
           {/* Título */}
@@ -284,7 +284,7 @@ export default function AdminCambiosPage() {
             <textarea rows={8} className={inp} style={{ resize: 'none' }} maxLength={DESCRIPCION_MAX}
               placeholder="Describe los cambios en detalle. Este texto llegará por email a los propietarios y se publicará en /novedades..."
               value={form.descripcion} onChange={e => setForm({ ...form, descripcion: e.target.value })} />
-            <p className={`text-xs mt-1 text-right tabular-nums ${restantes <= 120 ? 'text-orange-500 font-semibold' : 'text-gray-400'}`}>
+            <p className={`text-xs mt-1 text-right tabular-nums ${restantes <= 120 ? 'text-orange-500 font-semibold' : 'text-gray-500'}`}>
               {form.descripcion.length}/{DESCRIPCION_MAX}
             </p>
           </div>
@@ -292,7 +292,7 @@ export default function AdminCambiosPage() {
           {/* Versión y destinatarios */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className={lbl}>Versión <span className="text-gray-400 font-normal normal-case">(opcional)</span></label>
+              <label className={lbl}>Versión <span className="text-gray-500 font-normal normal-case">(opcional)</span></label>
               <input className={inp} placeholder="Ej: 2.4.0"
                 value={form.version}
                 onChange={e => { versionTocada.current = true; setForm({ ...form, version: e.target.value }); }} />
@@ -300,7 +300,7 @@ export default function AdminCambiosPage() {
               {/* Pista de versión: qué se publicó por última vez y qué toca
                   ahora. El botón vuelve a la sugerencia si la editaron. */}
               {sugerencia ? (
-                <p className="text-[11px] text-gray-400 mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                <p className="text-[11px] text-gray-500 mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
                   {sugerencia.ultima
                     ? <>Última publicada: <strong className="text-gray-600">{sugerencia.ultima}</strong> ·</>
                     : <>Primera publicación ·</>}
@@ -317,7 +317,7 @@ export default function AdminCambiosPage() {
                   )}
                 </p>
               ) : (
-                <p className="text-[11px] text-gray-400 mt-1">La "v" se agrega sola al mostrarla</p>
+                <p className="text-[11px] text-gray-500 mt-1">La "v" se agrega sola al mostrarla</p>
               )}
             </div>
             <div>
@@ -328,7 +328,7 @@ export default function AdminCambiosPage() {
                 options={DESTINATARIOS}
                 aria-label="Destinatarios del cambio"
               />
-              <p className="text-[11px] text-gray-400 mt-1">Define a quién le llega el email</p>
+              <p className="text-[11px] text-gray-500 mt-1">Define a quién le llega el email</p>
             </div>
           </div>
 
@@ -352,7 +352,7 @@ export default function AdminCambiosPage() {
             </button>
           </div>
           {incompleto && (
-            <p className="text-xs text-gray-400 text-center">Completa título y descripción para continuar</p>
+            <p className="text-xs text-gray-500 text-center">Completa título y descripción para continuar</p>
           )}
           </div>
         </div>
@@ -362,7 +362,7 @@ export default function AdminCambiosPage() {
           <div className="flex items-center justify-between gap-3 pb-4 mb-5 border-b border-gray-100">
             <div className="min-w-0">
               <h2 className="text-lg font-black text-gray-900 flex items-center gap-2">
-                <History className="h-[18px] w-[18px] text-gray-400 shrink-0" />
+                <History className="h-[18px] w-[18px] text-gray-500 shrink-0" />
                 Historial
               </h2>
               <p className="text-sm text-gray-500 mt-0.5">Lo que ya salió, de lo más reciente a lo más viejo</p>
@@ -379,8 +379,8 @@ export default function AdminCambiosPage() {
               <span className="w-14 h-14 rounded-2xl bg-gray-50 text-gray-300 grid place-items-center mx-auto mb-4">
                 <Bell className="h-7 w-7" />
               </span>
-              <p className="font-black text-gray-400 uppercase text-sm">Sin cambios publicados</p>
-              <p className="text-gray-400 text-xs mt-1">Los cambios que publiques aparecerán aquí</p>
+              <p className="font-black text-gray-500 text-sm">Sin cambios publicados</p>
+              <p className="text-gray-500 text-xs mt-1">Los cambios que publiques aparecerán aquí</p>
             </div>
           ) : (
             <div className="space-y-3 max-h-[560px] overflow-y-auto no-scrollbar -mr-1 pr-1">
@@ -404,7 +404,7 @@ export default function AdminCambiosPage() {
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
                         <CheckCircle className="h-3.5 w-3.5 text-green-500" />
-                        <span className="text-[10px] text-green-600 font-bold">Enviado</span>
+                        <span className="text-[11px] text-green-600 font-bold">Enviado</span>
                       </div>
                     </div>
 
@@ -412,11 +412,11 @@ export default function AdminCambiosPage() {
                     <p className="text-xs text-gray-500 line-clamp-2 whitespace-pre-line leading-relaxed">{c.descripcion}</p>
 
                     <div className="flex items-center justify-between gap-3 pt-2 border-t border-gray-50">
-                      <p className="text-[11px] text-gray-400 flex items-center gap-1.5">
+                      <p className="text-[11px] text-gray-500 flex items-center gap-1.5">
                         <Clock className="h-3 w-3 shrink-0" />
                         {new Date(c.createdAt).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </p>
-                      <p className="text-[11px] text-gray-400 flex items-center gap-1.5 min-w-0">
+                      <p className="text-[11px] text-gray-500 flex items-center gap-1.5 min-w-0">
                         <Users className="h-3 w-3 shrink-0" />
                         <span className="truncate">{DESTINATARIOS.find(d => d.value === c.destinatarios)?.label ?? c.destinatarios}</span>
                       </p>

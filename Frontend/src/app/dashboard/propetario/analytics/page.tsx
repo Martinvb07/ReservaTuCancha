@@ -40,13 +40,13 @@ function KpiCard({
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between mb-3">
-        <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest leading-tight pr-2">{label}</p>
+        <p className="text-[11px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest leading-tight pr-2">{label}</p>
         <div className={`w-8 h-8 shrink-0 rounded-lg ${bg} flex items-center justify-center`}>
           <Icon className={`h-4 w-4 ${color}`} />
         </div>
       </div>
       <p className="text-2xl sm:text-3xl font-black text-gray-900 leading-none">{value}</p>
-      {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
+      {sub && <p className="text-xs text-gray-500 mt-1">{sub}</p>}
     </div>
   );
 }
@@ -59,8 +59,8 @@ function ChartCard({ title, subtitle, icon: Icon, iconBg, iconColor, children }:
     <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h2 className="font-black text-gray-900 uppercase text-xs sm:text-sm tracking-widest">{title}</h2>
-          {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+          <h2 className="font-black text-gray-900 text-xs sm:text-sm tracking-widest">{title}</h2>
+          {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
         </div>
         {Icon && (
           <div className={`w-8 h-8 rounded-lg ${iconBg ?? 'bg-gray-50'} flex items-center justify-center shrink-0`}>
@@ -120,7 +120,7 @@ export default function OwnerAnalyticsPage() {
       {/* Header */}
       <div>
         <p className="text-lime-600 font-semibold text-xs uppercase tracking-widest flex items-center gap-2 mb-1">
-          <span>✦</span> Panel Propietario
+          Panel Propietario
         </p>
         <h1 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase">Analytics</h1>
         <p className="text-gray-500 text-sm mt-1">Rendimiento e ingresos de tus canchas</p>
@@ -134,7 +134,7 @@ export default function OwnerAnalyticsPage() {
           <>
             <KpiCard label="Reservas totales"   value={totalBookings}      icon={CalendarDays}  color="text-blue-600"    bg="bg-blue-50"   />
             <KpiCard label="Confirmadas"         value={confirmedBookings}  icon={CheckCircle2}  color="text-green-600"   bg="bg-green-50"  />
-            <KpiCard label="Ingresos totales"    value={fmt(totalRevenue)}  icon={DollarSign}    color="text-emerald-600" bg="bg-emerald-50" />
+            <KpiCard label="Ingresos totales"    value={fmt(totalRevenue)}  icon={DollarSign}    color="text-green-600" bg="bg-green-50" />
             <KpiCard label="Canchas activas"     value={totalCourts}        icon={Building2}     color="text-purple-600"  bg="bg-purple-50" />
             <KpiCard label="Pendientes"          value={pendingBookings}    icon={Clock}         color="text-amber-600"   bg="bg-amber-50"  />
             <KpiCard label="Canceladas"          value={cancelledBookings}  icon={XCircle}       color="text-red-500"     bg="bg-red-50"    />
@@ -162,7 +162,7 @@ export default function OwnerAnalyticsPage() {
       {/* ── Ingresos + Estado ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-        <ChartCard title="Ingresos (COP)" subtitle="Últimos 12 meses" icon={TrendingUp} iconBg="bg-emerald-50" iconColor="text-emerald-600">
+        <ChartCard title="Ingresos (COP)" subtitle="Últimos 12 meses" icon={TrendingUp} iconBg="bg-green-50" iconColor="text-green-600">
           {isLoading ? <Skeleton className="h-44" /> : monthly.length > 0 ? (
             <ResponsiveContainer width="100%" height={190}>
               <LineChart data={monthly} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
@@ -252,7 +252,7 @@ export default function OwnerAnalyticsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1 gap-2">
                         <span className="text-sm font-bold text-gray-800 truncate">{c.name}</span>
-                        <span className="text-xs font-black text-emerald-600 shrink-0">{fmt(c.revenue)}</span>
+                        <span className="text-xs font-black text-green-600 shrink-0">{fmt(c.revenue)}</span>
                       </div>
                       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <div
@@ -261,8 +261,8 @@ export default function OwnerAnalyticsPage() {
                         />
                       </div>
                       <div className="flex gap-3 mt-1">
-                        <span className="text-[10px] text-gray-400">{c.bookings} reservas</span>
-                        <span className="text-[10px] text-green-500">{c.confirmed} confirmadas</span>
+                        <span className="text-[11px] text-gray-500">{c.bookings} reservas</span>
+                        <span className="text-[11px] text-green-500">{c.confirmed} confirmadas</span>
                       </div>
                     </div>
                   </div>

@@ -80,7 +80,7 @@ export default function ReservaManualDialog({ open, onOpenChange }: { open: bool
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg rounded-2xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 font-black uppercase text-gray-900">
+          <DialogTitle className="flex items-center gap-2 font-black text-gray-900">
             <PhoneCall className="h-5 w-5 text-green-600" /> Anotar reserva
           </DialogTitle>
         </DialogHeader>
@@ -115,11 +115,11 @@ export default function ReservaManualDialog({ open, onOpenChange }: { open: bool
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className={lbl}>Celular <span className="font-normal text-gray-400">(opcional)</span></label>
+              <label className={lbl}>Celular <span className="font-normal text-gray-500">(opcional)</span></label>
               <input type="tel" className={inp} placeholder="300 123 4567" value={f.guestPhone} onChange={set('guestPhone')} />
             </div>
             <div>
-              <label className={lbl}>Correo <span className="font-normal text-gray-400">(opcional)</span></label>
+              <label className={lbl}>Correo <span className="font-normal text-gray-500">(opcional)</span></label>
               <input type="email" className={inp} placeholder="para el recordatorio" value={f.guestEmail} onChange={set('guestEmail')} />
             </div>
           </div>
@@ -132,14 +132,14 @@ export default function ReservaManualDialog({ open, onOpenChange }: { open: bool
               </select>
             </div>
             <div>
-              <label className={lbl}>Cobras <span className="font-normal text-gray-400">(por fecha)</span></label>
+              <label className={lbl}>Cobras <span className="font-normal text-gray-500">(por fecha)</span></label>
               <input type="number" min={0} step={1000} className={inp}
                 placeholder={precioLista ? `$${precioLista.toLocaleString('es-CO')}` : 'Precio de lista'}
                 value={f.precio} onChange={set('precio')} />
             </div>
           </div>
           <div>
-            <label className={lbl}>Notas <span className="font-normal text-gray-400">(opcional)</span></label>
+            <label className={lbl}>Notas <span className="font-normal text-gray-500">(opcional)</span></label>
             <textarea rows={2} className={inp} style={{ resize: 'none' }} value={f.notes} onChange={set('notes')} />
           </div>
 
@@ -147,7 +147,7 @@ export default function ReservaManualDialog({ open, onOpenChange }: { open: bool
             className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white font-bold text-sm py-3 rounded-xl transition-colors">
             {crear.isPending ? 'Anotando…' : f.semanas > 1 ? `Anotar ${f.semanas} semanas` : 'Anotar reserva'}
           </button>
-          <p className="text-[11px] text-center text-gray-400">
+          <p className="text-[11px] text-center text-gray-500">
             No pasa por ePayco ni tiene comisión. Si alguna fecha ya está ocupada, no se anota ninguna y te decimos cuál.
           </p>
         </form>

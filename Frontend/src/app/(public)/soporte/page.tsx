@@ -32,8 +32,8 @@ const CANALES = [
     desc: 'Si tu caso necesita revisión, escríbenos y te atendemos personalmente.',
     cta: 'Abrir WhatsApp',
     href: WHATSAPP,
-    color: 'bg-emerald-50',
-    iconColor: 'text-emerald-600',
+    color: 'bg-green-50',
+    iconColor: 'text-green-600',
   },
   {
     icon: Mail,
@@ -122,7 +122,7 @@ export default function SoportePage() {
                     <c.icon className={`h-5 w-5 ${c.iconColor}`} />
                   </span>
                   {c.badge && (
-                    <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2.5 py-1 rounded-full whitespace-nowrap">
+                    <span className="text-[11px] font-bold bg-green-100 text-green-700 px-2.5 py-1 rounded-full whitespace-nowrap">
                       {c.badge}
                     </span>
                   )}
@@ -153,7 +153,7 @@ export default function SoportePage() {
       {/* ── PREGUNTAS FRECUENTES ─────────────────────────────── */}
       <section className="bg-gray-50 py-12 md:py-16">
         <div className="max-w-4xl mx-auto px-4">
-          <h2 className="text-2xl md:text-3xl font-black text-gray-900 uppercase text-center">Preguntas frecuentes</h2>
+          <h2 className="text-2xl md:text-3xl font-black text-gray-900 text-center">Preguntas frecuentes</h2>
 
           {/* PillTabs y FaqAccordion traen la animación (la píldora que se
               desliza y la respuesta que se despliega): no rehacerlas a mano. */}
@@ -172,7 +172,7 @@ export default function SoportePage() {
       {/* ── CIERRE ───────────────────────────────────────────── */}
       <section className="bg-gray-900 py-12 md:py-16">
         <div className="max-w-3xl mx-auto px-4 text-center">
-          <h2 className="text-2xl md:text-3xl font-black text-white uppercase">¿No encontraste tu respuesta?</h2>
+          <h2 className="text-2xl md:text-3xl font-black text-white">¿No encontraste tu respuesta?</h2>
           <p className="text-gray-400 mt-3 text-sm md:text-base">
             Escríbenos por WhatsApp con tu código de reserva y lo revisamos contigo.
           </p>

@@ -107,7 +107,7 @@ export default function ReservasOwnerPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <p className="text-lime-600 font-semibold text-xs sm:text-sm uppercase tracking-widest flex items-center gap-2 mb-1">
-            <span>✦</span> Panel Propietario
+            Panel Propietario
           </p>
           <h1 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase">Reservas</h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-1">
@@ -155,7 +155,7 @@ export default function ReservasOwnerPage() {
       {/* Filtros (ambas vistas) */}
       <div className="flex flex-col gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
           <input
             type="text"
             placeholder="Buscar por cliente, email o código (#XXXXXXXX)..."
@@ -203,8 +203,8 @@ export default function ReservasOwnerPage() {
           {filtered.length === 0 && (
             <div className="text-center py-16 sm:py-20 bg-white rounded-2xl border border-gray-100">
               <CalendarDays className="h-10 sm:h-12 w-10 sm:w-12 text-gray-300 mx-auto mb-3" />
-              <p className="font-black text-gray-400 uppercase text-xs sm:text-sm">Sin reservas</p>
-              <p className="text-gray-400 text-xs mt-1">
+              <p className="font-black text-gray-500 text-xs sm:text-sm">Sin reservas</p>
+              <p className="text-gray-500 text-xs mt-1">
                 {search || filterStatus !== 'all' ? 'Intenta con otros filtros' : 'Las reservas de tus canchas aparecerán aquí'}
               </p>
             </div>
@@ -223,7 +223,7 @@ export default function ReservasOwnerPage() {
                   >
                     <div className="flex items-start gap-3">
                       <div className="bg-green-50 rounded-xl px-2.5 py-2 text-center min-w-[44px] shrink-0">
-                        <p className="text-[9px] text-green-600 font-bold uppercase leading-none">
+                        <p className="text-[11px] text-green-600 font-bold uppercase leading-none">
                           {format(new Date(booking.date), 'MMM', { locale: es })}
                         </p>
                         <p className="text-lg font-black text-green-700 leading-tight">
@@ -233,17 +233,17 @@ export default function ReservasOwnerPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                           {court && <span className="font-black text-gray-900 text-sm">{court.name}</span>}
-                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${st.pill}`}>
+                          <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${st.pill}`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
                             {STATUS_LABELS[booking.status]}
                           </span>
                           {esManual(booking) && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
                               <Store className="h-3 w-3" /> En el club
                             </span>
                           )}
                           {booking.serieId && (
-                            <span title="Turno fijo semanal" className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-100 text-sky-700">
+                            <span title="Turno fijo semanal" className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-sky-100 text-sky-700">
                               <Repeat className="h-3 w-3" /> Fijo
                             </span>
                           )}
@@ -264,13 +264,13 @@ export default function ReservasOwnerPage() {
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button onClick={() => setSelected(booking)} title="Ver detalles"
-                          className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all">
+                          className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-all">
                           <Eye className="h-3.5 w-3.5" />
                         </button>
                         {/* El pago lo confirma ePayco, no el club. */}
                         {booking.status === 'pending' && (
                           <span title="Se confirma sola cuando ePayco apruebe el pago; si no se paga, el horario se libera"
-                              className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full whitespace-nowrap">
+                              className="text-[11px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full whitespace-nowrap">
                               Esperando pago
                             </span>
                         )}
@@ -284,10 +284,10 @@ export default function ReservasOwnerPage() {
                     </div>
                     <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-gray-50">
                       {booking.bookingCode
-                        ? <span className="font-mono text-xs font-bold text-gray-400">#{booking.bookingCode}</span>
+                        ? <span className="font-mono text-xs font-bold text-gray-500">#{booking.bookingCode}</span>
                         : <span />
                       }
-                      <span className="font-black text-green-700 text-sm">${netoDueno(booking).toLocaleString('es-CO')} <span className="text-[10px] font-normal text-gray-400">COP</span></span>
+                      <span className="font-black text-green-700 text-sm">${netoDueno(booking).toLocaleString('es-CO')} <span className="text-[11px] font-normal text-gray-500">COP</span></span>
                     </div>
                   </div>
                 );
@@ -317,7 +317,7 @@ export default function ReservasOwnerPage() {
                     const isFirstOrLast = page === 1 || page === totalPages;
                     if (!isActive && !isNear && !isFirstOrLast) {
                       if (page === 2 || page === totalPages - 1) {
-                        return <span key={page} className="text-gray-400">...</span>;
+                        return <span key={page} className="text-gray-500">...</span>;
                       }
                       return null;
                     }
@@ -354,7 +354,7 @@ export default function ReservasOwnerPage() {
       <Dialog open={!!selected} onOpenChange={open => { if (!open) setSelected(null); }}>
         <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="font-black uppercase text-gray-900">Detalle de reserva</DialogTitle>
+            <DialogTitle className="font-black text-gray-900">Detalle de reserva</DialogTitle>
           </DialogHeader>
           {selected && (
             <div className="space-y-4 py-2">

@@ -5,6 +5,7 @@ import {
   CalendarCheck, Lock, FileText, Building2, CheckCircle, Quote,
 } from 'lucide-react';
 import FadeIn from '@/components/ui/FadeIn';
+import FotoRemota from '@/components/ui/FotoRemota';
 
 export const metadata: Metadata = {
   title: 'Publica tu cancha — Para clubes y empresas',
@@ -197,7 +198,7 @@ export default async function ParaClubesPage() {
       {/* ── CTA FINAL (banner separado del footer) ───────────── */}
       <section className="max-w-6xl mx-auto px-4 py-14 md:py-20">
         <div className="relative overflow-hidden rounded-3xl bg-gray-900 px-6 py-9 md:px-12 md:py-11">
-          <img src="https://images.unsplash.com/photo-1459865264687-595d652de67e?w=1200&q=80" alt="cancha aérea" className="absolute inset-0 w-full h-full object-cover opacity-20" />
+          <FotoRemota src="https://images.unsplash.com/photo-1459865264687-595d652de67e?w=1200&q=80" alt="" className="object-cover opacity-20" sizes="(max-width: 1152px) 100vw, 1152px" />
           <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/85 to-gray-900/40" />
           <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-5">
             <div className="text-white max-w-xl">

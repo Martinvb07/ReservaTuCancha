@@ -55,8 +55,8 @@ function ResenaContent() {
     return (
       <div className="text-center space-y-4 py-20">
         <XCircle className="h-16 w-16 text-red-400 mx-auto" />
-        <h2 className="text-2xl font-black text-white uppercase">Link inválido</h2>
-        <p className="text-gray-400">Este link de reseña no es válido o ya fue usado.</p>
+        <h2 className="text-2xl font-black text-white">Link inválido</h2>
+        <p className="text-gray-500">Este link de reseña no es válido o ya fue usado.</p>
         <Link href="/" className="inline-flex items-center gap-2 bg-lime-400 hover:bg-lime-300 text-gray-900 font-bold px-6 py-3 rounded-full">
           Volver al inicio
         </Link>
@@ -71,8 +71,8 @@ function ResenaContent() {
           <CheckCircle className="h-10 w-10 text-gray-900" />
         </div>
         <div>
-          <h2 className="text-3xl font-black text-white uppercase">¡Gracias!</h2>
-          <p className="text-gray-400 mt-2">Tu reseña fue enviada. Ayuda a otros jugadores a encontrar las mejores canchas.</p>
+          <h2 className="text-3xl font-black text-white">¡Gracias!</h2>
+          <p className="text-gray-500 mt-2">Tu reseña fue enviada. Ayuda a otros jugadores a encontrar las mejores canchas.</p>
         </div>
         <div className="flex justify-center gap-1">
           {[1,2,3,4,5].map(i => (
@@ -90,8 +90,8 @@ function ResenaContent() {
     <div className="max-w-md mx-auto space-y-6 py-6">
       <div className="text-center space-y-2">
         <p className="text-lime-400 font-semibold text-sm uppercase tracking-widest">✦ Tu opinión importa</p>
-        <h2 className="text-3xl font-black text-white uppercase">¿Cómo estuvo la cancha?</h2>
-        <p className="text-gray-400 text-sm">Tu reseña ayuda a otros jugadores a elegir mejor</p>
+        <h2 className="text-3xl font-black text-white">¿Cómo estuvo la cancha?</h2>
+        <p className="text-gray-500 text-sm">Tu reseña ayuda a otros jugadores a elegir mejor</p>
       </div>
 
       <div className="bg-white rounded-3xl overflow-hidden shadow-2xl">
@@ -107,8 +107,8 @@ function ResenaContent() {
 
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">
-              Comentario <span className="text-gray-400 font-normal normal-case">(opcional)</span>
+            <label className="block text-xs font-black text-gray-500 tracking-widest mb-2">
+              Comentario <span className="text-gray-500 font-normal normal-case">(opcional)</span>
             </label>
             <textarea
               rows={4}
@@ -117,7 +117,7 @@ function ResenaContent() {
               placeholder="¿Cómo fue la cancha? ¿Las instalaciones, la atención, la puntualidad...?"
               className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 transition resize-none"
             />
-            <p className="text-xs text-gray-400 text-right mt-1">{comment.length}/300</p>
+            <p className="text-xs text-gray-500 text-right mt-1">{comment.length}/300</p>
           </div>
 
           {mutation.isError && (

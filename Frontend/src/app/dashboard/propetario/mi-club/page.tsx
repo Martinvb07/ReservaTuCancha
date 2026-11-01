@@ -227,7 +227,7 @@ export default function MiClubPage() {
   if (!club) {
     return (
       <div className="max-w-3xl mx-auto text-center py-20">
-        <p className="text-2xl font-black text-gray-300 uppercase">Sin club registrado</p>
+        <p className="text-2xl font-black text-gray-300">Sin club registrado</p>
       </div>
     );
   }
@@ -242,7 +242,7 @@ export default function MiClubPage() {
       {/* Header */}
       <div>
         <p className="text-lime-600 font-semibold text-sm uppercase tracking-widest flex items-center gap-2 mb-1">
-          <span>✦</span> Panel Propietario
+          Panel Propietario
         </p>
         <h1 className="text-2xl md:text-3xl font-black text-gray-900 uppercase">Mi Club</h1>
         <p className="text-gray-500 text-sm mt-1">Elige qué quieres editar — esto es lo que ven tus clientes</p>
@@ -274,12 +274,12 @@ export default function MiClubPage() {
                 {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>}
               </div>
               <div>
-                <label className={lbl}>Slogan <span className="text-gray-400 font-normal normal-case">(opcional)</span></label>
+                <label className={lbl}>Slogan <span className="text-gray-500 font-normal normal-case">(opcional)</span></label>
                 <input className={inp} placeholder="La mejor cancha sintética de Villavicencio" {...register('slogan')} />
                 {errors.slogan && <p className="text-xs text-red-500 mt-1">{errors.slogan.message}</p>}
               </div>
               <div>
-                <label className={lbl}>Descripción <span className="text-gray-400 font-normal normal-case">(opcional)</span></label>
+                <label className={lbl}>Descripción <span className="text-gray-500 font-normal normal-case">(opcional)</span></label>
                 <textarea rows={5} className={inp} style={{ resize: 'none' }}
                   placeholder="Describe tu club, qué ofreces, qué lo hace especial..."
                   {...register('description')} />
@@ -318,7 +318,7 @@ export default function MiClubPage() {
                 <label className={lbl}>Horario de atención</label>
                 <input className={inp} placeholder="Lunes a viernes 7am-10pm · Sábados y domingos 8am-8pm"
                   {...register('schedule')} />
-                <p className="text-xs text-gray-400 mt-1.5">
+                <p className="text-xs text-gray-500 mt-1.5">
                   Este texto se muestra tal cual en tu página pública.
                 </p>
               </div>
@@ -356,7 +356,7 @@ export default function MiClubPage() {
                     Quitar logo
                   </button>
                 )}
-                <p className="text-xs text-gray-400">Recomendado: 200×200px, PNG o JPG</p>
+                <p className="text-xs text-gray-500">Recomendado: 200×200px, PNG o JPG</p>
               </div>
               <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
             </div>
@@ -364,7 +364,7 @@ export default function MiClubPage() {
 
           {section === 'redes' && (
             <div className="space-y-4">
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-500">
                 Estos links aparecen en tu página pública. Deja vacío para no mostrar.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -394,7 +394,7 @@ export default function MiClubPage() {
                     <MessageCircle className="h-4 w-4 text-[#25D366]" /> WhatsApp
                   </label>
                   <input className={inp} placeholder="300 123 4567" {...register('whatsapp')} />
-                  <p className="text-xs text-gray-400 mt-1.5">Número con indicativo o link wa.me</p>
+                  <p className="text-xs text-gray-500 mt-1.5">Número con indicativo o link wa.me</p>
                 </div>
               </div>
             </div>
@@ -404,7 +404,7 @@ export default function MiClubPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-500">Parqueadero, vestidores, cafetería, áreas comunes</p>
-                <p className="text-xs font-bold text-gray-400 shrink-0">
+                <p className="text-xs font-bold text-gray-500 shrink-0">
                   {clubPhotos.length} foto{clubPhotos.length !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -416,11 +416,11 @@ export default function MiClubPage() {
               >
                 {uploadingPhotos
                   ? <Loader2 className="h-6 w-6 animate-spin text-green-500" />
-                  : <Camera className="h-6 w-6 text-gray-400" />}
+                  : <Camera className="h-6 w-6 text-gray-500" />}
                 <p className="text-sm font-bold text-gray-600">
                   {uploadingPhotos ? 'Subiendo...' : 'Agregar fotos de instalaciones'}
                 </p>
-                <p className="text-xs text-gray-400">Hasta 10 fotos por vez</p>
+                <p className="text-xs text-gray-500">Hasta 10 fotos por vez</p>
               </button>
               <input ref={photosInputRef} type="file" multiple accept="image/*" className="hidden" onChange={handlePhotosUpload} />
 
@@ -443,7 +443,7 @@ export default function MiClubPage() {
                 </div>
               )}
 
-              <p className="text-xs text-gray-400">Las fotos se guardan al instante, no necesitas guardar cambios.</p>
+              <p className="text-xs text-gray-500">Las fotos se guardan al instante, no necesitas guardar cambios.</p>
             </div>
           )}
         </SettingsTabs>
@@ -465,7 +465,7 @@ export default function MiClubPage() {
               </button>
             </div>
             {hasChanges && (
-              <p className="text-xs text-gray-400 text-center mt-2">Tienes cambios sin guardar</p>
+              <p className="text-xs text-gray-500 text-center mt-2">Tienes cambios sin guardar</p>
             )}
           </div>
         )}

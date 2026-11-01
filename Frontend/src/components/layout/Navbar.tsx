@@ -202,7 +202,7 @@ export default function Navbar() {
                     {session.user?.name?.charAt(0).toUpperCase() ?? 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${userMenuOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-3.5 w-3.5 text-gray-500 transition-transform duration-200 ${userMenuOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {/* Menú: crece desde la esquina del avatar y las filas entran escalonadas */}

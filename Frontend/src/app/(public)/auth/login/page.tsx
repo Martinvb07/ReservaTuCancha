@@ -118,9 +118,9 @@ export default function LoginPage() {
             }}
           >
             <p className="text-lime-400 font-semibold text-sm uppercase tracking-widest flex items-center gap-2">
-              <span>✦</span> Panel de propietarios
+              Panel de propietarios
             </p>
-            <h2 className="text-4xl font-black text-white uppercase leading-tight">
+            <h2 className="text-4xl font-black text-white leading-tight">
               Gestiona tu cancha
               <span className="block text-lime-400">desde un solo lugar</span>
             </h2>
@@ -231,7 +231,7 @@ export default function LoginPage() {
 
             <motion.form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate {...fade(0.12)}>
               <div className="space-y-1.5">
-                <label htmlFor="email" className="block text-xs font-black text-gray-700 uppercase tracking-widest">
+                <label htmlFor="email" className="block text-xs font-black text-gray-700 tracking-widest">
                   Email
                 </label>
                 <input
@@ -262,12 +262,12 @@ export default function LoginPage() {
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label htmlFor="password" className="block text-xs font-black text-gray-700 uppercase tracking-widest">
+                  <label htmlFor="password" className="block text-xs font-black text-gray-700 tracking-widest">
                     Contraseña
                   </label>
                   <Link
                     href="/soporte"
-                    className="text-xs font-semibold text-gray-400 hover:text-green-600 transition-colors"
+                    className="text-xs font-semibold text-gray-500 hover:text-green-600 transition-colors"
                   >
                     ¿Olvidaste tu contraseña?
                   </Link>
@@ -288,7 +288,7 @@ export default function LoginPage() {
                     tabIndex={-1}
                     onClick={() => setShowPass(!showPass)}
                     aria-label={showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-600 transition-colors"
                   >
                     {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -329,7 +329,7 @@ export default function LoginPage() {
                   Solicitar acceso →
                 </Link>
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-500">
                 ¿Solo quieres reservar?{' '}
                 <Link href="/empresas" className="font-semibold text-gray-500 hover:text-green-600 hover:underline transition-colors">
                   Buscar canchas

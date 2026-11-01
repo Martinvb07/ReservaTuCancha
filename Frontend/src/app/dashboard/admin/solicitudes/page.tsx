@@ -96,7 +96,7 @@ export default function AdminSolicitudesPage() {
       {/* Header */}
       <div>
         <p className="text-lime-600 font-semibold text-sm uppercase tracking-widest flex items-center gap-2 mb-1">
-          <span>✦</span> Administración
+          Administración
         </p>
         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 uppercase tracking-tight">Solicitudes de acceso</h1>
         <p className="text-slate-500 text-sm mt-1">Revisa y aprueba a los nuevos propietarios</p>
@@ -107,7 +107,7 @@ export default function AdminSolicitudesPage() {
         {kpis.map(k => (
           <div key={k.label} className="bg-white rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/40 p-4">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{k.label}</p>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">{k.label}</p>
               <div className={`w-8 h-8 rounded-lg ${k.bg} grid place-items-center`}>
                 <k.icon className={`h-4 w-4 ${k.color}`} />
               </div>
@@ -144,7 +144,7 @@ export default function AdminSolicitudesPage() {
       {!isLoading && filtered.length === 0 && (
         <div className="text-center py-20 bg-white rounded-2xl border border-slate-100">
           <FileText className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-          <p className="font-black text-slate-400 uppercase text-sm">Sin solicitudes</p>
+          <p className="font-black text-slate-400 text-sm">Sin solicitudes</p>
         </div>
       )}
 
@@ -164,7 +164,7 @@ export default function AdminSolicitudesPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="font-black text-slate-900 text-sm">{s.nombre} {s.apellido}</span>
-                    <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full ${st.pill}`}>
+                    <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full ${st.pill}`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
                       {ESTADO_LABELS[s.estado]}
                     </span>
@@ -237,7 +237,7 @@ export default function AdminSolicitudesPage() {
                   </div>
                   <div className="min-w-0">
                     <p className="text-base font-black text-slate-900 truncate">{selected.nombre} {selected.apellido}</p>
-                    <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5 ${ESTADO_STYLES[selected.estado].pill}`}>
+                    <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2 py-0.5 rounded-full mt-0.5 ${ESTADO_STYLES[selected.estado].pill}`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${ESTADO_STYLES[selected.estado].dot}`} />
                       {ESTADO_LABELS[selected.estado]}
                     </span>
@@ -264,7 +264,7 @@ export default function AdminSolicitudesPage() {
                       <div key={label} className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 min-w-0">
                         <div className="flex items-center gap-1.5 mb-1">
                           <Icon className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
+                          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
                         </div>
                         <p className="text-sm font-semibold text-slate-800 break-words">{val || 'No especificado'}</p>
                       </div>
@@ -273,7 +273,7 @@ export default function AdminSolicitudesPage() {
 
                   {selected.mensaje && (
                     <div className="bg-slate-50 rounded-2xl p-4">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
                         <MessageSquare className="h-3 w-3" /> Mensaje
                       </p>
                       <p className="text-sm text-slate-600 italic">"{selected.mensaje}"</p>

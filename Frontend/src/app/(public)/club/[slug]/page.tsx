@@ -5,6 +5,7 @@ import { MapPin, Phone, Star, Users, Trophy, Camera, Clock } from 'lucide-react'
 import { getSportIcon } from '@/components/ui/SportIcons';
 import JsonLd from '@/components/seo/JsonLd';
 import { jsonLdClub } from '@/lib/seo';
+import FotoRemota from '@/components/ui/FotoRemota';
 
 const API = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ?? 'http://localhost:4000';
 
@@ -168,13 +169,13 @@ export default async function ClubPublicPage({ params }: { params: { slug: strin
 
         {/* Canchas */}
         <section>
-          <h2 className="text-2xl font-black text-gray-900 uppercase mb-6 flex items-center gap-2">
+          <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
             <Trophy className="h-6 w-6 text-lime-500" /> Canchas disponibles
           </h2>
 
           {club.courts.length === 0 ? (
             <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-              <p className="text-gray-400 font-bold">Sin canchas disponibles por el momento</p>
+              <p className="text-gray-500 font-bold">Sin canchas disponibles por el momento</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -183,7 +184,7 @@ export default async function ClubPublicPage({ params }: { params: { slug: strin
                   {/* Foto */}
                   <div className="relative h-48 bg-gray-100">
                     {court.photos?.[0] ? (
-                      <img src={court.photos[0]} alt={court.name} className="w-full h-full object-cover" />
+                      <FotoRemota src={court.photos[0]} alt={court.name} className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         {(() => { const Icon = getSportIcon(court.sport); return <Icon className="h-14 w-14 text-gray-300" />; })()}
@@ -206,7 +207,7 @@ export default async function ClubPublicPage({ params }: { params: { slug: strin
                         <p className="text-2xl font-black text-gray-900">
                           ${court.pricePerHour?.toLocaleString('es-CO')}
                         </p>
-                        <p className="text-xs text-gray-400">por hora</p>
+                        <p className="text-xs text-gray-500">por hora</p>
                       </div>
                     </div>
 
@@ -227,7 +228,7 @@ export default async function ClubPublicPage({ params }: { params: { slug: strin
 
                     <Link
                       href={`/canchas/${court._id}`}
-                      className="block w-full text-center bg-lime-400 hover:bg-lime-300 text-gray-900 font-black py-3 rounded-xl transition-colors text-sm uppercase tracking-wide"
+                      className="block w-full text-center bg-lime-400 hover:bg-lime-300 text-gray-900 font-black py-3 rounded-xl transition-colors text-sm tracking-wide"
                     >
                       Reservar ahora →
                     </Link>
@@ -241,13 +242,13 @@ export default async function ClubPublicPage({ params }: { params: { slug: strin
         {/* Fotos del club / instalaciones */}
         {club.photos?.length > 0 && (
           <section>
-            <h2 className="text-2xl font-black text-gray-900 uppercase mb-6 flex items-center gap-2">
+            <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
               <Camera className="h-6 w-6 text-lime-500" /> Nuestras instalaciones
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {club.photos.map((url: string, i: number) => (
-                <div key={i} className="rounded-2xl overflow-hidden">
-                  <img src={url} alt={`Instalación ${i + 1}`} className="w-full h-44 object-cover hover:scale-105 transition-transform" />
+                <div key={i} className="relative h-44 rounded-2xl overflow-hidden">
+                  <FotoRemota src={url} alt={`Instalación ${i + 1}`} className="object-cover hover:scale-105 transition-transform" sizes="(max-width: 768px) 50vw, 33vw" />
                 </div>
               ))}
             </div>
@@ -257,7 +258,7 @@ export default async function ClubPublicPage({ params }: { params: { slug: strin
         {/* Reseñas */}
         {club.reviews.length > 0 && (
           <section>
-            <h2 className="text-2xl font-black text-gray-900 uppercase mb-6 flex items-center gap-2">
+            <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
               <Star className="h-6 w-6 text-yellow-400 fill-yellow-400" /> Lo que dicen nuestros clientes
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -266,7 +267,7 @@ export default async function ClubPublicPage({ params }: { params: { slug: strin
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <p className="font-bold text-gray-900 text-sm">{r.guestName}</p>
-                      <p className="text-xs text-gray-400">{r.courtName}</p>
+                      <p className="text-xs text-gray-500">{r.courtName}</p>
                     </div>
                     <StarRating rating={r.rating} />
                   </div>
@@ -280,11 +281,11 @@ export default async function ClubPublicPage({ params }: { params: { slug: strin
         {/* CTA final */}
         <section className="bg-gray-900 rounded-3xl p-10 text-center text-white">
           <Users className="h-10 w-10 text-lime-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-black uppercase mb-2">¿Listo para jugar?</h2>
+          <h2 className="text-2xl font-black mb-2">¿Listo para jugar?</h2>
           <p className="text-gray-400 text-sm mb-6">Reserva tu cancha en minutos, paga en efectivo o en línea</p>
           <Link
             href="/empresas"
-            className="inline-block bg-lime-400 hover:bg-lime-300 text-gray-900 font-black py-3 px-8 rounded-xl transition-colors uppercase tracking-wide"
+            className="inline-block bg-lime-400 hover:bg-lime-300 text-gray-900 font-black py-3 px-8 rounded-xl transition-colors tracking-wide"
           >
             Ver todas las canchas
           </Link>

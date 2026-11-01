@@ -57,7 +57,7 @@ function Field({ label, error, optional, children }: {
     <div>
       <label className={labelClass}>
         {label} {optional
-          ? <span className="text-gray-400 font-medium normal-case">(opcional)</span>
+          ? <span className="text-gray-500 font-medium normal-case">(opcional)</span>
           : <span className="text-red-500">*</span>}
       </label>
       {children}
@@ -162,7 +162,7 @@ export default function SolicitarAccesoPage() {
             <CheckCircle2 className="h-10 w-10 text-gray-900" />
           </motion.div>
           <div className="text-white space-y-2">
-            <h2 className="text-3xl font-black uppercase">¡Solicitud enviada!</h2>
+            <h2 className="text-3xl font-black">¡Solicitud enviada!</h2>
             <p className="text-gray-400 text-base">
               Revisaremos tu información y te contactaremos en las próximas{' '}
               <span className="text-white font-semibold">24–48 horas hábiles</span>{' '}
@@ -195,7 +195,7 @@ export default function SolicitarAccesoPage() {
         </div>
         <div className="relative max-w-6xl mx-auto px-4 text-center text-white space-y-4">
           <p className="text-lime-400 font-semibold text-sm uppercase tracking-widest flex items-center justify-center gap-2">
-            <span>✦</span> Para propietarios de canchas
+            Para propietarios de canchas
           </p>
           <h1 className="text-4xl md:text-5xl font-black uppercase leading-tight">
             Publica tu cancha y empieza a
@@ -271,12 +271,12 @@ export default function SolicitarAccesoPage() {
                           </Field>
 
                           <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100 overflow-hidden">
-                            <p className="px-4 py-3 text-xs font-black text-gray-900 uppercase tracking-widest bg-gray-50">
+                            <p className="px-4 py-3 text-xs font-black text-gray-900 tracking-widest bg-gray-50">
                               Resumen de tu solicitud
                             </p>
                             {RESUMEN.map((r) => (
                               <div key={r.label} className="flex items-center gap-3 px-4 py-2.5">
-                                <span className="text-xs text-gray-400 w-28 shrink-0">{r.label}</span>
+                                <span className="text-xs text-gray-500 w-28 shrink-0">{r.label}</span>
                                 <span className="text-sm font-semibold text-gray-800 truncate">{r.value || '—'}</span>
                                 <button
                                   type="button"
@@ -328,7 +328,7 @@ export default function SolicitarAccesoPage() {
                 <AnimatePresence initial={false}>
                   {step === LAST && (
                     <motion.p
-                      className="text-center text-xs text-gray-400 pt-4"
+                      className="text-center text-xs text-gray-500 pt-4"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
@@ -354,7 +354,7 @@ export default function SolicitarAccesoPage() {
           {/* ── BENEFICIOS (resumen corto, no compite con el formulario) ── */}
           <aside className="lg:col-span-2 order-2 lg:order-1 lg:sticky lg:top-24 lg:self-start space-y-6">
             <div className="space-y-2">
-              <h2 className="text-xl font-black text-gray-900 uppercase">Lo que obtienes</h2>
+              <h2 className="text-xl font-black text-gray-900">Lo que obtienes</h2>
               <p className="text-gray-500 text-sm leading-relaxed">
                 Todo lo necesario para gestionar tu cancha, sin mensualidad ni contrato:
                 solo el 9% de cada reserva pagada por la plataforma.

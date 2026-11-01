@@ -42,7 +42,7 @@ export default function Footer() {
 
           {/* Deportes */}
           <div className="space-y-4">
-            <h4 className="font-black text-sm uppercase tracking-widest text-gray-300">Deportes</h4>
+            <h4 className="font-black text-sm tracking-widest text-gray-300">Deportes</h4>
             <ul className="space-y-2.5">
               {[
                 { href: '/empresas?sport=futbol',      label: 'Fútbol'      },
@@ -62,7 +62,7 @@ export default function Footer() {
 
           {/* Empresa */}
           <div className="space-y-4">
-            <h4 className="font-black text-sm uppercase tracking-widest text-gray-300">Empresa</h4>
+            <h4 className="font-black text-sm tracking-widest text-gray-300">Empresa</h4>
             <ul className="space-y-2.5">
               {[
                 { href: '/que-ofrecemos',    label: 'Qué ofrecemos'    },
@@ -82,7 +82,7 @@ export default function Footer() {
 
           {/* Legal + Contacto */}
           <div className="space-y-4">
-            <h4 className="font-black text-sm uppercase tracking-widest text-gray-300">Legal</h4>
+            <h4 className="font-black text-sm tracking-widest text-gray-300">Legal</h4>
             <ul className="space-y-2.5">
               {[
                 { href: '/terminos',   label: 'Términos de uso'      },
@@ -97,7 +97,7 @@ export default function Footer() {
               ))}
             </ul>
             <div className="pt-2 space-y-2">
-              <h4 className="font-black text-sm uppercase tracking-widest text-gray-300">Contacto</h4>
+              <h4 className="font-black text-sm tracking-widest text-gray-300">Contacto</h4>
               <a href="mailto:martinvelasquezdev@gmail.com"
                 className="flex items-center gap-2 text-sm text-gray-400 hover:text-lime-400 transition-colors">
                 <Mail className="h-3.5 w-3.5 shrink-0" /> martinvelasquezdev@gmail.com

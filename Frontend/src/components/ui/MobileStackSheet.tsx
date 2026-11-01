@@ -102,7 +102,7 @@ export default function MobileStackSheet<K extends string>({
                 style={rowShadow}
               >
                 <span className="text-[15px] text-gray-500 flex-none">{s.label}</span>
-                <span className={`text-[15px] font-bold truncate text-right ${s.filled ? 'text-gray-900' : 'text-gray-400'}`}>
+                <span className={`text-[15px] font-bold truncate text-right ${s.filled ? 'text-gray-900' : 'text-gray-500'}`}>
                   {s.value}
                 </span>
               </button>

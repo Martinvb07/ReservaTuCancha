@@ -63,7 +63,7 @@ export default function StepWizard({ steps, step, dir, onGoTo, children, classNa
                     className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-black transition-colors duration-300 ${
                       done    ? 'bg-green-600 text-white' :
                       current ? 'bg-gray-900 text-white ring-4 ring-gray-900/10' :
-                                'bg-white border border-gray-200 text-gray-400'
+                                'bg-white border border-gray-200 text-gray-500'
                     }`}
                   >
                     <AnimatePresence mode="wait" initial={false}>
@@ -81,7 +81,7 @@ export default function StepWizard({ steps, step, dir, onGoTo, children, classNa
                   {/* Las etiquetas solo caben en desktop; en móvil el paso se
                       identifica con el título grande de abajo */}
                   <span className={`hidden lg:block text-xs font-black uppercase tracking-wide whitespace-nowrap transition-colors duration-300 ${
-                    current ? 'text-gray-900' : done ? 'text-green-700 group-hover:text-green-800' : 'text-gray-400'
+                    current ? 'text-gray-900' : done ? 'text-green-700 group-hover:text-green-800' : 'text-gray-500'
                   }`}>
                     {s.title}
                   </span>

@@ -140,7 +140,7 @@ export function OwnerHomeWidgets() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-black text-white text-sm">Tu página pública</p>
-            <p className="text-xs text-gray-400 mt-0.5 truncate">
+            <p className="text-xs text-gray-500 mt-0.5 truncate">
               reservatucancha.site/club/{clubInfo.slug}
             </p>
           </div>
@@ -172,10 +172,10 @@ export function OwnerHomeWidgets() {
         <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-100 p-5 sm:p-6">
           <div className="flex items-start justify-between mb-5">
             <div>
-              <h2 className="font-black text-gray-900 text-xs sm:text-sm uppercase tracking-widest">
+              <h2 className="font-black text-gray-900 text-xs sm:text-sm tracking-widest">
                 Últimos 7 días
               </h2>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-gray-500 mt-0.5">
                 {weekBookTotal} reserva{weekBookTotal !== 1 ? 's' : ''} ·{' '}
                 <span className="text-green-600 font-semibold">{fmtCOP(weekRevTotal)} COP</span>
               </p>
@@ -217,10 +217,10 @@ export function OwnerHomeWidgets() {
 
           {/* Leyenda */}
           <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50">
-            <span className="flex items-center gap-1.5 text-[11px] text-gray-400">
+            <span className="flex items-center gap-1.5 text-[11px] text-gray-500">
               <span className="w-3 h-3 rounded bg-green-600 shrink-0" /> Hoy
             </span>
-            <span className="flex items-center gap-1.5 text-[11px] text-gray-400">
+            <span className="flex items-center gap-1.5 text-[11px] text-gray-500">
               <span className="w-3 h-3 rounded bg-green-200 shrink-0" /> Otros días
             </span>
           </div>
@@ -230,10 +230,10 @@ export function OwnerHomeWidgets() {
         <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 flex flex-col min-h-[260px]">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="font-black text-gray-900 text-xs sm:text-sm uppercase tracking-widest">
+              <h2 className="font-black text-gray-900 text-xs sm:text-sm tracking-widest">
                 Por confirmar
               </h2>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-gray-500 mt-0.5">
                 {isLoading ? '—' : `${pending.length} pendiente${pending.length !== 1 ? 's' : ''}`}
               </p>
             </div>
@@ -242,7 +242,7 @@ export function OwnerHomeWidgets() {
             }`}>
               {pending.length > 0
                 ? <Clock className="h-4 w-4 text-amber-600" />
-                : <CheckCircle className="h-4 w-4 text-gray-400" />
+                : <CheckCircle className="h-4 w-4 text-gray-500" />
               }
             </div>
           </div>
@@ -256,7 +256,7 @@ export function OwnerHomeWidgets() {
               <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mb-3">
                 <CheckCircle className="h-6 w-6 text-green-500" />
               </div>
-              <p className="text-sm font-black text-gray-400">Todo al día</p>
+              <p className="text-sm font-black text-gray-500">Todo al día</p>
               <p className="text-xs text-gray-300 mt-0.5">Sin reservas pendientes</p>
             </div>
           ) : (
@@ -271,11 +271,11 @@ export function OwnerHomeWidgets() {
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-gray-800 truncate">{b.guestName}</p>
-                      <p className="text-[10px] text-gray-400 truncate">
+                      <p className="text-[11px] text-gray-500 truncate">
                         {b.date ? format(parseISO(b.date), 'dd MMM', { locale: es }) : ''} · {to12h(b.startTime)}
                         {court ? ` · ${court.name}` : ''}
                       </p>
-                      <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full mt-0.5 ${
+                      <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-1.5 py-0.5 rounded-full mt-0.5 ${
                         method ? 'bg-amber-200 text-amber-800' : 'bg-blue-100 text-blue-700'
                       }`}>
                         {method ? <Banknote className="h-2.5 w-2.5" /> : <CreditCard className="h-2.5 w-2.5" />}
@@ -283,7 +283,7 @@ export function OwnerHomeWidgets() {
                       </span>
                     </div>
                     {/* La confirma ePayco al aprobar el pago, no el club. */}
-                    <span className="text-[10px] font-bold text-amber-700 whitespace-nowrap shrink-0">Esperando pago</span>
+                    <span className="text-[11px] font-bold text-amber-700 whitespace-nowrap shrink-0">Esperando pago</span>
                   </div>
                 );
               })}
@@ -305,17 +305,17 @@ export function OwnerHomeWidgets() {
       <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="font-black text-gray-900 text-xs sm:text-sm uppercase tracking-widest">
+            <h2 className="font-black text-gray-900 text-xs sm:text-sm tracking-widest">
               Reservas de hoy
             </h2>
-            <p className="text-xs text-gray-400 mt-0.5 capitalize">
+            <p className="text-xs text-gray-500 mt-0.5 capitalize">
               {format(new Date(), "EEEE d 'de' MMMM", { locale: es })}
             </p>
           </div>
           <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
             todayBookings.length > 0 ? 'bg-blue-50' : 'bg-gray-100'
           }`}>
-            <Calendar className={`h-4 w-4 ${todayBookings.length > 0 ? 'text-blue-600' : 'text-gray-400'}`} />
+            <Calendar className={`h-4 w-4 ${todayBookings.length > 0 ? 'text-blue-600' : 'text-gray-500'}`} />
           </div>
         </div>
 
@@ -330,7 +330,7 @@ export function OwnerHomeWidgets() {
             <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center mb-3">
               <Calendar className="h-7 w-7 text-gray-300" />
             </div>
-            <p className="text-sm font-black text-gray-400">Sin reservas para hoy</p>
+            <p className="text-sm font-black text-gray-500">Sin reservas para hoy</p>
             <p className="text-xs text-gray-300 mt-1">Las reservas del día aparecerán aquí</p>
           </div>
         ) : (
@@ -354,22 +354,22 @@ export function OwnerHomeWidgets() {
 
                   {/* Cliente */}
                   <div className="flex items-center gap-1.5 mb-1">
-                    <User className="h-3 w-3 text-gray-400 shrink-0" />
+                    <User className="h-3 w-3 text-gray-500 shrink-0" />
                     <p className="text-xs font-semibold text-gray-800 truncate">{b.guestName}</p>
                   </div>
 
                   {/* Cancha */}
                   {court && (
-                    <p className="text-[11px] text-gray-400 truncate mb-1.5">{court.name}</p>
+                    <p className="text-[11px] text-gray-500 truncate mb-1.5">{court.name}</p>
                   )}
 
                   {/* Footer: estado + código */}
                   <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/60">
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full bg-white/70`}>
+                    <span className={`text-[11px] font-black px-2 py-0.5 rounded-full bg-white/70`}>
                       {STATUS_LABEL[b.status] ?? b.status}
                     </span>
                     {b.bookingCode && (
-                      <span className="text-[10px] font-mono text-gray-300">#{b.bookingCode}</span>
+                      <span className="text-[11px] font-mono text-gray-300">#{b.bookingCode}</span>
                     )}
                   </div>
                 </div>
@@ -380,7 +380,7 @@ export function OwnerHomeWidgets() {
 
         {todayBookings.length > 0 && (
           <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-gray-500">
               <span className="font-bold text-gray-700">{todayBookings.length}</span> reserva{todayBookings.length !== 1 ? 's' : ''} hoy ·{' '}
               <span className="text-green-600 font-semibold">
                 {fmtCOP(todayBookings.filter(b => ['confirmed', 'completed'].includes(b.status)).reduce((s: number, b: any) => s + netoDueno(b), 0))} confirmados

@@ -99,7 +99,7 @@ function MiniCalendar({ value, onPick }: { value: Date | null; onPick: (d: Date)
         </button>
       </div>
       <div className="grid grid-cols-7 mb-1">
-        {DOW.map((d) => <div key={d} className="text-center text-[11px] font-bold text-gray-400 py-1">{d}</div>)}
+        {DOW.map((d) => <div key={d} className="text-center text-[11px] font-bold text-gray-500 py-1">{d}</div>)}
       </div>
       <div className="grid grid-cols-7 gap-0.5">{cells}</div>
     </div>
@@ -242,7 +242,7 @@ export default function HeroSearch({ initialSport, initialCity, initialDate, ini
       {/* Franjas del día con chips de hora (12h) */}
       {HOUR_GROUPS.map((g, gi) => (
         <div key={g.label} className={gi > 0 ? 'mt-3' : ''}>
-          <p className="rtc-item flex items-center gap-1.5 px-1 mb-1.5 text-[11px] font-extrabold uppercase tracking-[.08em] text-gray-400"
+          <p className="rtc-item flex items-center gap-1.5 px-1 mb-1.5 text-[11px] font-extrabold uppercase tracking-[.08em] text-gray-500"
             style={{ animationDelay: `${gi * 45}ms` }}>
             <g.Icon className="h-3.5 w-3.5" /> {g.label}
           </p>
@@ -280,7 +280,7 @@ export default function HeroSearch({ initialSport, initialCity, initialDate, ini
         className="w-full flex items-center justify-between gap-4 px-5 py-4 bg-white rounded-2xl text-left"
         style={{ boxShadow: '0 2px 16px rgba(20,14,30,.10)' }}>
         <span className="text-[15px] text-gray-500 flex-none">{label}</span>
-        <span className={`text-[15px] font-bold truncate text-right capitalize ${filled ? 'text-gray-900' : 'text-gray-400'}`}>{value}</span>
+        <span className={`text-[15px] font-bold truncate text-right capitalize ${filled ? 'text-gray-900' : 'text-gray-500'}`}>{value}</span>
       </button>
     );
 
@@ -335,7 +335,7 @@ export default function HeroSearch({ initialSport, initialCity, initialDate, ini
   // estilos compartidos — estética de barra única: campo activo con tinte,
   // borde de la barra que se ilumina cuando hay un panel abierto
   const fieldActive = (p: Panel) => (panel === p ? 'bg-green-50' : 'hover:bg-gray-50');
-  const fieldLabel = 'block text-[10px] font-extrabold uppercase tracking-[.1em] text-green-600';
+  const fieldLabel = 'block text-[11px] font-extrabold uppercase tracking-[.1em] text-green-600';
   const fieldValue = (filled: boolean) => `block text-sm font-semibold truncate ${filled ? 'text-gray-900' : 'text-gray-500'}`;
   const dropBase = 'rtc-drop absolute z-50 top-[calc(100%+8px)] left-0 w-full min-w-[280px] md:min-w-0 bg-white rounded-2xl overflow-hidden';
   const dropStyle = { border: '1.5px solid #e5e7eb', boxShadow: '0 20px 48px rgba(0,0,0,.14)' };
@@ -363,7 +363,7 @@ export default function HeroSearch({ initialSport, initialCity, initialDate, ini
               <span className={fieldLabel}>Deporte</span>
               <span className={fieldValue(!!sport)}>{sportLabel}</span>
             </span>
-            <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${panel === 'deporte' ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${panel === 'deporte' ? 'rotate-180' : ''}`} />
           </button>
           {panel === 'deporte' && (
             <div className={`${dropBase} md:w-[320px] md:left-[calc(50%-160px)]`} style={dropStyle}>
@@ -385,7 +385,7 @@ export default function HeroSearch({ initialSport, initialCity, initialDate, ini
               <span className={fieldLabel}>Ubicación</span>
               <span className={fieldValue(!!city)}>{city || 'Elige tu ciudad'}</span>
             </span>
-            <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${panel === 'ciudad' ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${panel === 'ciudad' ? 'rotate-180' : ''}`} />
           </button>
           {panel === 'ciudad' && (
             <div className={`${dropBase} md:w-[320px] md:left-[calc(50%-160px)]`} style={dropStyle}>
@@ -407,7 +407,7 @@ export default function HeroSearch({ initialSport, initialCity, initialDate, ini
               <span className={fieldLabel}>Fecha</span>
               <span className={`${fieldValue(!!date)} capitalize`}>{dateLabel}</span>
             </span>
-            <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${panel === 'fecha' ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${panel === 'fecha' ? 'rotate-180' : ''}`} />
           </button>
           {panel === 'fecha' && (
             <div className={`${dropBase} md:w-[300px] md:left-[calc(50%-150px)]`} style={dropStyle}>
@@ -429,7 +429,7 @@ export default function HeroSearch({ initialSport, initialCity, initialDate, ini
               <span className={fieldLabel}>Hora</span>
               <span className={fieldValue(!!time)}>{time ? to12h(time) : 'Cualquier hora'}</span>
             </span>
-            <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${panel === 'hora' ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${panel === 'hora' ? 'rotate-180' : ''}`} />
           </button>
           {panel === 'hora' && (
             <div className={`${dropBase} md:w-[320px] md:left-[calc(50%-160px)]`} style={dropStyle}>

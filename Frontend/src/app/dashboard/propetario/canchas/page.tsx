@@ -65,7 +65,7 @@ export default function OwnerCanchasPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-lime-600 font-semibold text-sm uppercase tracking-widest flex items-center gap-2 mb-1">
-            <span>✦</span> Panel Propietario
+            Panel Propietario
           </p>
           <h1 className="text-3xl font-black text-gray-900 uppercase">Mis canchas</h1>
           <p className="text-gray-500 text-sm mt-1">{courts.length} canchas registradas</p>
@@ -81,7 +81,7 @@ export default function OwnerCanchasPage() {
       {/* Filtros */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
           <input type="text" placeholder="Buscar por nombre o ciudad..."
             value={search} onChange={e => setSearch(e.target.value)}
             className="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 transition" />
@@ -102,8 +102,8 @@ export default function OwnerCanchasPage() {
       {!isLoading && filtered.length === 0 && (
         <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
           <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="font-black text-gray-400 uppercase text-sm">No hay canchas</p>
-          <p className="text-sm text-gray-400 mt-1">{search || sport ? 'Intenta con otros filtros' : 'Agrega tu primera cancha'}</p>
+          <p className="font-black text-gray-500 text-sm">No hay canchas</p>
+          <p className="text-sm text-gray-500 mt-1">{search || sport ? 'Intenta con otros filtros' : 'Agrega tu primera cancha'}</p>
           <Link href="/dashboard/propetario/canchas/nueva"
             className="inline-flex items-center gap-2 mt-4 bg-green-600 hover:bg-green-700 text-white font-bold text-sm px-5 py-3 rounded-xl transition-colors">
             <Plus className="h-4 w-4" /> Nueva cancha
@@ -125,10 +125,10 @@ export default function OwnerCanchasPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-black text-gray-900">{court.name}</span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${court.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${court.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                       {court.isActive ? 'Activa' : 'Inactiva'}
                     </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{s.label}</span>
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{s.label}</span>
                   </div>
                   <div className="flex flex-wrap gap-3 mt-1 text-xs text-gray-500">
                     <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{court.location?.city}, {court.location?.department}</span>
@@ -143,18 +143,18 @@ export default function OwnerCanchasPage() {
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="text-right hidden sm:block">
                     <p className="font-black text-green-700 text-base">${court.pricePerHour?.toLocaleString('es-CO')}</p>
-                    <p className="text-[10px] text-gray-400">COP/hora</p>
+                    <p className="text-[11px] text-gray-500">COP/hora</p>
                   </div>
 
                   {/* Ver — gris */}
                   <Link href={`/canchas/${court._id}`} target="_blank" title="Ver cancha pública"
-                    className="w-9 h-9 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all">
+                    className="w-9 h-9 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-all">
                     <Eye className="h-3.5 w-3.5" />
                   </Link>
 
                   {/* Editar — gris claro */}
                   <Link href={`/dashboard/propetario/canchas/${court._id}/editar`} title="Editar cancha"
-                    className="w-9 h-9 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all">
+                    className="w-9 h-9 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-all">
                     <Edit className="h-3.5 w-3.5" />
                   </Link>
 

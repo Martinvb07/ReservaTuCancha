@@ -35,7 +35,7 @@ export default function ChangelogToast() {
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${TAGS[last.tag]?.bg ?? ''} ${TAGS[last.tag]?.color ?? ''}`}>{TAGS[last.tag] && (() => { const { Icon } = TAGS[last.tag]; return <Icon className="h-3 w-3" />; })()}{TAGS[last.tag]?.label ?? ''}</span>
-                  {last.version && <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{last.version}</span>}
+                  {last.version && <span className="text-[11px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{last.version}</span>}
                 </div>
                 <div className="font-black text-gray-900 text-sm mb-0.5">{last.titulo}</div>
                 <div className="text-xs text-gray-600 line-clamp-2 max-w-xs">{last.descripcion}</div>

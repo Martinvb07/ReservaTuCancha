@@ -218,10 +218,10 @@ export default function AdminUsuariosPage() {
                       {/* ── Pill estado ── */}
                       <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-0.5 rounded-full border ${
                         user.isActive
-                          ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                          ? 'bg-green-50 text-green-600 border-green-200'
                           : 'bg-gray-100 text-gray-500 border-gray-200'
                       }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${user.isActive ? 'bg-emerald-500' : 'bg-gray-400'}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${user.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
                         {user.isActive ? 'Activo' : 'Inactivo'}
                       </span>
                     </div>
@@ -242,7 +242,7 @@ export default function AdminUsuariosPage() {
                           : 'Fecha inválida'}
                       </span>
                       {user.lastLoginAt && (
-                        <span className="text-muted-foreground/60 text-[10px]">
+                        <span className="text-muted-foreground/60 text-[11px]">
                           Último acceso: {format(new Date(user.lastLoginAt), "dd MMM", { locale: es })}
                         </span>
                       )}

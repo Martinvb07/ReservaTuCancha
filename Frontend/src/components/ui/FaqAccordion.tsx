@@ -83,7 +83,7 @@ export default function FaqAccordion({
                       transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 28 }}
                     >
                       <ChevronRight
-                        className={`${iconClassName} transition-colors duration-200 ${isOpen ? 'text-green-500' : 'text-gray-400'}`}
+                        className={`${iconClassName} transition-colors duration-200 ${isOpen ? 'text-green-500' : 'text-gray-500'}`}
                       />
                     </motion.span>
                   </div>

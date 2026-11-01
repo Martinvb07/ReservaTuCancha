@@ -110,7 +110,7 @@ export default function QueOfrecemosPage() {
         </div>
         <div className="relative max-w-6xl mx-auto px-4 py-24 text-center text-white space-y-6">
           <p className="text-lime-400 font-semibold text-sm uppercase tracking-widest flex items-center justify-center gap-2">
-            <span>✦</span> Lo que ofrecemos
+            Lo que ofrecemos
           </p>
           <h1 className="text-5xl md:text-7xl font-black uppercase leading-tight">
             Todo lo que necesitas para
@@ -154,9 +154,9 @@ export default function QueOfrecemosPage() {
       <section className="max-w-6xl mx-auto px-4 py-20">
         <div className="text-center mb-14">
           <p className="text-lime-600 font-semibold text-sm uppercase tracking-widest flex items-center justify-center gap-2 mb-3">
-            <span>✦</span> Funcionalidades
+            Funcionalidades
           </p>
-          <h2 className="text-4xl font-black text-gray-900 uppercase">Una herramienta, todo el control</h2>
+          <h2 className="text-4xl font-black text-gray-900">Una herramienta, todo el control</h2>
           <p className="text-gray-500 mt-3 max-w-xl mx-auto">
             Diseñada específicamente para el mercado colombiano de canchas deportivas.
           </p>
@@ -180,9 +180,9 @@ export default function QueOfrecemosPage() {
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-14">
             <p className="text-lime-600 font-semibold text-sm uppercase tracking-widest flex items-center justify-center gap-2 mb-3">
-              <span>✦</span> Proceso
+              Proceso
             </p>
-            <h2 className="text-4xl font-black text-gray-900 uppercase">Empieza en 4 pasos</h2>
+            <h2 className="text-4xl font-black text-gray-900">Empieza en 4 pasos</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
@@ -211,9 +211,9 @@ export default function QueOfrecemosPage() {
       <section className="max-w-6xl mx-auto px-4 py-16 md:py-20">
         <div className="text-center mb-10 md:mb-14">
           <p className="text-lime-600 font-semibold text-sm uppercase tracking-widest flex items-center justify-center gap-2 mb-3">
-            <span>✦</span> Precios
+            Precios
           </p>
-          <h2 className="text-3xl md:text-4xl font-black text-gray-900 uppercase">Sin mensualidad</h2>
+          <h2 className="text-3xl md:text-4xl font-black text-gray-900">Sin mensualidad</h2>
           <p className="text-gray-500 mt-3">Ganas tú, ganamos nosotros. Nunca al revés.</p>
         </div>
 
@@ -244,7 +244,7 @@ export default function QueOfrecemosPage() {
 
           {/* Cómo te pagamos */}
           <div className="rounded-2xl border-2 border-gray-200 p-6 md:p-8 bg-gray-50">
-            <h3 className="font-black text-gray-900 text-lg uppercase">Cómo te pagamos</h3>
+            <h3 className="font-black text-gray-900 text-lg">Cómo te pagamos</h3>
             <p className="text-sm text-gray-500 mt-2">
               Conectas tu cuenta de ePayco una vez y cada pago se reparte solo, al instante.
             </p>
@@ -263,7 +263,7 @@ export default function QueOfrecemosPage() {
               ))}
             </ol>
 
-            <p className="text-xs text-gray-400 mt-6 pt-5 border-t border-gray-200">
+            <p className="text-xs text-gray-500 mt-6 pt-5 border-t border-gray-200">
               Ejemplo: una cancha de $100.000 la hora. El jugador paga $102.000 ($100.000 de
               cancha + $2.000 de servicio) y a ti te llegan $95.724 al instante: un 4,28%
               frente a tu precio de lista.
@@ -277,9 +277,9 @@ export default function QueOfrecemosPage() {
         <div className="max-w-3xl mx-auto px-4">
           <div className="text-center mb-12">
             <p className="text-lime-600 font-semibold text-sm uppercase tracking-widest flex items-center justify-center gap-2 mb-3">
-              <span>✦</span> FAQ
+              FAQ
             </p>
-            <h2 className="text-4xl font-black text-gray-900 uppercase">Preguntas frecuentes</h2>
+            <h2 className="text-4xl font-black text-gray-900">Preguntas frecuentes</h2>
           </div>
 
           <FaqAccordion
@@ -295,7 +295,7 @@ export default function QueOfrecemosPage() {
           <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full translate-x-1/2 -translate-y-1/2" />
         </div>
         <div className="relative max-w-4xl mx-auto px-4 text-center text-white space-y-6">
-          <h2 className="text-4xl font-black uppercase">¿Listo para llenar tu cancha?</h2>
+          <h2 className="text-4xl font-black">¿Listo para llenar tu cancha?</h2>
           <p className="text-green-100 text-lg max-w-xl mx-auto">
             Únete a los propietarios que ya digitalizaron su negocio con ReservaTuCancha.
           </p>

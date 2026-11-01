@@ -7,6 +7,10 @@ import { KeyRound, Pause, Play, Trash2, UserPlus, UsersRound, ShieldCheck } from
 import { Skeleton } from '@/components/ui/skeleton';
 import api from '@/lib/api/axios';
 import { useApiAuth } from '@/hooks/useApiAuth';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface Persona {
   _id: string;
@@ -30,6 +34,7 @@ export default function EquipoPage() {
   const esStaff = !!(session as any)?.user?.esStaff;
   const queryClient = useQueryClient();
   const [nuevo, setNuevo] = useState({ name: '', email: '', phone: '' });
+  const [aQuitar, setAQuitar] = useState<Persona | null>(null);
 
   const { data: equipo = [], isLoading } = useQuery<Persona[]>({
     queryKey: ['equipo'],
@@ -72,7 +77,7 @@ export default function EquipoPage() {
     return (
       <div className="max-w-xl mx-auto text-center py-20">
         <ShieldCheck className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-        <p className="font-black text-gray-500 uppercase text-sm">Solo el dueño del club gestiona el equipo</p>
+        <p className="font-black text-gray-500 text-sm">Solo el dueño del club gestiona el equipo</p>
       </div>
     );
   }
@@ -81,7 +86,7 @@ export default function EquipoPage() {
     <div className="max-w-4xl mx-auto space-y-6 pb-12">
       <div>
         <p className="text-lime-600 font-semibold text-xs sm:text-sm uppercase tracking-widest flex items-center gap-2 mb-1">
-          <span>✦</span> Panel Propietario
+          Panel Propietario
         </p>
         <h1 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase">Equipo</h1>
         <p className="text-gray-500 text-xs sm:text-sm mt-1 max-w-2xl">
@@ -95,7 +100,7 @@ export default function EquipoPage() {
         className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 space-y-3"
         onSubmit={(e) => { e.preventDefault(); if (nuevo.name.trim().length >= 2 && nuevo.email.includes('@')) invitar.mutate(); }}
       >
-        <p className="flex items-center gap-2 font-black text-gray-900 text-sm uppercase">
+        <p className="flex items-center gap-2 font-black text-gray-900 text-sm">
           <UserPlus className="h-4 w-4 text-green-600" /> Dar acceso
         </p>
         <div className="grid sm:grid-cols-3 gap-2">
@@ -107,7 +112,7 @@ export default function EquipoPage() {
           className="bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-colors">
           {invitar.isPending ? 'Enviando…' : 'Enviar acceso'}
         </button>
-        <p className="text-[11px] text-gray-400">Le llega un correo con una clave temporal. Hasta 10 personas por club.</p>
+        <p className="text-[11px] text-gray-500">Le llega un correo con una clave temporal. Hasta 10 personas por club.</p>
       </form>
 
       {isLoading ? (
@@ -115,7 +120,7 @@ export default function EquipoPage() {
       ) : equipo.length === 0 ? (
         <div className="text-center py-14 bg-white rounded-2xl border border-gray-100">
           <UsersRound className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-          <p className="font-black text-gray-400 uppercase text-xs">Todavía no hay nadie en tu equipo</p>
+          <p className="font-black text-gray-500 text-xs">Todavía no hay nadie en tu equipo</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -124,12 +129,12 @@ export default function EquipoPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-black text-gray-900 text-sm">{p.name}</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${p.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${p.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                     {p.isActive ? 'Activo' : 'Pausado'}
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 truncate">{p.email}{p.phone ? ` · ${p.phone}` : ''}</p>
-                <p className="text-[11px] text-gray-400">
+                <p className="text-[11px] text-gray-500">
                   {p.lastLoginAt ? `Último ingreso: ${new Date(p.lastLoginAt).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })}` : 'Aún no ha entrado'}
                 </p>
               </div>
@@ -143,7 +148,7 @@ export default function EquipoPage() {
                   className="flex items-center gap-1.5 border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold px-3 py-2 rounded-xl">
                   <KeyRound className="h-3.5 w-3.5" /> Clave
                 </button>
-                <button onClick={() => { if (confirm(`¿Quitar a ${p.name} del equipo?`)) quitar.mutate(p._id); }} title="Quitar"
+                <button onClick={() => setAQuitar(p)} title="Quitar" aria-label={`Quitar a ${p.name}`}
                   className="flex items-center border border-red-200 hover:bg-red-50 text-red-600 text-xs font-bold px-3 py-2 rounded-xl">
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -152,6 +157,26 @@ export default function EquipoPage() {
           ))}
         </div>
       )}
+
+      <AlertDialog open={!!aQuitar} onOpenChange={(v) => { if (!v) setAQuitar(null); }}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Quitar a {aQuitar?.name} del equipo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ya no podrá entrar al panel del club. Si cambias de idea, tendrás que volver a darle acceso.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => { if (aQuitar) quitar.mutate(aQuitar._id); setAQuitar(null); }}
+            >
+              Quitar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

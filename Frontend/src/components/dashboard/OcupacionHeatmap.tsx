@@ -32,7 +32,7 @@ function colorDe(pct: number) {
   if (pct >= 40) return 'bg-green-400 text-green-950';
   if (pct >= 20) return 'bg-green-200 text-green-900';
   if (pct > 0) return 'bg-green-100 text-green-800';
-  return 'bg-gray-50 text-gray-400';
+  return 'bg-gray-50 text-gray-500';
 }
 
 /**
@@ -59,8 +59,8 @@ export default function OcupacionHeatmap() {
             <Grid3x3 className="h-4 w-4 text-green-600" />
           </div>
           <div>
-            <h3 className="font-black text-gray-900 text-sm uppercase">Ocupación por hora</h3>
-            <p className="text-xs text-gray-400">
+            <h3 className="font-black text-gray-900 text-sm">Ocupación por hora</h3>
+            <p className="text-xs text-gray-500">
               {data ? `Del ${data.desde} al ${data.hasta} · horas reservadas sobre horas que podías vender` : 'Cargando…'}
             </p>
           </div>
@@ -83,20 +83,20 @@ export default function OcupacionHeatmap() {
       {isLoading || !data ? (
         <div className="h-64 animate-pulse bg-gray-100 rounded-xl" />
       ) : data.total.capacidad === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-12">Configura el horario de tus canchas para ver la ocupación.</p>
+        <p className="text-sm text-gray-500 text-center py-12">Configura el horario de tus canchas para ver la ocupación.</p>
       ) : (
         <>
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-gray-50 rounded-xl p-3">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Ocupación</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Ocupación</p>
               <p className="text-2xl font-black text-gray-900">{data.total.pct}%</p>
             </div>
             <div className="bg-gray-50 rounded-xl p-3">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Horas vendidas</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Horas vendidas</p>
               <p className="text-2xl font-black text-gray-900">{data.total.ocupado.toLocaleString('es-CO')}</p>
             </div>
             <div className="bg-gray-50 rounded-xl p-3">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Horas vacías</p>
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Horas vacías</p>
               <p className="text-2xl font-black text-gray-900">{Math.max(0, data.total.capacidad - data.total.ocupado).toLocaleString('es-CO')}</p>
             </div>
           </div>
@@ -107,9 +107,9 @@ export default function OcupacionHeatmap() {
                 <tr>
                   <th />
                   {horas.map((h) => (
-                    <th key={h} className="text-[10px] font-semibold text-gray-400 px-0.5 whitespace-nowrap">{hora12(h)}</th>
+                    <th key={h} className="text-[11px] font-semibold text-gray-500 px-0.5 whitespace-nowrap">{hora12(h)}</th>
                   ))}
-                  <th className="text-[10px] font-semibold text-gray-500 pl-2">Día</th>
+                  <th className="text-[11px] font-semibold text-gray-500 pl-2">Día</th>
                 </tr>
               </thead>
               <tbody>
@@ -123,7 +123,7 @@ export default function OcupacionHeatmap() {
                         if (!c || c.capacidad === 0) return <td key={h} className="w-9 h-8 rounded-md bg-white border border-dashed border-gray-100" title="Cerrado" />;
                         return (
                           <td key={h} title={`${DIAS[d]} ${hora12(h)}: ${c.ocupado} de ${c.capacidad} h (${c.pct}%)`}
-                            className={`w-9 h-8 rounded-md text-center text-[10px] font-bold tabular-nums ${colorDe(c.pct)}`}>
+                            className={`w-9 h-8 rounded-md text-center text-[11px] font-bold tabular-nums ${colorDe(c.pct)}`}>
                             {Math.round(c.pct)}
                           </td>
                         );
@@ -136,7 +136,7 @@ export default function OcupacionHeatmap() {
             </table>
           </div>
 
-          <div className="flex items-center gap-1.5 text-[10px] text-gray-400 flex-wrap">
+          <div className="flex items-center gap-1.5 text-[11px] text-gray-500 flex-wrap">
             <span>Menos lleno</span>
             {[0, 10, 30, 50, 70, 90].map((p) => <span key={p} className={`w-5 h-3 rounded ${colorDe(p).split(' ')[0]}`} />)}
             <span>Más lleno · los números son % ocupado</span>
@@ -144,7 +144,7 @@ export default function OcupacionHeatmap() {
 
           <div className="grid sm:grid-cols-2 gap-3">
             <div className="rounded-xl border border-gray-100 p-3.5">
-              <p className="flex items-center gap-1.5 text-xs font-black text-gray-900 uppercase mb-2"><Moon className="h-3.5 w-3.5 text-indigo-500" /> Franjas que más se quedan vacías</p>
+              <p className="flex items-center gap-1.5 text-xs font-black text-gray-900 mb-2"><Moon className="h-3.5 w-3.5 text-indigo-500" /> Franjas que más se quedan vacías</p>
               <ul className="space-y-1">
                 {data.horasVacias.map((c) => (
                   <li key={`${c.dia}-${c.hora}`} className="flex justify-between text-xs text-gray-600">
@@ -154,9 +154,9 @@ export default function OcupacionHeatmap() {
               </ul>
             </div>
             <div className="rounded-xl border border-gray-100 p-3.5">
-              <p className="flex items-center gap-1.5 text-xs font-black text-gray-900 uppercase mb-2"><Flame className="h-3.5 w-3.5 text-orange-500" /> Horas pico</p>
+              <p className="flex items-center gap-1.5 text-xs font-black text-gray-900 mb-2"><Flame className="h-3.5 w-3.5 text-orange-500" /> Horas pico</p>
               {data.horasPico.length === 0 ? (
-                <p className="text-xs text-gray-400">Aún no hay reservas en este período.</p>
+                <p className="text-xs text-gray-500">Aún no hay reservas en este período.</p>
               ) : (
                 <ul className="space-y-1">
                   {data.horasPico.map((c) => (

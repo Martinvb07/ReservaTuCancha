@@ -3,6 +3,7 @@
 import { MapPin, Building2, ChevronRight } from 'lucide-react';
 import type { Club } from '@/types/club.types';
 import { getSportIcon } from '@/components/ui/SportIcons';
+import FotoRemota from '@/components/ui/FotoRemota';
 
 const SPORT_LABELS: Record<string, { label: string; color: string }> = {
   futbol:      { label: 'Fútbol',      color: 'bg-green-100 text-green-700'  },
@@ -23,7 +24,7 @@ export default function ClubCard({ club, onClick }: Props) {
       {/* Header oscuro */}
       <div className="relative h-28 bg-gray-900 flex items-center justify-center overflow-hidden">
         {club.logo ? (
-          <img src={club.logo} alt={club.name} className="absolute inset-0 w-full h-full object-cover opacity-40" />
+          <FotoRemota src={club.logo} alt="" className="object-cover opacity-40" sizes="(max-width: 768px) 100vw, 33vw" />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
         )}
@@ -38,7 +39,7 @@ export default function ClubCard({ club, onClick }: Props) {
         </div>
 
         {(club.totalCourts ?? 0) > 0 && (
-          <div className="absolute top-3 right-3 bg-lime-400 text-gray-900 text-[10px] font-black px-2.5 py-1 rounded-full">
+          <div className="absolute top-3 right-3 bg-lime-400 text-gray-900 text-[11px] font-black px-2.5 py-1 rounded-full">
             {club.totalCourts} {club.totalCourts === 1 ? 'cancha' : 'canchas'}
           </div>
         )}
@@ -52,14 +53,14 @@ export default function ClubCard({ club, onClick }: Props) {
               {club.name}
             </h3>
             {(club.city || club.address) && (
-              <p className="flex items-center gap-1 text-xs text-gray-400 mt-1">
+              <p className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                 <MapPin className="h-3 w-3 shrink-0" />
                 <span className="truncate">{club.city || club.address}</span>
               </p>
             )}
           </div>
           <div className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center shrink-0 group-hover:border-lime-400 group-hover:bg-lime-50 transition-all">
-            <ChevronRight className="h-3.5 w-3.5 text-gray-400 group-hover:text-lime-600 transition-colors" />
+            <ChevronRight className="h-3.5 w-3.5 text-gray-500 group-hover:text-lime-600 transition-colors" />
           </div>
         </div>
 
@@ -70,7 +71,7 @@ export default function ClubCard({ club, onClick }: Props) {
               const s = SPORT_LABELS[sport] ?? { label: sport, color: 'bg-gray-100 text-gray-600' };
               const Icon = getSportIcon(sport);
               return (
-                <span key={sport} className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full ${s.color}`}>
+                <span key={sport} className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-full ${s.color}`}>
                   <Icon className="h-3 w-3" /> {s.label}
                 </span>
               );
@@ -80,12 +81,12 @@ export default function ClubCard({ club, onClick }: Props) {
 
         {/* CTA */}
         <div className="flex items-center justify-between pt-2 border-t border-gray-50">
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
+          <div className="flex items-center gap-1.5 text-xs text-gray-500">
             <Building2 className="h-3 w-3" />
             <span>Ver canchas disponibles</span>
           </div>
           {club.contactEmail && (
-            <span className="text-[10px] text-gray-300 truncate max-w-[120px]">{club.contactEmail}</span>
+            <span className="text-[11px] text-gray-300 truncate max-w-[120px]">{club.contactEmail}</span>
           )}
         </div>
       </div>

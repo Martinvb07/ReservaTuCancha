@@ -9,6 +9,7 @@ import HeroSearch from '@/components/home/HeroSearch';
 import MobileSearchTrigger from '@/components/home/MobileSearchTrigger';
 import { SEARCH_ANCHOR_ID } from '@/hooks/useSearchDock';
 import type { Court } from '@/types';
+import FotoRemota from '@/components/ui/FotoRemota';
 
 const SPORT_GALLERY = [
   { key: 'futbol',      label: 'Futbol',      img: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=1200&h=900&fit=crop&crop=entropy&q=80', desc: 'La adrenalina y el trabajo en equipo se fusionan.' },
@@ -95,7 +96,7 @@ export default function HomeClient({ stats }: Props) {
           <p className="text-lime-600 font-semibold text-xs md:text-sm flex items-center gap-1.5 mb-2">
             <span className="text-lime-500">*</span> Servicios
           </p>
-          <h2 className="text-2xl md:text-4xl font-black text-gray-900 uppercase">Encuentra tu lugar en la cancha</h2>
+          <h2 className="text-2xl md:text-4xl font-black text-gray-900">Encuentra tu lugar en la cancha</h2>
           <p className="text-gray-500 mt-2 text-sm md:text-base">Canchas de clubes verificados, reservas en segundos y eventos que unen a la comunidad.</p>
         </div>
 
@@ -114,15 +115,15 @@ export default function HomeClient({ stats }: Props) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-          <div className="rounded-xl overflow-hidden h-[120px] md:h-[380px]">
-            <img src="https://imagenes2.eltiempo.com/files/image_1200_675/uploads/2025/02/08/67a826ea4f6fb.jpeg" alt="padel" className="w-full h-full object-cover" />
+          <div className="relative rounded-xl overflow-hidden h-[120px] md:h-[380px]">
+            <FotoRemota src="https://imagenes2.eltiempo.com/files/image_1200_675/uploads/2025/02/08/67a826ea4f6fb.jpeg" alt="padel" className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
           </div>
           <div className="flex flex-col gap-3 md:gap-4">
-            <div className="rounded-xl overflow-hidden h-[120px] md:h-[180px]">
-              <img src="https://images.unsplash.com/photo-1519046947096-f43d6481532b?w=1200&h=500&fit=crop&crop=entropy&q=80" alt="voley" className="w-full h-full object-cover" />
+            <div className="relative rounded-xl overflow-hidden h-[120px] md:h-[180px]">
+              <FotoRemota src="https://images.unsplash.com/photo-1519046947096-f43d6481532b?w=1200&h=500&fit=crop&crop=entropy&q=80" alt="voley" className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
             </div>
-            <div className="rounded-xl overflow-hidden h-[120px] md:h-[180px]">
-              <img src="https://images.unsplash.com/photo-1459865264687-595d652de67e?w=1200&h=500&fit=crop&crop=entropy&q=80" alt="futbol" className="w-full h-full object-cover" />
+            <div className="relative rounded-xl overflow-hidden h-[120px] md:h-[180px]">
+              <FotoRemota src="https://images.unsplash.com/photo-1459865264687-595d652de67e?w=1200&h=500&fit=crop&crop=entropy&q=80" alt="futbol" className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
             </div>
           </div>
         </div>
@@ -131,13 +132,13 @@ export default function HomeClient({ stats }: Props) {
       {/* ── EXPLORA POR DEPORTE ────────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-4 py-8 md:py-16">
         <div className="mb-6 md:mb-8">
-          <h2 className="text-2xl md:text-4xl font-black text-gray-900 uppercase">Explora por deporte</h2>
+          <h2 className="text-2xl md:text-4xl font-black text-gray-900">Explora por deporte</h2>
           <p className="text-gray-500 mt-1 text-sm md:text-base">Clubes con iluminacion nocturna, cesped de primera y mas.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
           {SPORT_GALLERY.map((s) => (
             <Link key={s.key} href={`/empresas?sport=${s.key}`} className="block h-[200px] md:h-[260px] rounded-2xl overflow-hidden relative">
-              <img src={s.img} alt={s.label} className="w-full h-full object-cover" />
+              <FotoRemota src={s.img} alt={s.label} className="object-cover" sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 text-white">
                 <div className="text-lg md:text-2xl font-black">{s.label}</div>
@@ -153,7 +154,7 @@ export default function HomeClient({ stats }: Props) {
         <section className="bg-gray-50 py-8 md:py-16">
           <div className="max-w-6xl mx-auto px-4 space-y-6">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <h2 className="text-2xl md:text-4xl font-black text-gray-900 uppercase">Canchas Destacadas</h2>
+              <h2 className="text-2xl md:text-4xl font-black text-gray-900">Canchas Destacadas</h2>
               <Link href="/empresas" className="flex items-center gap-1 font-semibold text-gray-700 hover:text-lime-600 transition-colors text-sm md:text-base">
                 Ver todas <ChevronRight className="h-5 w-5" />
               </Link>
@@ -173,7 +174,7 @@ export default function HomeClient({ stats }: Props) {
       {/* ── POR QUE ELEGIRNOS ─────────────────────────────────────────── */}
       <section className="bg-gray-50 py-8 md:py-16">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-2xl md:text-4xl font-black text-gray-900 uppercase text-center mb-8 md:mb-12">Por que elegirnos</h2>
+          <h2 className="text-2xl md:text-4xl font-black text-gray-900 text-center mb-8 md:mb-12">Por que elegirnos</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               { icon: Shield,      title: 'Pago 100% seguro',       desc: 'Procesamos pagos con ePayco. Nequi, Daviplata, PSE y tarjetas.' },
@@ -184,7 +185,7 @@ export default function HomeClient({ stats }: Props) {
                 <div className="w-14 h-14 bg-lime-100 rounded-2xl flex items-center justify-center mx-auto">
                   <item.icon className="h-7 w-7 text-lime-600" />
                 </div>
-                <h3 className="font-black text-gray-900 uppercase text-sm">{item.title}</h3>
+                <h3 className="font-black text-gray-900 text-sm">{item.title}</h3>
                 <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
               </FadeIn>
             ))}
@@ -198,7 +199,7 @@ export default function HomeClient({ stats }: Props) {
           <p className="text-lime-600 font-semibold text-xs md:text-sm flex items-center gap-1.5 mb-2">
             <span>*</span> FAQ
           </p>
-          <h2 className="text-2xl md:text-4xl font-black text-gray-900 uppercase">Preguntas frecuentes</h2>
+          <h2 className="text-2xl md:text-4xl font-black text-gray-900">Preguntas frecuentes</h2>
         </div>
 
         <FaqAccordion

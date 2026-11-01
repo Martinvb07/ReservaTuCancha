@@ -17,25 +17,25 @@ export default function TerminosPage() {
         <div>
           <p className="text-lime-600 font-semibold text-sm uppercase tracking-widest mb-2">✦ ReservaTuCancha</p>
           <h1 className="text-4xl font-black text-gray-900 uppercase">Términos de uso</h1>
-          <p className="text-gray-400 text-sm mt-2">Última actualización: Marzo 2026</p>
+          <p className="text-gray-500 text-sm mt-2">Última actualización: Marzo 2026</p>
         </div>
         <div className="space-y-6 text-gray-600 text-sm leading-relaxed">
           <p>Al usar ReservaTuCancha, aceptas los presentes términos. Si no estás de acuerdo, por favor no uses el servicio.</p>
           <div className="space-y-3">
-            <h2 className="text-lg font-black text-gray-900 uppercase">1. Uso del servicio</h2>
+            <h2 className="text-lg font-black text-gray-900">1. Uso del servicio</h2>
             <p>ReservaTuCancha es una plataforma que conecta usuarios con propietarios de canchas deportivas en Colombia. Actuamos como intermediarios y no somos responsables por las instalaciones físicas de terceros.</p>
           </div>
           <div className="space-y-3">
-            <h2 className="text-lg font-black text-gray-900 uppercase">2. Reservas y pagos</h2>
+            <h2 className="text-lg font-black text-gray-900">2. Reservas y pagos</h2>
             <p>Las reservas son vinculantes una vez confirmadas. Los pagos se procesan de forma segura a través de ePayco, que reparte cada pago en el momento: el club recibe directamente su parte y ReservaTuCancha su tarifa. Sobre el precio de la cancha se cobra al jugador una tarifa de servicio fija de $2.000 por reserva, que se muestra desglosada antes del pago. Puedes soltar tu horario hasta 24 horas antes del turno, pero el pago no se reembolsa; en su lugar puedes mover la reserva a otro horario disponible solicitándolo a soporte.</p>
             <p>Si un turno ya pagado no puede prestarse por causas atribuibles al club o a la plataforma, se reversa el pago y se devuelve al jugador el valor total, incluida la tarifa de servicio.</p>
           </div>
           <div className="space-y-3">
-            <h2 className="text-lg font-black text-gray-900 uppercase">3. Responsabilidades</h2>
+            <h2 className="text-lg font-black text-gray-900">3. Responsabilidades</h2>
             <p>ReservaTuCancha no se hace responsable por lesiones, daños o pérdidas ocurridas durante el uso de las instalaciones. Cada propietario es responsable de sus canchas y equipos.</p>
           </div>
           <div className="space-y-3">
-            <h2 className="text-lg font-black text-gray-900 uppercase">4. Contacto</h2>
+            <h2 className="text-lg font-black text-gray-900">4. Contacto</h2>
             <p>Para consultas sobre estos términos: <a href="mailto:soporte@reservatucancha.pro" className="text-green-600 hover:underline">soporte@reservatucancha.pro</a></p>
           </div>
         </div>

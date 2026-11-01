@@ -193,7 +193,7 @@ export default function LocationPicker({ value, onChange, onResolve, city, class
       {/* Buscador + sugerencias */}
       <div ref={boxRef} className="relative">
         <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
           <input
             type="text"
             value={query}
@@ -203,10 +203,10 @@ export default function LocationPicker({ value, onChange, onResolve, city, class
             className="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-24 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 transition"
           />
           <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            {searching && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
+            {searching && <Loader2 className="h-4 w-4 animate-spin text-gray-500" />}
             {query && !searching && (
               <button type="button" onClick={() => { setQuery(''); setResults([]); }}
-                className="w-7 h-7 grid place-items-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition">
+                className="w-7 h-7 grid place-items-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-600 transition">
                 <X className="h-3.5 w-3.5" />
               </button>
             )}

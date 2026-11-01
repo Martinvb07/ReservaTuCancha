@@ -189,7 +189,7 @@ export default function EditarCanchaPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <p className="text-lime-600 font-semibold text-sm uppercase tracking-widest flex items-center gap-2 mb-1">
-            <span>✦</span> Editar cancha
+            Editar cancha
           </p>
           <h1 className="text-2xl md:text-3xl font-black text-gray-900 uppercase">{court?.name ?? '—'}</h1>
           <p className="text-gray-500 text-sm mt-1">Elige qué quieres modificar</p>
@@ -201,7 +201,7 @@ export default function EditarCanchaPage() {
             <SportIcon className="h-6 w-6 text-green-600 shrink-0" />
             <div>
               <p className="text-sm font-black text-gray-900 leading-tight">{sportLabel}</p>
-              <p className="text-[11px] text-gray-400">No se puede cambiar</p>
+              <p className="text-[11px] text-gray-500">No se puede cambiar</p>
             </div>
           </div>
         )}
@@ -218,7 +218,7 @@ export default function EditarCanchaPage() {
                 {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>}
               </div>
               <div>
-                <label className={lbl}>Descripción <span className="text-gray-400 font-normal normal-case">(opcional)</span></label>
+                <label className={lbl}>Descripción <span className="text-gray-500 font-normal normal-case">(opcional)</span></label>
                 <textarea rows={4} className={inp} style={{ resize: 'none' }}
                   placeholder="Superficie, capacidad, características especiales..."
                   {...register('description')} />
@@ -247,7 +247,7 @@ export default function EditarCanchaPage() {
               </div>
 
               <div className="pt-2">
-                <label className={lbl}>Punto en el mapa <span className="text-gray-400 font-normal normal-case">(recomendado)</span></label>
+                <label className={lbl}>Punto en el mapa <span className="text-gray-500 font-normal normal-case">(recomendado)</span></label>
                 <LocationPicker
                   value={pin}
                   onChange={(v) => { setPin(v); setPinDirty(true); }}
@@ -262,7 +262,7 @@ export default function EditarCanchaPage() {
             <div className="max-w-xs">
               <label className={lbl}>Precio por hora (COP) <span className="text-red-500">*</span></label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">$</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold">$</span>
                 <input type="number" min={1000} step={1000}
                   className={inp + ' pl-8'} placeholder="80000" {...register('pricePerHour')} />
               </div>
@@ -276,7 +276,7 @@ export default function EditarCanchaPage() {
 
           {section === 'comodidades' && (
             <div>
-              <label className={lbl}>Comodidades <span className="text-gray-400 font-normal normal-case">(opcional)</span></label>
+              <label className={lbl}>Comodidades <span className="text-gray-500 font-normal normal-case">(opcional)</span></label>
               <div className="flex flex-wrap gap-2">
                 {AMENITIES.map(a => {
                   const active = amenities.includes(a);
@@ -295,7 +295,7 @@ export default function EditarCanchaPage() {
                   );
                 })}
               </div>
-              <p className="text-xs text-gray-400 mt-3">
+              <p className="text-xs text-gray-500 mt-3">
                 Se muestran en la ficha pública de tu cancha.
                 {extras.length > 0 && ` La modalidad (${extras.join(', ')}) se conserva aparte.`}
               </p>
@@ -319,7 +319,7 @@ export default function EditarCanchaPage() {
             </button>
           </div>
           {(isDirty || pinDirty || amenitiesDirty) && (
-            <p className="text-xs text-gray-400 text-center mt-2">Tienes cambios sin guardar</p>
+            <p className="text-xs text-gray-500 text-center mt-2">Tienes cambios sin guardar</p>
           )}
         </div>
       </form>

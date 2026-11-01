@@ -54,7 +54,7 @@ export default function CuentaEpayco({ actual, guardando, onGuardar }: Props) {
             <ShieldCheck className="h-5 w-5 text-lime-400" />
           </div>
           <div className="min-w-0">
-            <h2 className="font-black text-gray-900 uppercase text-sm tracking-wide">Cuenta de ePayco</h2>
+            <h2 className="font-black text-gray-900 text-sm tracking-wide">Cuenta de ePayco</h2>
             <p className="text-gray-500 text-sm mt-1 leading-snug">
               El pago de cada reserva se divide en el momento: a ti te llega tu parte y a nosotros la
               nuestra. Para eso necesitas tu propia cuenta de ePayco.
@@ -108,7 +108,7 @@ export default function CuentaEpayco({ actual, guardando, onGuardar }: Props) {
           </button>
 
           {!listo && (
-            <p className="text-[11px] text-gray-400 mt-3 leading-snug text-center">
+            <p className="text-[11px] text-gray-500 mt-3 leading-snug text-center">
               Mientras no conectes tu cuenta, tus canchas no pueden recibir reservas pagadas en línea.
             </p>
           )}

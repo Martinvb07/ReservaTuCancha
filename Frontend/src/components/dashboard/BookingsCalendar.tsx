@@ -83,7 +83,7 @@ export default function BookingsCalendar({ bookings, onChangeStatus }: Props) {
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <h2 className="text-base sm:text-lg font-black text-gray-900 uppercase">
+          <h2 className="text-base sm:text-lg font-black text-gray-900">
             {format(currentMonth, 'MMMM yyyy', { locale: es })}
           </h2>
           <button
@@ -97,7 +97,7 @@ export default function BookingsCalendar({ bookings, onChangeStatus }: Props) {
         {/* Weekday headers */}
         <div className="grid grid-cols-7 border-b border-gray-100">
           {WEEKDAYS.map(d => (
-            <div key={d} className="text-center text-[10px] sm:text-xs font-bold text-gray-400 uppercase py-2.5">
+            <div key={d} className="text-center text-[11px] sm:text-xs font-bold text-gray-500 uppercase py-2.5">
               {d}
             </div>
           ))}
@@ -142,14 +142,14 @@ export default function BookingsCalendar({ bookings, onChangeStatus }: Props) {
                         return (
                           <div
                             key={b._id}
-                            className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-md truncate ${st.pill}`}
+                            className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-md truncate ${st.pill}`}
                           >
                             {formatTime12h(b.startTime)} {court?.name ?? ''}
                           </div>
                         );
                       })}
                       {dayItems.length > 3 && (
-                        <div className="text-[9px] font-bold text-gray-400 px-1.5">
+                        <div className="text-[11px] font-bold text-gray-500 px-1.5">
                           +{dayItems.length - 3} más
                         </div>
                       )}
@@ -163,7 +163,7 @@ export default function BookingsCalendar({ bookings, onChangeStatus }: Props) {
                         );
                       })}
                       {dayItems.length > 5 && (
-                        <span className="text-[8px] font-bold text-gray-400">+{dayItems.length - 5}</span>
+                        <span className="text-[11px] font-bold text-gray-500">+{dayItems.length - 5}</span>
                       )}
                     </div>
                   </div>
@@ -189,16 +189,16 @@ export default function BookingsCalendar({ bookings, onChangeStatus }: Props) {
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="px-4 sm:px-5 py-3 border-b border-gray-100 flex items-center justify-between">
             <div>
-              <h3 className="font-black text-gray-900 text-sm sm:text-base uppercase">
+              <h3 className="font-black text-gray-900 text-sm sm:text-base">
                 {format(selectedDay, "EEEE d 'de' MMMM", { locale: es })}
               </h3>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-500">
                 {dayBookings.length} {dayBookings.length === 1 ? 'reserva' : 'reservas'}
               </p>
             </div>
             <button
               onClick={() => setSelectedDay(null)}
-              className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all"
+              className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-600 hover:bg-gray-50 transition-all"
             >
               <X className="h-4 w-4" />
             </button>
@@ -207,7 +207,7 @@ export default function BookingsCalendar({ bookings, onChangeStatus }: Props) {
           {dayBookings.length === 0 ? (
             <div className="text-center py-10">
               <CalendarDays className="h-8 w-8 text-gray-200 mx-auto mb-2" />
-              <p className="text-xs text-gray-400 font-semibold">Sin reservas este día</p>
+              <p className="text-xs text-gray-500 font-semibold">Sin reservas este día</p>
             </div>
           ) : (
             <div className="divide-y divide-gray-50">
@@ -219,7 +219,7 @@ export default function BookingsCalendar({ bookings, onChangeStatus }: Props) {
                     {/* Time block */}
                     <div className="w-16 sm:w-20 shrink-0 text-center">
                       <p className="text-sm sm:text-base font-black text-gray-900">{formatTime12h(booking.startTime)}</p>
-                      <p className="text-[10px] text-gray-400">{formatTime12h(booking.endTime)}</p>
+                      <p className="text-[11px] text-gray-500">{formatTime12h(booking.endTime)}</p>
                     </div>
 
                     {/* Vertical line with status color */}
@@ -229,7 +229,7 @@ export default function BookingsCalendar({ bookings, onChangeStatus }: Props) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-0.5">
                         {court && <span className="font-bold text-gray-900 text-sm">{court.name}</span>}
-                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${st.pill}`}>
+                        <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${st.pill}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
                           {STATUS_LABELS[booking.status]}
                         </span>
@@ -248,14 +248,14 @@ export default function BookingsCalendar({ bookings, onChangeStatus }: Props) {
                     {/* Actions */}
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button onClick={() => setSelectedBooking(booking)} title="Ver detalles"
-                        className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all">
+                        className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-all">
                         <Eye className="h-3.5 w-3.5" />
                       </button>
                       {/* El pago lo confirma ePayco, no el club: una pendiente es un
                           checkout en curso y se libera sola si no se paga. */}
                       {booking.status === 'pending' && (
                         <span title="Se confirma sola cuando ePayco apruebe el pago; si no se paga, el horario se libera"
-                            className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full whitespace-nowrap">
+                            className="text-[11px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full whitespace-nowrap">
                             Esperando pago
                           </span>
                       )}
@@ -272,7 +272,7 @@ export default function BookingsCalendar({ bookings, onChangeStatus }: Props) {
       <Dialog open={!!selectedBooking} onOpenChange={open => { if (!open) setSelectedBooking(null); }}>
         <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="font-black uppercase text-gray-900">Detalle de reserva</DialogTitle>
+            <DialogTitle className="font-black text-gray-900">Detalle de reserva</DialogTitle>
           </DialogHeader>
           {selectedBooking && (
             <div className="space-y-4 py-2">

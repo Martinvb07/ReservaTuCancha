@@ -79,7 +79,7 @@ export default function CourtLocationMap({ coordinates, city, address, seed, nam
   if (!point) {
     return (
       <div className="flex items-start gap-2.5 bg-gray-50 border border-gray-100 rounded-2xl p-4">
-        <MapPin className="h-4 w-4 text-gray-400 shrink-0 mt-0.5" />
+        <MapPin className="h-4 w-4 text-gray-500 shrink-0 mt-0.5" />
         <p className="text-sm text-gray-500">
           Esta cancha aún no tiene ubicación registrada en el mapa.
           {address ? <> Dirección: <span className="font-medium text-gray-700">{address}</span>.</> : null}

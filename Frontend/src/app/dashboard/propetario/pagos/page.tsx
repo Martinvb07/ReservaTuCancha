@@ -161,7 +161,7 @@ export default function OwnerPagosPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <p className="text-lime-600 font-semibold text-xs uppercase tracking-widest flex items-center gap-2 mb-1">
-            <span>✦</span> Panel Propietario
+            Panel Propietario
           </p>
           <h1 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase">Pagos</h1>
           <p className="text-gray-500 text-sm mt-1">Historial de cobros y tu cuenta de ePayco</p>
@@ -199,7 +199,7 @@ export default function OwnerPagosPage() {
           {/* ── Filtro período ── */}
           <div className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
             <div className="flex items-center gap-2 flex-wrap">
-              <SlidersHorizontal className="h-4 w-4 text-gray-400 shrink-0" />
+              <SlidersHorizontal className="h-4 w-4 text-gray-500 shrink-0" />
               {PERIODS.map(p => (
                 <button
                   key={p.key}
@@ -214,26 +214,26 @@ export default function OwnerPagosPage() {
                 </button>
               ))}
             </div>
-            <p className="text-xs text-gray-400 font-medium shrink-0">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</p>
+            <p className="text-xs text-gray-500 font-medium shrink-0">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</p>
           </div>
 
           {/* ── KPIs del período ── */}
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
             {[
-              { label: 'Ingresos confirmados', value: fmtBig(revenue),    sub: `${confirmedCt} reserva${confirmedCt !== 1 ? 's' : ''}`, icon: DollarSign,    color: 'text-emerald-600', bg: 'bg-emerald-50' },
+              { label: 'Ingresos confirmados', value: fmtBig(revenue),    sub: `${confirmedCt} reserva${confirmedCt !== 1 ? 's' : ''}`, icon: DollarSign,    color: 'text-green-600', bg: 'bg-green-50' },
               { label: 'Esperando pago',   value: fmtBig(pendingRev), sub: `${filtered.filter((b: any) => b.status === 'pending').length} pendiente${filtered.filter((b: any) => b.status === 'pending').length !== 1 ? 's' : ''}`, icon: Clock, color: 'text-amber-600',   bg: 'bg-amber-50'   },
               { label: 'Total reservas',        value: filtered.length,    sub: period === 'todo' ? 'Historial completo' : `En este ${period === 'hoy' ? 'día' : period}`, icon: CalendarDays, color: 'text-blue-600', bg: 'bg-blue-50' },
               { label: 'Canceladas',            value: cancelledCt,        sub: `${confirmedCt > 0 ? Math.round(cancelledCt / (filtered.length || 1) * 100) : 0}% del período`, icon: XCircle, color: 'text-red-500', bg: 'bg-red-50' },
             ].map(k => (
               <div key={k.label} className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between mb-3">
-                  <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest leading-tight pr-2">{k.label}</p>
+                  <p className="text-[11px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest leading-tight pr-2">{k.label}</p>
                   <div className={`w-8 h-8 shrink-0 rounded-lg ${k.bg} flex items-center justify-center`}>
                     <k.icon className={`h-4 w-4 ${k.color}`} />
                   </div>
                 </div>
                 <p className="text-2xl sm:text-3xl font-black text-gray-900 leading-none">{loadingBookings ? '—' : k.value}</p>
-                <p className="text-xs text-gray-400 mt-1">{k.sub}</p>
+                <p className="text-xs text-gray-500 mt-1">{k.sub}</p>
               </div>
             ))}
           </div>
@@ -241,7 +241,7 @@ export default function OwnerPagosPage() {
           {/* ── Buscador + filtro estado ── */}
           <div className="flex flex-col gap-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <input
                 type="text"
                 placeholder="Buscar por cliente, email o código (#XXXXXXXX)..."
@@ -281,7 +281,7 @@ export default function OwnerPagosPage() {
                   <TrendingUp className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <p className="font-black text-sm uppercase tracking-wide">Ingresos del período</p>
+                  <p className="font-black text-sm tracking-wide">Ingresos del período</p>
                   <p className="text-green-100 text-xs">{confirmedCt} reservas confirmadas / completadas</p>
                 </div>
               </div>
@@ -294,7 +294,7 @@ export default function OwnerPagosPage() {
             {/* Header tabla */}
             <div className="hidden sm:grid grid-cols-[1fr_1.4fr_120px_110px_100px] gap-4 px-6 py-3 border-b border-gray-100 bg-gray-50">
               {['Cliente', 'Fecha / Hora', 'Método', 'Total', 'Estado'].map(h => (
-                <p key={h} className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{h}</p>
+                <p key={h} className="text-[11px] font-black text-gray-500 tracking-widest">{h}</p>
               ))}
             </div>
 
@@ -316,8 +316,8 @@ export default function OwnerPagosPage() {
             {!loadingBookings && filtered.length === 0 && (
               <div className="text-center py-16">
                 <DollarSign className="h-10 w-10 text-gray-200 mx-auto mb-3" />
-                <p className="font-black text-gray-400 uppercase text-sm">Sin resultados</p>
-                <p className="text-gray-400 text-xs mt-1">
+                <p className="font-black text-gray-500 text-sm">Sin resultados</p>
+                <p className="text-gray-500 text-xs mt-1">
                   {search || filterStatus !== 'all' ? 'Intenta con otros filtros' : 'No hay pagos en este período'}
                 </p>
               </div>
@@ -348,8 +348,8 @@ export default function OwnerPagosPage() {
                         </div>
                         <div className="min-w-0">
                           <p className="font-bold text-gray-900 text-sm truncate">{b.guestName}</p>
-                          <p className="text-[11px] text-gray-400 truncate">{b.guestEmail}</p>
-                          {court && <p className="text-[10px] text-gray-300 truncate">{court.name}</p>}
+                          <p className="text-[11px] text-gray-500 truncate">{b.guestEmail}</p>
+                          {court && <p className="text-[11px] text-gray-300 truncate">{court.name}</p>}
                         </div>
                       </div>
 
@@ -358,15 +358,15 @@ export default function OwnerPagosPage() {
                         <p className="text-sm font-semibold text-gray-700">
                           {b.date ? format(parseISO(b.date), 'dd MMM yyyy', { locale: es }) : '—'}
                         </p>
-                        <p className="text-xs text-gray-400">{formatTime12h(b.startTime)} – {formatTime12h(b.endTime)}</p>
+                        <p className="text-xs text-gray-500">{formatTime12h(b.startTime)} – {formatTime12h(b.endTime)}</p>
                         {b.bookingCode && (
-                          <p className="text-[10px] font-mono text-gray-300 mt-0.5">#{b.bookingCode}</p>
+                          <p className="text-[11px] font-mono text-gray-300 mt-0.5">#{b.bookingCode}</p>
                         )}
                       </div>
 
                       {/* Método */}
                       <div className="hidden sm:block">
-                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full ${method.color}`}>
+                        <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full ${method.color}`}>
                           {b.paymentMethod === 'efectivo'
                             ? <Banknote className="h-3 w-3" />
                             : <CreditCard className="h-3 w-3" />
@@ -378,12 +378,12 @@ export default function OwnerPagosPage() {
                       {/* Total */}
                       <div className="text-right sm:text-left shrink-0">
                         <p className="font-black text-gray-900 text-sm">{fmtCOP(netoDueno(b))}</p>
-                        <p className="text-[10px] text-gray-400">COP</p>
+                        <p className="text-[11px] text-gray-500">COP</p>
                       </div>
 
                       {/* Estado */}
                       <div className="hidden sm:block">
-                        <span className={`inline-flex items-center text-[10px] font-bold px-2.5 py-1 rounded-full ${STATUS_PILL[b.status] ?? STATUS_PILL.pending}`}>
+                        <span className={`inline-flex items-center text-[11px] font-bold px-2.5 py-1 rounded-full ${STATUS_PILL[b.status] ?? STATUS_PILL.pending}`}>
                           {STATUS_LABEL[b.status] ?? b.status}
                         </span>
                       </div>
@@ -414,7 +414,7 @@ export default function OwnerPagosPage() {
                     const show = page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1;
                     const dots = !show && (page === 2 || page === totalPages - 1);
                     if (!show && !dots) return null;
-                    if (dots) return <span key={page} className="px-1 text-gray-400 self-center">…</span>;
+                    if (dots) return <span key={page} className="px-1 text-gray-500 self-center">…</span>;
                     return (
                       <button
                         key={page}

@@ -339,7 +339,7 @@ export default function BookingForm({
             <span className="text-2xl font-bold text-gray-900">${pricePerHour.toLocaleString('es-CO')}</span>
             <span className="text-gray-500 text-sm whitespace-nowrap"> COP / hora</span>
           </div>
-          <span className="text-xs font-medium text-gray-400">
+          <span className="text-xs font-medium text-gray-500">
             {step === 'when' ? 'Paso 1 de 2' : 'Paso 2 de 2'}
           </span>
         </div>
@@ -354,7 +354,7 @@ export default function BookingForm({
               <label className={lbl}><CalendarDays className="h-3.5 w-3.5" /> Elige un día</label>
               {availability.length === 0 ? (
                 <div className="text-center py-6 border-2 border-dashed border-gray-200 rounded-2xl">
-                  <p className="text-sm text-gray-400">Esta cancha no tiene días configurados aún</p>
+                  <p className="text-sm text-gray-500">Esta cancha no tiene días configurados aún</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -363,7 +363,7 @@ export default function BookingForm({
                       className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 disabled:opacity-30 transition">
                       <ChevronLeft className="h-3.5 w-3.5" />
                     </button>
-                    <span className="text-xs text-gray-400 font-medium">
+                    <span className="text-xs text-gray-500 font-medium">
                       {visibleDates.length > 0 && `${format(visibleDates[0], 'd MMM', { locale: es })} – ${format(visibleDates[visibleDates.length - 1], 'd MMM', { locale: es })}`}
                     </span>
                     <button type="button" onClick={() => setDateOffset(dateOffset + PER_PAGE)} disabled={dateOffset + PER_PAGE >= availableDates.length}
@@ -377,10 +377,10 @@ export default function BookingForm({
                       return (
                         <button key={date.toISOString()} type="button" onClick={() => pickDate(date)}
                           className={`flex flex-col items-center py-2.5 rounded-xl border transition-all ${isSelected ? 'border-green-600 bg-green-50 rtc-pick' : 'border-gray-200 hover:border-green-400'}`}>
-                          <span className="text-[10px] text-gray-400 uppercase">{DAYS_ES[getDay(date)]}</span>
+                          <span className="text-[11px] text-gray-500 uppercase">{DAYS_ES[getDay(date)]}</span>
                           <span className={`text-base font-bold ${isSelected ? 'text-green-700' : 'text-gray-900'}`}>{format(date, 'd')}</span>
-                          <span className="text-[10px] text-gray-400">{format(date, 'MMM', { locale: es })}</span>
-                          {isToday(date) && <span className="text-[9px] text-green-600 font-semibold mt-0.5">Hoy</span>}
+                          <span className="text-[11px] text-gray-500">{format(date, 'MMM', { locale: es })}</span>
+                          {isToday(date) && <span className="text-[11px] text-green-600 font-semibold mt-0.5">Hoy</span>}
                         </button>
                       );
                     })}
@@ -394,7 +394,7 @@ export default function BookingForm({
               <div>
                 <label className={lbl}>
                   <Clock className="h-3.5 w-3.5" /> Horarios
-                  <span className="text-gray-400 font-normal">({slotDuration} min)</span>
+                  <span className="text-gray-500 font-normal">({slotDuration} min)</span>
                 </label>
                 {timeSlots.length === 0 ? (
                   <Skeleton className="h-24 rounded-xl" />
@@ -413,7 +413,7 @@ export default function BookingForm({
                               selected
                                 ? 'border-green-600 bg-green-600 text-white rtc-pick'
                                 : esperable
-                                  ? `border-gray-100 bg-gray-50 text-gray-400 line-through hover:border-amber-300 hover:text-amber-700 ${espera === slot ? 'ring-2 ring-amber-300' : ''}`
+                                  ? `border-gray-100 bg-gray-50 text-gray-500 line-through hover:border-amber-300 hover:text-amber-700 ${espera === slot ? 'ring-2 ring-amber-300' : ''}`
                                   : unavailable
                                   ? 'border-gray-100 bg-gray-50 text-gray-300 line-through cursor-not-allowed'
                                   : 'border-gray-200 text-gray-700 hover:border-green-400 hover:bg-green-50'
@@ -423,12 +423,12 @@ export default function BookingForm({
                         );
                       })}
                     </div>
-                    <div className="flex items-center gap-4 mt-2.5 text-[11px] text-gray-400">
+                    <div className="flex items-center gap-4 mt-2.5 text-[11px] text-gray-500">
                       <span className="flex items-center gap-1"><span className="w-3 h-3 rounded border border-green-600 bg-green-600 inline-block" /> Elegido</span>
                       <span className="flex items-center gap-1"><span className="w-3 h-3 rounded border border-gray-200 inline-block" /> Libre</span>
                       <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-gray-100 inline-block" /> Ocupado</span>
                     </div>
-                    <p className="text-[11px] text-gray-400 mt-1.5">Toca varias horas seguidas para reservar más tiempo. ¿Está ocupado el que quieres? Tócalo y te avisamos si se libera.</p>
+                    <p className="text-[11px] text-gray-500 mt-1.5">Toca varias horas seguidas para reservar más tiempo. ¿Está ocupado el que quieres? Tócalo y te avisamos si se libera.</p>
 
                     {espera && (
                       <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-3.5">
@@ -534,7 +534,7 @@ export default function BookingForm({
                       <span className="text-sm font-semibold text-gray-700">Total</span>
                       <span className="text-base font-bold text-gray-900 whitespace-nowrap">${totalPrice.toLocaleString('es-CO')}</span>
                     </div>
-                    <p className="text-[11px] text-gray-400 leading-snug pt-0.5">
+                    <p className="text-[11px] text-gray-500 leading-snug pt-0.5">
                       La tarifa de servicio es fija por reserva, sin importar cuánto dure ni cuánto cueste la cancha.
                     </p>
                   </div>
@@ -542,7 +542,7 @@ export default function BookingForm({
               </div>
             )}
 
-            <p className="text-xs text-center text-gray-400">Sin registro · Puedes cambiar de horario hasta 24h antes</p>
+            <p className="text-xs text-center text-gray-500">Sin registro · Puedes cambiar de horario hasta 24h antes</p>
           </div>
         )}
 
@@ -584,7 +584,7 @@ export default function BookingForm({
                 {errors.guestPhone && <p className="text-xs text-red-500 mt-1">{errors.guestPhone.message}</p>}
               </div>
               <div>
-                <label className={lbl}>Notas <span className="text-gray-400 font-normal">(opcional)</span></label>
+                <label className={lbl}>Notas <span className="text-gray-500 font-normal">(opcional)</span></label>
                 <textarea rows={2} className={inp} style={{ resize: 'none' }} placeholder="Ej: venimos 5 personas…" {...register('notes')} />
               </div>
             </div>
@@ -612,7 +612,7 @@ export default function BookingForm({
                       <span className="block text-xs text-gray-500">Tarjeta débito o crédito, Nequi, PSE y DaviPlata</span>
                     </span>
                   </span>
-                  <CreditCard className="h-5 w-5 text-gray-400" />
+                  <CreditCard className="h-5 w-5 text-gray-500" />
                 </div>
               )}
             </div>
@@ -645,7 +645,7 @@ export default function BookingForm({
               <CreditCard className="h-5 w-5" />
               {processing ? 'Procesando…' : 'Confirmar y pagar'}
             </button>
-            <p className="text-xs text-center text-gray-400">Recibirás la confirmación por email, con el link para cambiar tu horario si lo necesitas.</p>
+            <p className="text-xs text-center text-gray-500">Recibirás la confirmación por email, con el link para cambiar tu horario si lo necesitas.</p>
           </form>
         )}
       </div>

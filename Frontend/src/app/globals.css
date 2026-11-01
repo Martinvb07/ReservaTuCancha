@@ -410,3 +410,19 @@ body.sheet-open .fab-float {
 }
 
 .rtc-picker-pin:active { cursor: grabbing; }
+
+/* Navegación con teclado: todo lo que se puede enfocar muestra un anillo
+   verde al llegar con Tab. Con el mouse o el dedo no aparece
+   (:focus-visible), así que no ensucia los clics. */
+@layer base {
+  a:focus-visible,
+  button:focus-visible,
+  [role='button']:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid #16a34a;
+    outline-offset: 2px;
+  }
+}

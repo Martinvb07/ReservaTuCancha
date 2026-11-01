@@ -35,7 +35,7 @@ export default function AdminReportesPage() {
 
   const KPIS = [
     { label: 'Propietarios',          value: g.totalOwners ?? 0,        change: `+${g.newOwnersThisMonth ?? 0} este mes`, trend: (g.newOwnersThisMonth ?? 0) > 0 ? 'up' : 'neutral', icon: Users,     color: 'text-blue-600',    bg: 'bg-blue-50'    },
-    { label: 'Clientes activos',      value: g.activeOwners ?? 0,       change: `de ${g.totalOwners ?? 0} totales`,       trend: 'neutral',                                          icon: UserCheck, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Clientes activos',      value: g.activeOwners ?? 0,       change: `de ${g.totalOwners ?? 0} totales`,       trend: 'neutral',                                          icon: UserCheck, color: 'text-green-600', bg: 'bg-green-50' },
     { label: 'Suscripciones activas', value: g.activeSubs ?? 0,         change: `${g.trialSubs ?? 0} en trial`,           trend: 'neutral',                                          icon: Zap,       color: 'text-green-600',   bg: 'bg-green-50'   },
     { label: 'Solicitudes pendientes',value: g.pendingSolicitudes ?? 0, change: `${g.totalSolicitudes ?? 0} totales`,     trend: (g.pendingSolicitudes ?? 0) > 0 ? 'warn' : 'neutral', icon: FileText,  color: 'text-orange-600',  bg: 'bg-orange-50'  },
   ];
@@ -58,7 +58,7 @@ export default function AdminReportesPage() {
 
       <div>
         <p className="text-lime-600 font-semibold text-sm uppercase tracking-widest flex items-center gap-2 mb-1">
-          <span>✦</span> Administración
+          Administración
         </p>
         <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tight">Reportes</h1>
         <p className="text-slate-500 text-sm mt-1">Métricas de la plataforma — clientes y reservas</p>
@@ -77,8 +77,8 @@ export default function AdminReportesPage() {
                 <ArrowUpRight className="h-4 w-4 text-slate-300" />
               </div>
               <p className="text-2xl font-black text-slate-900 tracking-tight">{isLoading ? '—' : k.value}</p>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">{k.label}</p>
-              <p className={`flex items-center gap-1 text-[10px] font-semibold mt-1.5 ${t.cls}`}>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">{k.label}</p>
+              <p className={`flex items-center gap-1 text-[11px] font-semibold mt-1.5 ${t.cls}`}>
                 <t.icon className="h-3 w-3 shrink-0" />
                 <span className="truncate">{k.change}</span>
               </p>

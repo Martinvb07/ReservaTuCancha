@@ -266,7 +266,7 @@ export default function AdminNuevaCanchaPage() {
 
       <div>
         <p className="text-lime-600 font-semibold text-sm uppercase tracking-widest flex items-center gap-2 mb-1">
-          <span>✦</span> Nueva cancha
+          Nueva cancha
         </p>
         <h1 className="text-3xl font-black text-gray-900 uppercase">Publicar cancha</h1>
         <p className="text-gray-500 text-sm mt-1">Son {STEPS.length} pasos cortos. Puedes volver atrás cuando quieras.</p>
@@ -291,9 +291,9 @@ export default function AdminNuevaCanchaPage() {
                         active ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-green-300'
                       }`}
                     >
-                      <s.Icon className={`h-8 w-8 transition-colors duration-200 ${active ? 'text-green-600' : 'text-gray-400'}`} />
+                      <s.Icon className={`h-8 w-8 transition-colors duration-200 ${active ? 'text-green-600' : 'text-gray-500'}`} />
                       <span className="text-xs font-black text-gray-800">{s.label}</span>
-                      <span className="text-[10px] text-gray-400 text-center px-1">{s.desc}</span>
+                      <span className="text-[11px] text-gray-500 text-center px-1">{s.desc}</span>
                       {active && (
                         <motion.span
                           initial={{ scale: 0, opacity: 0 }}
@@ -333,8 +333,8 @@ export default function AdminNuevaCanchaPage() {
                         >
                           <span className="text-lg font-black text-green-700">{m.label.split(' ')[1]}</span>
                           <span className="text-xs font-bold text-gray-700">{m.label}</span>
-                          <span className="text-[10px] text-gray-400">{m.desc}</span>
-                          <span className="text-[10px] text-gray-500 flex items-center gap-0.5"><Users className="h-2.5 w-2.5" />{m.players}</span>
+                          <span className="text-[11px] text-gray-500">{m.desc}</span>
+                          <span className="text-[11px] text-gray-500 flex items-center gap-0.5"><Users className="h-2.5 w-2.5" />{m.players}</span>
                         </motion.button>
                       );
                     })}
@@ -355,7 +355,7 @@ export default function AdminNuevaCanchaPage() {
               </div>
 
               <div>
-                <label className={lbl}>Descripción <span className="text-gray-400 font-normal normal-case">(opcional)</span></label>
+                <label className={lbl}>Descripción <span className="text-gray-500 font-normal normal-case">(opcional)</span></label>
                 <textarea rows={3} className={inp} style={{ resize: 'none' }}
                   placeholder="Superficie, capacidad, características especiales..."
                   {...register('description')} />
@@ -381,7 +381,7 @@ export default function AdminNuevaCanchaPage() {
               </div>
 
               <div className="pt-2">
-                <label className={lbl}>Punto en el mapa <span className="text-gray-400 font-normal normal-case">(recomendado)</span></label>
+                <label className={lbl}>Punto en el mapa <span className="text-gray-500 font-normal normal-case">(recomendado)</span></label>
                 <LocationPicker
                   value={pin}
                   onChange={setPin}
@@ -399,7 +399,7 @@ export default function AdminNuevaCanchaPage() {
                 <div className="sm:col-span-2">
                   <label className={lbl}><DollarSign className="inline h-3 w-3 mr-1" />Precio por hora <span className="text-red-500">*</span></label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">$</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold">$</span>
                     <input type="number" min={1000} step={1000} placeholder="80000"
                       className={inp + ' pl-8'} {...register('pricePerHour')} />
                   </div>
@@ -439,7 +439,7 @@ export default function AdminNuevaCanchaPage() {
                   <Upload className="h-5 w-5 text-green-600" />
                 </div>
                 <p className="text-sm font-bold text-gray-700">Arrastra tus fotos o haz click aquí</p>
-                <p className="text-xs text-gray-400">JPG o PNG · hasta 10 fotos · la primera será la principal</p>
+                <p className="text-xs text-gray-500">JPG o PNG · hasta 10 fotos · la primera será la principal</p>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -464,7 +464,7 @@ export default function AdminNuevaCanchaPage() {
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={p.preview} alt="" className="w-full h-full object-cover" />
                       {i === 0 && (
-                        <span className="absolute top-1.5 left-1.5 bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        <span className="absolute top-1.5 left-1.5 bg-green-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
                           Principal
                         </span>
                       )}
@@ -481,7 +481,7 @@ export default function AdminNuevaCanchaPage() {
                 </div>
               )}
 
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-500">
                 Puedes saltarte este paso y subirlas después desde <span className="font-semibold text-gray-500">Fotos</span> en el panel.
               </p>
             </>
@@ -491,7 +491,7 @@ export default function AdminNuevaCanchaPage() {
           {step === 4 && (
             <>
               <div>
-                <label className={lbl}>Comodidades <span className="text-gray-400 font-normal normal-case">(opcional)</span></label>
+                <label className={lbl}>Comodidades <span className="text-gray-500 font-normal normal-case">(opcional)</span></label>
                 <div className="flex flex-wrap gap-2">
                   {AMENITIES.map(a => {
                     const active = amenities.includes(a);
@@ -511,7 +511,7 @@ export default function AdminNuevaCanchaPage() {
                     );
                   })}
                 </div>
-                <p className="text-xs text-gray-400 mt-3">
+                <p className="text-xs text-gray-500 mt-3">
                   Aparecen en la ficha de tu cancha. Puedes cambiarlas después desde
                   <span className="font-semibold text-gray-500"> Editar cancha</span>.
                 </p>
@@ -523,12 +523,12 @@ export default function AdminNuevaCanchaPage() {
           {step === 5 && (
             <>
               <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100 overflow-hidden">
-                <p className="px-4 py-3 text-xs font-black text-gray-900 uppercase tracking-widest bg-gray-50">
+                <p className="px-4 py-3 text-xs font-black text-gray-900 tracking-widest bg-gray-50">
                   Resumen de la cancha
                 </p>
                 {RESUMEN.map(r => (
                   <div key={r.label} className="flex items-center gap-3 px-4 py-2.5">
-                    <span className="text-xs text-gray-400 w-24 shrink-0">{r.label}</span>
+                    <span className="text-xs text-gray-500 w-24 shrink-0">{r.label}</span>
                     <span className="text-sm font-semibold text-gray-800 truncate">{r.value || '—'}</span>
                     <button
                       type="button"

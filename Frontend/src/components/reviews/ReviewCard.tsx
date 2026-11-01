@@ -16,7 +16,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
           </div>
           <div>
             <p className="font-black text-gray-900 text-sm">{review.guestName}</p>
-            <p className="text-[10px] text-gray-400 mt-0.5">
+            <p className="text-[11px] text-gray-500 mt-0.5">
               {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true, locale: es })}
             </p>
           </div>

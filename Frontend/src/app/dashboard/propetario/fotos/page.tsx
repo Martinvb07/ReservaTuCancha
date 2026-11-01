@@ -108,8 +108,8 @@ export default function OwnerFotosPage() {
   if (courts.length === 0) {
     return (
       <div className="max-w-5xl mx-auto text-center py-20">
-        <p className="text-2xl font-black text-gray-300 uppercase">Sin canchas registradas</p>
-        <p className="text-gray-400 text-sm mt-2">Primero crea una cancha desde el panel</p>
+        <p className="text-2xl font-black text-gray-300">Sin canchas registradas</p>
+        <p className="text-gray-500 text-sm mt-2">Primero crea una cancha desde el panel</p>
       </div>
     );
   }
@@ -120,7 +120,7 @@ export default function OwnerFotosPage() {
       {/* Header */}
       <div>
         <p className="text-lime-600 font-semibold text-sm uppercase tracking-widest flex items-center gap-2 mb-1">
-          <span>✦</span> Panel Propietario
+          Panel Propietario
         </p>
         <h1 className="text-3xl font-black text-gray-900 uppercase">Galería de fotos</h1>
         <p className="text-gray-500 text-sm mt-1">
@@ -130,7 +130,7 @@ export default function OwnerFotosPage() {
 
       {/* Selector de cancha */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5">
-        <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-3">Selecciona una cancha</p>
+        <p className="text-xs font-black text-gray-500 tracking-widest mb-3">Selecciona una cancha</p>
         <div className="flex flex-wrap gap-3">
           {courts.map(c => {
             const SportIcon = getSportIcon(c.sport);
@@ -145,7 +145,7 @@ export default function OwnerFotosPage() {
               }`}
             >
               <SportIcon className="h-4 w-4" /> {c.name}
-              <span className="text-xs font-normal text-gray-400">({c.photos?.length ?? 0})</span>
+              <span className="text-xs font-normal text-gray-500">({c.photos?.length ?? 0})</span>
               {selectedCourtId === c._id && <CheckCircle className="h-4 w-4" />}
             </button>
             );
@@ -170,14 +170,14 @@ export default function OwnerFotosPage() {
         <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center">
           {uploading
             ? <Loader2 className="h-7 w-7 text-green-500 animate-spin" />
-            : <Upload className="h-7 w-7 text-gray-400" />
+            : <Upload className="h-7 w-7 text-gray-500" />
           }
         </div>
         <div className="text-center">
           <p className="font-black text-gray-700">
             {uploading ? 'Subiendo fotos...' : 'Arrastra fotos aquí o haz click para subir'}
           </p>
-          <p className="text-xs text-gray-400 mt-1">JPG, PNG · Máx 5MB por foto · Recomendado: 1280×720px</p>
+          <p className="text-xs text-gray-500 mt-1">JPG, PNG · Máx 5MB por foto · Recomendado: 1280×720px</p>
         </div>
         {!uploading && (
           <div className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-colors">
@@ -197,19 +197,19 @@ export default function OwnerFotosPage() {
       {/* Galería */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <p className="text-xs font-black text-gray-500 uppercase tracking-widest">
+          <p className="text-xs font-black text-gray-500 tracking-widest">
             {fotos.length} foto{fotos.length !== 1 ? 's' : ''} — {selectedCourt?.name}
           </p>
           {fotos.length > 0 && (
-            <p className="flex items-center gap-1 text-xs text-gray-400"><Star className="h-3 w-3" /> = establecer como foto principal</p>
+            <p className="flex items-center gap-1 text-xs text-gray-500"><Star className="h-3 w-3" /> = establecer como foto principal</p>
           )}
         </div>
 
         {fotos.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
             <Image className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <p className="font-black text-gray-400 uppercase text-sm">Sin fotos aún</p>
-            <p className="text-gray-400 text-xs mt-1">Sube fotos de tu cancha para atraer más clientes</p>
+            <p className="font-black text-gray-500 text-sm">Sin fotos aún</p>
+            <p className="text-gray-500 text-xs mt-1">Sube fotos de tu cancha para atraer más clientes</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -247,7 +247,7 @@ export default function OwnerFotosPage() {
                 {/* Badge principal */}
                 {idx === 0 && (
                   <div className="absolute top-3 left-3">
-                    <span className="flex items-center gap-1 bg-lime-400 text-gray-900 text-[10px] font-black px-2.5 py-1 rounded-full">
+                    <span className="flex items-center gap-1 bg-lime-400 text-gray-900 text-[11px] font-black px-2.5 py-1 rounded-full">
                       <Star className="h-3 w-3" /> Principal
                     </span>
                   </div>

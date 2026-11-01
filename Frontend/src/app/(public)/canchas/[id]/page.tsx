@@ -197,13 +197,13 @@ export default async function CourtDetailPage({
 
             <div className="space-y-4">
               <SectionHeading>
-                Reseñas {reviews.length > 0 && <span className="text-gray-400 font-normal text-base">({reviews.length})</span>}
+                Reseñas {reviews.length > 0 && <span className="text-gray-500 font-normal text-base">({reviews.length})</span>}
               </SectionHeading>
               {reviews.length === 0 ? (
                 <div className="text-center py-10 bg-gray-50 rounded-2xl border border-gray-100">
                   <Star className="h-10 w-10 text-gray-300 mx-auto mb-3" />
                   <p className="text-gray-500 font-medium">Aún no hay reseñas</p>
-                  <p className="text-gray-400 text-sm mt-1">¡Sé el primero en reservar y opinar!</p>
+                  <p className="text-gray-500 text-sm mt-1">¡Sé el primero en reservar y opinar!</p>
                 </div>
               ) : (
                 <div className="space-y-3">

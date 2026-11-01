@@ -52,7 +52,7 @@ export default function MisReservasPage() {
         </div>
         <div className="relative max-w-3xl mx-auto px-4 text-center space-y-4">
           <p className="text-lime-400 font-semibold text-sm uppercase tracking-widest flex items-center justify-center gap-2">
-            <span>✦</span> Sin necesidad de cuenta
+            Sin necesidad de cuenta
           </p>
           <h1 className="text-4xl font-black text-white uppercase">Mis reservas</h1>
           <p className="text-gray-400">Ingresa tu email o el código de reserva para verla</p>
@@ -85,7 +85,7 @@ export default function MisReservasPage() {
         {!searched && (
           <div className="text-center py-16 space-y-3">
             <CalendarDays className="h-14 w-14 text-gray-200 mx-auto" />
-            <p className="font-black text-gray-300 uppercase text-sm tracking-widest">Ingresa tu email o código para ver tus reservas</p>
+            <p className="font-black text-gray-300 text-sm tracking-widest">Ingresa tu email o código para ver tus reservas</p>
           </div>
         )}
 
@@ -102,8 +102,8 @@ export default function MisReservasPage() {
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
               <X className="h-8 w-8 text-gray-300" />
             </div>
-            <p className="font-black text-gray-400 uppercase text-sm">No encontramos reservas</p>
-            <p className="text-gray-400 text-sm">No hay reservas asociadas a <strong>{query}</strong></p>
+            <p className="font-black text-gray-500 text-sm">No encontramos reservas</p>
+            <p className="text-gray-500 text-sm">No hay reservas asociadas a <strong>{query}</strong></p>
             <Link href="/empresas"
               className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold text-sm px-5 py-3 rounded-xl transition-colors">
               Buscar canchas <ChevronRight className="h-4 w-4" />
@@ -141,13 +141,13 @@ export default function MisReservasPage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-black text-gray-900">{court?.name ?? 'Cancha'}</span>
-                        <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full ${st.pill}`}>
+                        <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full ${st.pill}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
                           {st.label}
                         </span>
                       </div>
                       {court?.location && (
-                        <p className="flex items-center gap-1 text-xs text-gray-400">
+                        <p className="flex items-center gap-1 text-xs text-gray-500">
                           <MapPin className="h-3 w-3" />{court.location.city}
                         </p>
                       )}
@@ -156,7 +156,7 @@ export default function MisReservasPage() {
                         (ver findByGuestEmail): con el se llegaba al cancelToken. */}
                     {code && (
                       <div className="text-right shrink-0">
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Código</p>
+                        <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">Código</p>
                         <p className="font-black text-lime-600 text-sm">#{code}</p>
                       </div>
                     )}

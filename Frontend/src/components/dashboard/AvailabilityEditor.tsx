@@ -60,7 +60,7 @@ export default function AvailabilityEditor({ value, onChange }: Props) {
               whileTap={reduce ? undefined : { scale: 0.92 }}
               onClick={() => toggleDay(i)}
               className={`h-11 w-full sm:w-11 rounded-xl text-[11px] sm:text-xs font-bold border-2 bg-white transition-colors duration-200 ${
-                active ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 text-gray-400 hover:border-green-300'
+                active ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 text-gray-500 hover:border-green-300'
               }`}
             >
               {day}
@@ -70,7 +70,7 @@ export default function AvailabilityEditor({ value, onChange }: Props) {
       </div>
 
       {value.length === 0 ? (
-        <p className="text-sm text-gray-400">Selecciona al menos un día de atención.</p>
+        <p className="text-sm text-gray-500">Selecciona al menos un día de atención.</p>
       ) : (
         <div className="space-y-3 pt-3 border-t border-gray-200">
           {value.map(slot => (
@@ -83,17 +83,17 @@ export default function AvailabilityEditor({ value, onChange }: Props) {
               /* Móvil: una tarjeta por día. Desktop: una sola fila. */
               className="rounded-xl border border-gray-200 bg-white p-3 sm:border-0 sm:bg-transparent sm:p-0"
             >
-              <p className="text-xs font-black text-gray-700 uppercase tracking-widest mb-2 sm:hidden">
+              <p className="text-xs font-black text-gray-700 tracking-widest mb-2 sm:hidden">
                 {DAYS[slot.dayOfWeek]}
               </p>
 
               <div className="grid grid-cols-2 gap-2 sm:flex sm:items-end sm:gap-3">
                 <div className="hidden sm:block sm:w-12 sm:shrink-0">
-                  <span className="text-xs text-gray-400 block mb-1 font-bold">{DAYS[slot.dayOfWeek]}</span>
+                  <span className="text-xs text-gray-500 block mb-1 font-bold">{DAYS[slot.dayOfWeek]}</span>
                 </div>
 
                 <div className="min-w-0 sm:flex-1">
-                  <label className="text-xs text-gray-400 block mb-1">Inicio</label>
+                  <label className="text-xs text-gray-500 block mb-1">Inicio</label>
                   <SelectField
                     aria-label={`Hora de inicio ${DAYS[slot.dayOfWeek]}`}
                     value={slot.openTime}
@@ -103,10 +103,10 @@ export default function AvailabilityEditor({ value, onChange }: Props) {
                   />
                 </div>
 
-                <span className="hidden sm:block text-gray-400 font-bold pb-2">—</span>
+                <span className="hidden sm:block text-gray-500 font-bold pb-2">—</span>
 
                 <div className="min-w-0 sm:flex-1">
-                  <label className="text-xs text-gray-400 block mb-1">Fin</label>
+                  <label className="text-xs text-gray-500 block mb-1">Fin</label>
                   <SelectField
                     aria-label={`Hora de cierre ${DAYS[slot.dayOfWeek]}`}
                     value={slot.closeTime}
@@ -117,7 +117,7 @@ export default function AvailabilityEditor({ value, onChange }: Props) {
                 </div>
 
                 <div className="col-span-2 min-w-0 sm:w-24 sm:shrink-0">
-                  <label className="text-xs text-gray-400 block mb-1">Duración</label>
+                  <label className="text-xs text-gray-500 block mb-1">Duración</label>
                   <SelectField
                     aria-label={`Duración del turno ${DAYS[slot.dayOfWeek]}`}
                     value={String(slot.slotDurationMinutes)}

@@ -12,7 +12,7 @@ export default function ClubList({ clubs, onSelect }: ClubListProps) {
     return (
       <div className="text-center py-20 space-y-4">
         <Building2 className="h-14 w-14 text-gray-300 mx-auto" strokeWidth={1.5} />
-        <p className="text-xl font-black text-gray-900 uppercase">No hay clubs disponibles</p>
+        <p className="text-xl font-black text-gray-900">No hay clubs disponibles</p>
         <p className="text-gray-500 text-sm">Intenta con otro deporte</p>
       </div>
     );

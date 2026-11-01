@@ -56,7 +56,7 @@ export default function CourtCard({ court, query }: Props) {
         </h3>
 
         <p className="flex items-center gap-1 text-sm text-gray-500 mt-1">
-          <MapPin className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+          <MapPin className="h-3.5 w-3.5 shrink-0 text-gray-500" />
           <span className="truncate">
             {court.location.city}
             {court.location.department ? `, ${court.location.department}` : ''}
@@ -74,7 +74,7 @@ export default function CourtCard({ court, query }: Props) {
                 </span>
               );
             })}
-            {extraAmen > 0 && <span className="text-xs font-semibold text-gray-400">+{extraAmen}</span>}
+            {extraAmen > 0 && <span className="text-xs font-semibold text-gray-500">+{extraAmen}</span>}
           </div>
         )}
 
@@ -86,7 +86,7 @@ export default function CourtCard({ court, query }: Props) {
             <span className="block font-bold text-lg leading-tight whitespace-nowrap">
               ${court.pricePerHour.toLocaleString('es-CO')}
             </span>
-            <span className="block text-gray-400 text-xs font-normal whitespace-nowrap">COP / hora</span>
+            <span className="block text-gray-500 text-xs font-normal whitespace-nowrap">COP / hora</span>
           </span>
           <span className="inline-flex items-center gap-1 text-sm font-semibold text-green-700 whitespace-nowrap shrink-0 group-hover:gap-1.5 transition-all">
             Reservar <ArrowRight className="h-4 w-4" />

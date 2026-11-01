@@ -12,7 +12,7 @@ export default function NotFound() {
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="space-y-2 text-center">
               <p className="text-lime-400 font-semibold text-sm uppercase tracking-widest flex items-center justify-center gap-2">
-                <span>✦</span> Página no encontrada
+                Página no encontrada
               </p>
               <h1 className="text-4xl font-black text-white uppercase">
                 Ups, se fue
