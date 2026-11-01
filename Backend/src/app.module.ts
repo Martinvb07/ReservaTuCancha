@@ -19,6 +19,7 @@ import { SolicitudesModule } from './modules/solicitudes/solicitudes.module';
 import { ClubsModule } from './modules/clubs/clubs.module';
 import { ChangelogModule } from './modules/changelog/changelog.module';
 import { CobrosModule } from './modules/cobros/cobros.module';
+import { AppMovilModule } from './modules/app-movil/app-movil.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { CobrosModule } from './modules/cobros/cobros.module';
     /* Tarifas del cobro: global, porque las leen reservas, canchas,
        liquidaciones y los correos. */
     CobrosModule,
+    AppMovilModule,
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
