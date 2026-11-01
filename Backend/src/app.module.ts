@@ -3,7 +3,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_FILTER } from '@nestjs/core';
+import { SentryModule, SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { ScheduleModule } from '@nestjs/schedule';
 
 import { AuthModule } from './modules/auth/auth.module';
@@ -24,6 +25,7 @@ import { SeoModule } from './modules/seo/seo.module';
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     /* Tarifas del cobro: global, porque las leen reservas, canchas,
        liquidaciones y los correos. */
@@ -59,6 +61,9 @@ import { SeoModule } from './modules/seo/seo.module';
     /* Sin este provider el ThrottlerModule no hace nada: estaba importado pero
        nunca registrado, asi que /api/auth/login aceptaba intentos ilimitados. */
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    /* Reporta a Sentry los errores no controlados (los 5xx). Los HttpException
+       (400, 404...) siguen respondiendo igual y no se reportan. */
+    { provide: APP_FILTER, useClass: SentryGlobalFilter },
   ],
 })
 export class AppModule {}
