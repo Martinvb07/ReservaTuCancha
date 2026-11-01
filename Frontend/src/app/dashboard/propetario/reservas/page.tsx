@@ -6,10 +6,11 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { CalendarDays, Clock, User, Phone, Mail, Eye, Search, List, ChevronLeft, ChevronRight, LayoutGrid, Trophy, StickyNote } from 'lucide-react';
+import { CalendarDays, Clock, User, Phone, Mail, Eye, Search, List, ChevronLeft, ChevronRight, LayoutGrid, Trophy, StickyNote, Plus, Store, Repeat, Trash2 } from 'lucide-react';
 import api from '@/lib/api/axios';
 import { toast } from 'sonner';
-import type { Booking } from '@/types/booking.types';
+import { esManual, type Booking } from '@/types/booking.types';
+import ReservaManualDialog from '@/components/dashboard/ReservaManualDialog';
 import BookingsCalendar from '@/components/dashboard/BookingsCalendar';
 import { netoDueno } from '@/lib/neto';
 
@@ -39,6 +40,7 @@ export default function ReservasOwnerPage() {
   const [search, setSearch]       = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [view, setView] = useState<'list' | 'calendar'>('calendar');
+  const [anotar, setAnotar] = useState(false);
 
   const { data: bookings = [], isLoading } = useQuery<Booking[]>({
     queryKey: ['owner-bookings'],
@@ -54,6 +56,18 @@ export default function ReservasOwnerPage() {
       setSelected(null);
     },
     onError: () => toast.error('Error al cambiar el estado'),
+  });
+
+  const anular = useMutation({
+    mutationFn: ({ id, serie }: { id: string; serie: boolean }) =>
+      api.delete(`/bookings/manual/${id}${serie ? '?serie=1' : ''}`),
+    onSuccess: (r: any) => {
+      const n = r?.data?.anuladas ?? 1;
+      toast.success(n > 1 ? `${n} fechas anuladas` : 'Reserva anulada');
+      queryClient.invalidateQueries({ queryKey: ['owner-bookings'] });
+      setSelected(null);
+    },
+    onError: () => toast.error('No se pudo anular la reserva'),
   });
 
   const handleChangeStatus = (id: string, status: string) => {
@@ -103,6 +117,11 @@ export default function ReservasOwnerPage() {
           </p>
         </div>
 
+        <div className="flex items-center gap-2">
+        <button onClick={() => setAnotar(true)}
+          className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl transition-colors">
+          <Plus className="h-4 w-4" /> Anotar reserva
+        </button>
         {/* View toggle */}
         <div className="flex items-center bg-gray-100 rounded-xl p-1">
           <button
@@ -128,7 +147,10 @@ export default function ReservasOwnerPage() {
             Lista
           </button>
         </div>
+        </div>
       </div>
+
+      <ReservaManualDialog open={anotar} onOpenChange={setAnotar} />
 
       {/* Filtros (ambas vistas) */}
       <div className="flex flex-col gap-3">
@@ -215,6 +237,16 @@ export default function ReservasOwnerPage() {
                             <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
                             {STATUS_LABELS[booking.status]}
                           </span>
+                          {esManual(booking) && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                              <Store className="h-3 w-3" /> En el club
+                            </span>
+                          )}
+                          {booking.serieId && (
+                            <span title="Turno fijo semanal" className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-100 text-sky-700">
+                              <Repeat className="h-3 w-3" /> Fijo
+                            </span>
+                          )}
                         </div>
                         <div className="flex flex-col gap-0.5 text-xs text-gray-500">
                           <span className="flex items-center gap-1">
@@ -223,9 +255,11 @@ export default function ReservasOwnerPage() {
                           <span className="flex items-center gap-1 truncate">
                             <User className="h-3 w-3 shrink-0" /><span className="truncate">{booking.guestName}</span>
                           </span>
-                          <span className="flex items-center gap-1 truncate">
-                            <Mail className="h-3 w-3 shrink-0" /><span className="truncate">{booking.guestEmail}</span>
-                          </span>
+                          {(booking.guestEmail || booking.guestPhone) && (
+                            <span className="flex items-center gap-1 truncate">
+                              <Mail className="h-3 w-3 shrink-0" /><span className="truncate">{booking.guestEmail || booking.guestPhone}</span>
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
@@ -332,8 +366,8 @@ export default function ReservasOwnerPage() {
                 <div className="flex items-center gap-2 text-gray-600"><CalendarDays className="h-4 w-4 text-green-600" />{format(new Date(selected.date), 'PPP', { locale: es })}</div>
                 <div className="flex items-center gap-2 text-gray-600"><Clock className="h-4 w-4 text-green-600" />{formatTime12h(selected.startTime)} – {formatTime12h(selected.endTime)}</div>
                 <div className="flex items-center gap-2 text-gray-600"><User className="h-4 w-4 text-green-600" />{selected.guestName}</div>
-                <div className="flex items-center gap-2 text-gray-600"><Mail className="h-4 w-4 text-green-600" />{selected.guestEmail}</div>
-                <div className="flex items-center gap-2 text-gray-600"><Phone className="h-4 w-4 text-green-600" />{selected.guestPhone}</div>
+                {selected.guestEmail && <div className="flex items-center gap-2 text-gray-600"><Mail className="h-4 w-4 text-green-600" />{selected.guestEmail}</div>}
+                {selected.guestPhone && <div className="flex items-center gap-2 text-gray-600"><Phone className="h-4 w-4 text-green-600" />{selected.guestPhone}</div>}
                 {selected.notes && <div className="flex items-start gap-2 text-gray-500 pt-1 border-t border-gray-100"><StickyNote className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />{selected.notes}</div>}
               </div>
               {selected.bookingCode && (
@@ -343,9 +377,23 @@ export default function ReservasOwnerPage() {
                 </div>
               )}
               <div className="flex items-center justify-between bg-green-50 rounded-xl px-4 py-3">
-                <span className="text-sm text-gray-600 font-semibold">Te llega</span>
+                <span className="text-sm text-gray-600 font-semibold">{esManual(selected) ? 'Cobras en el club' : 'Te llega'}</span>
                 <span className="font-black text-green-700 text-lg">${netoDueno(selected).toLocaleString('es-CO')} COP</span>
               </div>
+              {esManual(selected) && (
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button onClick={() => anular.mutate({ id: selected._id, serie: false })} disabled={anular.isPending}
+                    className="flex-1 flex items-center justify-center gap-2 border border-red-200 text-red-600 hover:bg-red-50 font-bold text-sm py-2.5 rounded-xl transition-colors">
+                    <Trash2 className="h-4 w-4" /> Anular
+                  </button>
+                  {selected.serieId && (
+                    <button onClick={() => anular.mutate({ id: selected._id, serie: true })} disabled={anular.isPending}
+                      className="flex-1 flex items-center justify-center gap-2 border border-red-200 text-red-600 hover:bg-red-50 font-bold text-sm py-2.5 rounded-xl transition-colors">
+                      <Repeat className="h-4 w-4" /> Anular esta y las siguientes
+                    </button>
+                  )}
+                </div>
+              )}
               {selected.status === 'pending' && (
                 <p className="text-xs text-amber-700 bg-amber-50 rounded-xl px-4 py-3">
                   Esperando el pago. Se confirma sola cuando ePayco lo apruebe; si no se paga, el horario se libera.

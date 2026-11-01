@@ -10,13 +10,14 @@ import {
   LayoutDashboard, CalendarDays, Building2, BarChart3,
   Users, LogOut, Home, FileText, PenLine,
   CreditCard, Image as ImageIcon, MessageSquare, Zap, Ban,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, UsersRound,
 } from 'lucide-react';
 import api from '@/lib/api/axios';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import { LOGO_URL } from '@/lib/logo';
 
-type NavItem = { href: string; label: string; icon: any };
+/** `soloTitular`: lo ve el dueño, no sus empleados. */
+type NavItem = { href: string; label: string; icon: any; soloTitular?: boolean };
 type NavSection = { label: string | null; items: NavItem[] };
 
 const ADMIN_SECTIONS: NavSection[] = [
@@ -41,12 +42,13 @@ const OWNER_SECTIONS: NavSection[] = [
   ]},
   { label: 'Operación', items: [
     { href: '/dashboard/propetario/analytics', label: 'Analytics', icon: BarChart3  },
-    { href: '/dashboard/propetario/pagos',     label: 'Pagos',     icon: CreditCard },
+    { href: '/dashboard/propetario/pagos',     label: 'Pagos',     icon: CreditCard, soloTitular: true },
     { href: '/dashboard/propetario/bloqueos',  label: 'Bloqueos',  icon: Ban        },
     { href: '/dashboard/propetario/fotos',     label: 'Fotos',     icon: ImageIcon  },
   ]},
   { label: 'Cuenta', items: [
     { href: '/dashboard/propetario/mi-club',     label: 'Mi Club', icon: Building2     },
+    { href: '/dashboard/propetario/equipo',      label: 'Equipo',  icon: UsersRound, soloTitular: true },
     { href: '/dashboard/propetario/soporte',     label: 'Soporte', icon: MessageSquare },
   ]},
 ];
@@ -105,8 +107,12 @@ interface Props {
 
 export default function DashboardSidebar({ role, userName, variant = 'desktop' }: Props) {
   const pathname = usePathname() || '';
-  const sections = role === 'admin' ? ADMIN_SECTIONS : OWNER_SECTIONS;
   const session  = useApiAuth();
+  const esStaff  = !!(session as any)?.user?.esStaff;
+  const sections = (role === 'admin' ? ADMIN_SECTIONS : OWNER_SECTIONS).map((sec) => ({
+    ...sec,
+    items: sec.items.filter((it) => !(esStaff && it.soloTitular)),
+  }));
   const token    = (session as any)?.accessToken;
   const uid      = useId();
 

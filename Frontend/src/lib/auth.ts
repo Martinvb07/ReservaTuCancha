@@ -73,6 +73,8 @@ export const authOptions: NextAuthOptions = {
             name: data.user.name,
             email: data.user.email,
             role: data.user.role,
+            /* Empleado del club: usa el panel del dueño sin pagos ni equipo. */
+            esStaff: !!data.user.esStaff,
             avatarUrl: data.user.avatarUrl,
             accessToken: data.accessToken,
             refreshToken: data.refreshToken,
@@ -89,6 +91,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.esStaff = !!user.esStaff;
         token.avatarUrl = user.avatarUrl;
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;
@@ -108,6 +111,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
+        session.user.esStaff = !!token.esStaff;
         session.user.avatarUrl = token.avatarUrl;
       }
       session.accessToken = token.accessToken;

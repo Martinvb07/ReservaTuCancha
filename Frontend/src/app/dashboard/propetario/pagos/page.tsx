@@ -130,6 +130,8 @@ export default function OwnerPagosPage() {
   const filtered = useMemo(() => {
     const q = search.toLowerCase().replace('#', '');
     return bookings
+      /* Lo que el club anota y cobra en su caja no pasa por ePayco. */
+      .filter((b: any) => b.origen !== 'manual')
       .filter((b: any) => inPeriod(b.date, period))
       .filter((b: any) => filterStatus === 'all' || b.status === filterStatus)
       .filter((b: any) => !q ||

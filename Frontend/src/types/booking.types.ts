@@ -30,8 +30,17 @@ export interface Booking {
   bookingCode: string;
   reviewToken: string;
   reviewTokenUsed: boolean;
+  /** 'manual' = la anotó el club (teléfono, mostrador) y se cobra en el club. */
+  origen?: 'online' | 'manual';
+  paymentMethod?: 'epayco' | 'wompi' | 'club';
+  /** Turno fijo: las fechas de una misma serie comparten este id. */
+  serieId?: string;
+  serieOrden?: number;
   createdAt: string;
 }
+
+/** La reserva la anotó el club y no pasó por el cobro en línea. */
+export const esManual = (b: Pick<Booking, 'origen'> | null | undefined) => b?.origen === 'manual';
 
 export interface CreateBookingPayload {
   courtId: string;

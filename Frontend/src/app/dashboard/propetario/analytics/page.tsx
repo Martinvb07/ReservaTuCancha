@@ -10,6 +10,7 @@ import {
   LineChart, Line, PieChart, Pie, Cell, Legend,
 } from 'recharts';
 import api from '@/lib/api/axios';
+import OcupacionHeatmap from '@/components/dashboard/OcupacionHeatmap';
 
 // ─── Colores ─────────────────────────────────────────────────────────────────
 const STATUS_COLORS = ['#16a34a', '#f59e0b', '#ef4444', '#3b82f6'];
@@ -271,6 +272,8 @@ export default function OwnerAnalyticsPage() {
           )}
         </ChartCard>
       )}
+
+      <OcupacionHeatmap />
 
     </div>
   );
