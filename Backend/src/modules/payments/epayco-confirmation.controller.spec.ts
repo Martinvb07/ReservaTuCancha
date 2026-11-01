@@ -38,6 +38,7 @@ describe('EpaycoConfirmationController', () => {
       updateStatus: jest.fn(async () => ({})),
       eliminar: jest.fn(async () => undefined),
       avisarPagoHuerfano: jest.fn(async () => undefined),
+      totalACobrar: jest.fn(async (b: any) => b.totalPrice),
     };
     const epayco = new EpaycoService(configCon({ EPAYCO_P_CUST_ID_CLIENTE: CUST, EPAYCO_P_KEY: PKEY }));
     controller = new EpaycoConfirmationController(bookings as any, epayco);
@@ -83,6 +84,16 @@ describe('EpaycoConfirmationController', () => {
     reserva.totalPrice = 70_000;
     await expect(controller.porPost(evento())).rejects.toThrow('El monto pagado no corresponde a la reserva');
     expect(bookings.updateStatus).not.toHaveBeenCalled();
+  });
+
+  it('un turno fijo se confirma con el total de todas sus fechas', async () => {
+    bookings.totalACobrar.mockResolvedValueOnce(62_000);
+    reserva.totalPrice = 15_500;
+    await controller.porPost(evento());
+    expect(bookings.updateStatus).toHaveBeenCalledTimes(1);
+
+    bookings.totalACobrar.mockResolvedValueOnce(124_000);
+    await expect(controller.porPost(evento())).rejects.toThrow('El monto pagado no corresponde a la reserva');
   });
 
   it('no confirma en otra moneda', async () => {

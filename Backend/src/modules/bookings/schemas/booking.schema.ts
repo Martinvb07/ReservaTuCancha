@@ -3,6 +3,15 @@ import { Document, Types } from 'mongoose';
 
 export type BookingDocument = Booking & Document;
 
+/** De dónde salió la reserva. */
+export enum BookingOrigen {
+  /** La hizo el jugador en la web o la app y la pagó en línea. */
+  ONLINE = 'online',
+  /** La anotó el club (teléfono, mostrador). Se cobra en el club, por fuera
+      de la plataforma: no lleva tarifa, pasarela ni ganancia. */
+  MANUAL = 'manual',
+}
+
 export enum BookingStatus {
   /* Interno y transitorio: la reserva existe pero aún no se ha pagado. No se
      le muestra al club; si el pago no llega en 30 minutos, el cron la borra. */
@@ -23,11 +32,38 @@ export class Booking {
   @Prop({ required: true, trim: true })
   guestName: string;
 
-  @Prop({ required: true, lowercase: true, trim: true })
+  /* Obligatorios en las reservas en línea; en las que anota el club puede
+     que solo haya un nombre. */
+  @Prop({
+    lowercase: true,
+    trim: true,
+    required: function (this: Booking) { return this.origen !== BookingOrigen.MANUAL; },
+  })
   guestEmail: string;
 
-  @Prop({ required: true, trim: true })
+  @Prop({
+    trim: true,
+    required: function (this: Booking) { return this.origen !== BookingOrigen.MANUAL; },
+  })
   guestPhone: string;
+
+  @Prop({ enum: BookingOrigen, default: BookingOrigen.ONLINE })
+  origen: BookingOrigen;
+
+  /* ── Reservas fijas ──────────────────────────────────────────────────
+     Un turno que se repite cada semana: cada fecha es una reserva propia
+     (se mueve y se juega por separado) y todas comparten serieId. Las en
+     línea se pagan juntas en un solo cobro, con el código de la primera. */
+  @Prop({ index: true })
+  serieId?: string;
+
+  /** 1 para la primera fecha de la serie, 2 para la siguiente... */
+  @Prop()
+  serieOrden?: number;
+
+  /** Token de notificaciones push del teléfono que reservó (app móvil). */
+  @Prop({ select: false, trim: true })
+  pushToken?: string;
 
   // ─── Detalles de la reserva ───────────────────────────────────────────
   @Prop({ required: true })
@@ -98,8 +134,9 @@ export class Booking {
 
   /* Solo se cobra en linea. El efectivo se retiro: la plata tiene que pasar
      por la cuenta de la empresa para poder retener la comision y liquidar.
-     'wompi' sigue en el enum por las reservas anteriores al cambio. */
-  @Prop({ enum: ['epayco', 'wompi'], default: 'epayco' })
+     'wompi' sigue en el enum por las reservas anteriores al cambio, y
+     'club' es el de las reservas que anota el propio club. */
+  @Prop({ enum: ['epayco', 'wompi', 'club'], default: 'epayco' })
   paymentMethod: string;
 
   // ─── Tokens para acciones sin login ──────────────────────────────────

@@ -3,7 +3,20 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Booking, BookingDocument, BookingStatus } from '../bookings/schemas/booking.schema';
-import { NotificationsService } from './notifications.service';
+import { NotificationsService, formatDateCO, toAmPm } from './notifications.service';
+import { PushService } from './push.service';
+import { WhatsappService } from './whatsapp.service';
+
+/**
+ * Instante en que empieza un turno. La fecha se guarda como la medianoche
+ * local del día (ver BookingsService.create), así que se le suma la hora.
+ */
+export function inicioDelTurno(fecha: Date, hhmm: string): number {
+  const [h, m] = String(hhmm ?? '0:0').split(':').map(Number);
+  const inicio = new Date(fecha);
+  inicio.setHours(h || 0, m || 0, 0, 0);
+  return inicio.getTime();
+}
 
 @Injectable()
 export class RemindersCron {
@@ -12,43 +25,75 @@ export class RemindersCron {
   constructor(
     @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
     private readonly notificationsService: NotificationsService,
+    private readonly push: PushService,
+    private readonly whatsapp: WhatsappService,
   ) {}
 
   /**
-   * Cada hora revisa reservas que son dentro de 24h y envía recordatorio.
-   * Solo envía a reservas pending o confirmed que no han sido recordadas.
+   * Cada hora busca los turnos que empiezan en las próximas 24 horas y le
+   * recuerda al jugador por correo, push (si reservó desde la app) y WhatsApp.
+   *
+   * Antes se comparaba solo la fecha (medianoche) contra una ventana de 23 a
+   * 24 horas, así que el recordatorio salía a la medianoche del día anterior
+   * sin importar la hora del turno. Ahora cuenta la hora de inicio.
+   *
+   * No se le recuerda a quien reservó hace menos de 2 horas: acaba de recibir
+   * la confirmación.
    */
   @Cron(CronExpression.EVERY_HOUR)
   async sendReminders() {
-    const now = new Date();
-    const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const in23h = new Date(now.getTime() + 23 * 60 * 60 * 1000);
+    const ahora = Date.now();
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const pasadoManana = new Date(hoy.getTime() + 2 * 24 * 3600 * 1000);
 
-    // Buscar reservas cuya fecha es mañana (ventana de 1 hora para evitar duplicados)
-    const bookings = await this.bookingModel.find({
+    const candidatas = await this.bookingModel.find({
       status: { $in: [BookingStatus.CONFIRMED, BookingStatus.REAGENDADA] },
       reminderSent: { $ne: true },
-      date: { $gte: in23h, $lte: in24h },
+      date: { $gte: hoy, $lte: pasadoManana },
     })
       // el recordatorio lleva el enlace para mover el turno
-      .select('+cancelToken')
+      .select('+cancelToken +pushToken')
+      .populate('courtId', 'name')
       .lean();
+
+    const bookings = candidatas.filter((b: any) => {
+      const horas = (inicioDelTurno(b.date, b.startTime) - ahora) / 3_600_000;
+      const recienCreada = b.createdAt && ahora - new Date(b.createdAt).getTime() < 2 * 3_600_000;
+      return horas > 0 && horas <= 24 && !recienCreada;
+    });
 
     if (bookings.length === 0) return;
 
     this.logger.log(`Enviando ${bookings.length} recordatorios...`);
 
-    for (const booking of bookings) {
+    for (const booking of bookings as any[]) {
+      const inicio = new Date(inicioDelTurno(booking.date, booking.startTime));
+      const cuando = inicio.toDateString() === new Date(ahora).toDateString() ? 'hoy' : 'mañana';
+      const cancha = booking.courtId?.name ?? 'la cancha';
+      const horario = `${toAmPm(booking.startTime)} – ${toAmPm(booking.endTime)}`;
+
+      /* Cada canal por su lado: si WhatsApp falla, el correo igual sale. */
       try {
-        await this.notificationsService.sendBookingReminder(booking as any);
-        await this.bookingModel.updateOne(
-          { _id: booking._id },
-          { $set: { reminderSent: true } },
-        );
-        this.logger.log(`Recordatorio enviado: ${booking.bookingCode}`);
+        await this.notificationsService.sendBookingReminder(booking, cuando);
       } catch (e) {
-        this.logger.error(`Error recordatorio ${booking.bookingCode}: ${e.message}`);
+        this.logger.error(`Error recordatorio por correo ${booking.bookingCode}: ${e.message}`);
       }
+      await this.push.enviar([booking.pushToken], {
+        titulo: `Tu turno es ${cuando} a las ${toAmPm(booking.startTime)}`,
+        cuerpo: `${cancha} · código ${booking.bookingCode}`,
+        datos: { tipo: 'recordatorio', bookingCode: booking.bookingCode },
+      });
+      await this.whatsapp.recordatorio(booking.guestPhone, {
+        nombre: String(booking.guestName ?? '').split(' ')[0] || 'jugador',
+        cancha,
+        fecha: `${cuando}, ${formatDateCO(booking.date)}`,
+        horario,
+        codigo: booking.bookingCode,
+      });
+
+      await this.bookingModel.updateOne({ _id: booking._id }, { $set: { reminderSent: true } });
+      this.logger.log(`Recordatorio enviado: ${booking.bookingCode}`);
     }
   }
 

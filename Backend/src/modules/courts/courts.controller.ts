@@ -7,6 +7,7 @@ import { PhotoDto } from './dto/photo.dto';
 import { BlockSlotDto } from './dto/block-slot.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { SoloTitularGuard } from '../../common/guards/solo-titular.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../users/schemas/user.schema';
 import { SportType } from './schemas/court.schema';
@@ -90,7 +91,7 @@ export class CourtsController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, SoloTitularGuard)
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Eliminar cancha (owner/admin)' })

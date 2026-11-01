@@ -12,7 +12,7 @@ import { escapeHtml } from '../../common/utils/html.util';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-function toAmPm(time: string): string {
+export function toAmPm(time: string): string {
   const [h, m] = time.split(':').map(Number);
   const ampm = h >= 12 ? 'pm' : 'am';
   const hour = h % 12 || 12;
@@ -24,7 +24,7 @@ function formatSport(sport: string): string {
   return sport.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
 }
 
-function formatDateCO(date: Date): string {
+export function formatDateCO(date: Date): string {
   return new Date(date).toLocaleDateString('es-CO', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
     timeZone: 'America/Bogota',
@@ -488,7 +488,15 @@ export class NotificationsService {
     });
   }
 
-  async sendBookingConfirmation(booking: Booking & { _id: any }) {
+  /**
+   * Confirmación al jugador. En una reserva fija llega un solo correo con
+   * todas las fechas (`serie`) en vez de uno por semana.
+   */
+  async sendBookingConfirmation(
+    booking: Booking & { _id: any },
+    serie?: { fechas: Date[]; total: number },
+  ) {
+    if (!booking.guestEmail) return;
     const { court, club } = await this.getCourtAndClub(booking);
     const cambiarUrl  = `${this.frontendUrl}/reservas/reprogramar?token=${booking.cancelToken}`;
     const bookingDate = formatDateCO(booking.date);
@@ -541,7 +549,21 @@ export class NotificationsService {
                     <td style="color: #6b7280; font-size: 14px;">Horario</td>
                     <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">${startAmPm} – ${endAmPm}</td>
                   </tr>
-                  ${booking.tarifaServicio ? `
+                  ${serie && serie.fechas.length > 1 ? `
+                  <tr style="height: 45px;">
+                    <td style="color: #6b7280; font-size: 14px; vertical-align: top; padding-top: 12px;">Turno fijo</td>
+                    <td align="right" style="color: #111827; font-size: 14px; font-weight: 700; padding: 12px 0;">
+                      Cada semana, ${serie.fechas.length} fechas:<br>
+                      <span style="font-weight: 500; color: #4b5563;">${serie.fechas
+                        .map((f) => new Date(f).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', timeZone: 'America/Bogota' }))
+                        .join(' · ')}</span>
+                    </td>
+                  </tr>
+                  <tr style="height: 65px;">
+                    <td style="color: #6b7280; font-size: 14px; border-top: 1px solid #f3f4f6;">Total pagado</td>
+                    <td align="right" style="color: #059669; font-size: 18px; font-weight: 800; border-top: 1px solid #f3f4f6;">$${serie.total.toLocaleString('es-CO')} COP</td>
+                  </tr>` : ''}
+                  ${!serie && booking.tarifaServicio ? `
                   <tr style="height: 45px;">
                     <td style="color: #6b7280; font-size: 14px; border-top: 1px solid #f3f4f6;">Cancha</td>
                     <td align="right" style="color: #111827; font-size: 14px; font-weight: 700; border-top: 1px solid #f3f4f6;">$${booking.precioCancha?.toLocaleString('es-CO')}</td>
@@ -550,17 +572,18 @@ export class NotificationsService {
                     <td style="color: #6b7280; font-size: 14px;">Tarifa de servicio</td>
                     <td align="right" style="color: #111827; font-size: 14px; font-weight: 700;">$${booking.tarifaServicio?.toLocaleString('es-CO')}</td>
                   </tr>` : ''}
+                  ${!serie ? `
                   <tr style="height: 65px;">
                     <td style="color: #6b7280; font-size: 14px; border-top: 1px solid #f3f4f6;">Total</td>
                     <td align="right" style="color: #059669; font-size: 18px; font-weight: 800; border-top: 1px solid #f3f4f6;">$${booking.totalPrice?.toLocaleString('es-CO')} COP</td>
-                  </tr>
+                  </tr>` : ''}
                 </table>
                 <div style="margin-top: 32px; text-align: center;">
                   <a href="${cambiarUrl}" style="background-color: #16a34a; color: #ffffff; padding: 16px 32px; border-radius: 16px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
                     Cambiar mi horario
                   </a>
                   <p style="color: #9ca3af; font-size: 12px; margin-top: 20px;">
-                    Puedes mover tu reserva hasta 24 horas antes del turno.
+                    Puedes mover tu reserva hasta 24 horas antes del turno.${serie && serie.fechas.length > 1 ? ' Este enlace mueve la primera fecha; las demás se cambian desde el correo de recordatorio de cada semana.' : ''}
                   </p>
                 </div>
               </td>
@@ -712,6 +735,7 @@ export class NotificationsService {
   }
 
   async sendReviewRequest(booking: Booking & { _id: any }) {
+    if (!booking.guestEmail) return;
     const { court, club } = await this.getCourtAndClub(booking);
     const courtName = (booking.courtId as any)?.name || court?.name || 'tu cancha';
     const clubName = club?.name || 'el club';
@@ -920,18 +944,21 @@ export class NotificationsService {
   // EMAILS NUEVOS (recordatorio 24h + notificación al owner)
   // ═══════════════════════════════════════════════════════════════════════
 
-  async sendBookingReminder(booking: Booking & { _id: any }) {
+  /** `cuando` es "hoy" o "mañana", según falten más o menos horas. */
+  async sendBookingReminder(booking: Booking & { _id: any }, cuando: 'hoy' | 'mañana' = 'mañana') {
+    if (!booking.guestEmail) return;
     const { court, club } = await this.getCourtAndClub(booking);
     const cambiarUrl = `${this.frontendUrl}/reservas/reprogramar?token=${booking.cancelToken}`;
+    const manual = (booking as any).origen === 'manual';
 
     await this.send({
       to: booking.guestEmail,
       from: this.fromEmail,
-      subject: `Recordatorio: tu reserva es mañana — #${booking.bookingCode}`,
+      subject: `Recordatorio: tu reserva es ${cuando} — #${booking.bookingCode}`,
       html: buildEmailHtml({
         iconBg: '#3b82f6', iconContent: '🔔', iconColor: '#ffffff',
-        title: '¡TU RESERVA ES MAÑANA!',
-        subtitle: `Hola <strong>${escapeHtml(booking.guestName)}</strong>, te recordamos que tienes una reserva programada para mañana. ¡No olvides llegar a tiempo!`,
+        title: `¡TU RESERVA ES ${cuando.toUpperCase()}!`,
+        subtitle: `Hola <strong>${escapeHtml(booking.guestName)}</strong>, te recordamos que tienes una reserva programada para ${cuando}. ¡No olvides llegar a tiempo!`,
         badgeCode: booking.bookingCode,
         badgeLabel: 'Código de Reserva',
         badgeColor: '#3b82f6',
@@ -942,16 +969,93 @@ export class NotificationsService {
           { label: 'Deporte', value: formatSport(court?.sport) },
           { label: 'Fecha', value: formatDateCO(booking.date) },
           { label: 'Horario', value: `${toAmPm(booking.startTime)} – ${toAmPm(booking.endTime)}` },
-          { label: 'Pago', value: 'Pagado online', highlight: true },
+          { label: 'Pago', value: manual ? 'En el club' : 'Pagado online', highlight: true },
         ],
-        ctaText: '¿No puedes ir? Cambia tu horario', ctaUrl: cambiarUrl, ctaBg: '#16a34a',
-        ctaNote: 'Puedes mover tu reserva hasta 24 horas antes del turno.',
+        /* Las que anota el club se mueven hablando con el club. */
+        ...(manual ? {} : {
+          ctaText: '¿No puedes ir? Cambia tu horario', ctaUrl: cambiarUrl, ctaBg: '#16a34a',
+          ctaNote: 'Puedes mover tu reserva hasta 24 horas antes del turno.',
+        }),
       }),
     });
   }
 
-  async sendOwnerNewBookingNotification(booking: Booking & { _id: any }, ownerEmail: string) {
+  /** Acceso de un empleado al panel del club, con su clave temporal. */
+  async sendInvitacionEquipo(datos: {
+    email: string;
+    nombre: string;
+    club: string;
+    clave: string;
+    esNueva: boolean;
+  }) {
+    await this.send({
+      to: datos.email,
+      from: this.fromEmail,
+      subject: datos.esNueva
+        ? `Te dieron acceso al panel de ${datos.club}`
+        : `Tu nueva clave del panel de ${datos.club}`,
+      html: buildEmailHtml({
+        iconBg: '#a3e635', iconContent: '👥', iconColor: '#111827',
+        title: datos.esNueva ? 'BIENVENIDO AL EQUIPO' : 'NUEVA CLAVE',
+        subtitle: datos.esNueva
+          ? `Hola <strong>${escapeHtml(datos.nombre)}</strong>, ${escapeHtml(datos.club)} te dio acceso a su panel en ReservaTuCancha: podrás ver y anotar reservas, bloquear horarios y validar los QR de los jugadores.`
+          : `Hola <strong>${escapeHtml(datos.nombre)}</strong>, el dueño de ${escapeHtml(datos.club)} te generó una clave nueva. La anterior ya no sirve.`,
+        rows: [
+          { label: 'Club', value: datos.club },
+          { label: 'Correo', value: datos.email },
+          { label: 'Clave temporal', value: datos.clave, highlight: true },
+        ],
+        alertBox: {
+          bg: '#fef3c7', color: '#92400e',
+          text: 'No compartas esta clave. Entra desde la web o desde la app ReservaTuCancha.',
+        },
+        ctaText: 'Entrar al panel', ctaUrl: `${this.frontendUrl}/auth/login`, ctaBg: '#111827',
+      }),
+    });
+  }
+
+  /**
+   * Se liberó un turno que el jugador estaba esperando. Lo puede tomar
+   * cualquiera de la lista: el correo invita a reservar ya, no lo aparta.
+   */
+  async sendTurnoLiberado(datos: {
+    email: string;
+    nombre?: string;
+    courtId: string;
+    fecha: string;
+    startTime: string;
+    endTime: string;
+  }) {
+    const court = await this.courtsService.findById(datos.courtId).catch(() => null);
+    const [y, m, d] = datos.fecha.split('-').map(Number);
+    const reservarUrl = `${this.frontendUrl}/canchas/${datos.courtId}?date=${datos.fecha}&start=${datos.startTime}`;
+
+    await this.send({
+      to: datos.email,
+      from: this.fromEmail,
+      subject: `¡Se liberó el turno que esperabas en ${court?.name ?? 'la cancha'}!`,
+      html: buildEmailHtml({
+        iconBg: '#a3e635', iconContent: '⚡', iconColor: '#111827',
+        title: '¡SE LIBERÓ TU TURNO!',
+        subtitle: `${datos.nombre ? `Hola <strong>${escapeHtml(datos.nombre)}</strong>, ` : ''}el horario que estabas esperando quedó libre. Avisamos a todos los de la lista al mismo tiempo: el primero que lo pague se lo queda.`,
+        rows: [
+          { label: 'Cancha', value: court?.name || '-' },
+          { label: 'Deporte', value: formatSport(court?.sport) },
+          { label: 'Fecha', value: formatDateCO(new Date(y, m - 1, d)) },
+          { label: 'Horario', value: `${toAmPm(datos.startTime)} – ${toAmPm(datos.endTime)}` },
+        ],
+        ctaText: 'Reservar ahora', ctaUrl: reservarUrl, ctaBg: '#16a34a',
+      }),
+    });
+  }
+
+  async sendOwnerNewBookingNotification(
+    booking: Booking & { _id: any },
+    ownerEmail: string,
+    serie?: { fechas: Date[]; netoTotal: number },
+  ) {
     const { court, club } = await this.getCourtAndClub(booking);
+    const esSerie = !!serie && serie.fechas.length > 1;
 
     await this.send({
       to: ownerEmail,
@@ -959,8 +1063,10 @@ export class NotificationsService {
       subject: `Nueva reserva recibida — #${booking.bookingCode}`,
       html: buildEmailHtml({
         iconBg: '#a3e635', iconContent: '📅', iconColor: '#111827',
-        title: 'NUEVA RESERVA',
-        subtitle: `<strong>${escapeHtml(booking.guestName)}</strong> acaba de reservar en tu cancha. Aquí tienes los detalles:`,
+        title: esSerie ? 'NUEVO TURNO FIJO' : 'NUEVA RESERVA',
+        subtitle: esSerie
+          ? `<strong>${escapeHtml(booking.guestName)}</strong> reservó y pagó un turno fijo semanal en tu cancha. Aquí tienes los detalles:`
+          : `<strong>${escapeHtml(booking.guestName)}</strong> acaba de reservar en tu cancha. Aquí tienes los detalles:`,
         badgeCode: booking.bookingCode,
         badgeColor: '#a3e635',
         rows: [
@@ -974,7 +1080,17 @@ export class NotificationsService {
           /* Al club le importa lo suyo, no lo que pagó el jugador: el total
              incluye la tarifa de servicio, que no es plata del club. */
           { label: 'Precio de la cancha', value: formatPrice(booking.precioCancha ?? booking.totalPrice) },
-          { label: 'Te queda', value: formatPrice(booking.netoDueno ?? booking.totalPrice), highlight: true },
+          ...(esSerie ? [{
+            label: 'Turno fijo',
+            value: `Cada semana, ${serie!.fechas.length} fechas: ${serie!.fechas
+              .map((f) => new Date(f).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', timeZone: 'America/Bogota' }))
+              .join(' · ')}`,
+          }] : []),
+          {
+            label: esSerie ? 'Te quedan (todas las fechas)' : 'Te queda',
+            value: formatPrice(esSerie ? serie!.netoTotal : (booking.netoDueno ?? booking.totalPrice)),
+            highlight: true,
+          },
         ],
         ctaText: 'Ver en el panel', ctaUrl: `${this.frontendUrl}/dashboard/propetario/reservas`, ctaBg: '#111827',
       }),

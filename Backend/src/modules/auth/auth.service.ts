@@ -5,6 +5,7 @@ import * as bcrypt from 'bcryptjs';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { CourtsService } from '../courts/courts.service';
+import { UserRole } from '../users/schemas/user.schema';
 
 @Injectable()
 export class AuthService {
@@ -27,6 +28,11 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
+    /* Un empleado entra solo mientras su club siga activo. */
+    if (user.role === UserRole.STAFF && !(await this.clubActivo(user))) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
+
     await this.usersService.updateLastLogin(user._id.toString());
 
     const tokens = await this.generateTokens(user);
@@ -42,7 +48,10 @@ export class AuthService {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        /* El empleado usa el panel del club: para la web y la app es un
+           "owner" con `esStaff`, y las pantallas sensibles se esconden. */
+        role: user.role === UserRole.STAFF ? UserRole.OWNER : user.role,
+        esStaff: user.role === UserRole.STAFF,
         avatarUrl: user.avatarUrl,
       },
     };
@@ -65,6 +74,9 @@ export class AuthService {
 
     const user = await this.usersService.findByIdWithRefreshToken(payload.sub);
     if (!user || !user.isActive || !user.refreshToken) {
+      throw new UnauthorizedException('Sesión inválida');
+    }
+    if (user.role === UserRole.STAFF && !(await this.clubActivo(user))) {
       throw new UnauthorizedException('Sesión inválida');
     }
 
@@ -94,12 +106,22 @@ export class AuthService {
     return this.usersService.findById(userId);
   }
 
+  private async clubActivo(staff: any): Promise<boolean> {
+    if (!staff.clubOwnerId) return false;
+    const dueno = await this.usersService.findById(staff.clubOwnerId.toString()).catch(() => null);
+    return !!dueno && (dueno as any).isActive !== false && (dueno as any).role === UserRole.OWNER;
+  }
+
   private async generateTokens(user: any) {
-    const payload = {
+    const esStaff = user.role === UserRole.STAFF;
+    const payload: Record<string, unknown> = {
       sub: user._id.toString(),
       email: user.email,
-      role: user.role,
+      /* El empleado actúa sobre el club de su dueño: ve y toca lo mismo que
+         él salvo lo que bloquea SoloTitularGuard (cuenta de pagos, equipo). */
+      role: esStaff ? UserRole.OWNER : user.role,
       name: user.name,
+      ...(esStaff ? { staff: true, ownerId: user.clubOwnerId?.toString() } : {}),
     };
 
     const accessToken = this.jwtService.sign(

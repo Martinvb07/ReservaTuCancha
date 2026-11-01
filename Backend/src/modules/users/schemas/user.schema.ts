@@ -1,11 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type UserDocument = User & Document;
 
 export enum UserRole {
   OWNER = 'owner',
   ADMIN = 'admin',
+  /** Empleado de un club: entra al panel del club con permisos recortados. */
+  STAFF = 'staff',
 }
 
 @Schema({ timestamps: true })
@@ -26,6 +28,10 @@ export class User {
 
   @Prop({ trim: true })
   phone?: string;
+
+  /** Solo en empleados: el dueño del club para el que trabajan. */
+  @Prop({ type: Types.ObjectId, ref: 'User', index: true })
+  clubOwnerId?: Types.ObjectId;
 
   @Prop()
   avatarUrl?: string;

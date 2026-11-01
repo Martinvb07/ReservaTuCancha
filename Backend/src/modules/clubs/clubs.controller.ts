@@ -17,6 +17,7 @@ import { UpdateClubProfileDto } from './dto/update-club-profile.dto';
 import { PhotoDto } from '../courts/dto/photo.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { SoloTitularGuard } from '../../common/guards/solo-titular.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../users/schemas/user.schema';
 
@@ -82,7 +83,7 @@ export class ClubsController {
    * sino el id del club como receptor en ePayco.
    */
   @Patch(':id/epayco')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, SoloTitularGuard)
   @Roles(UserRole.OWNER)
   async updateEpaycoReceptor(
     @Param('id') clubId: string,
@@ -95,7 +96,7 @@ export class ClubsController {
   /* Histórico: la cuenta bancaria del modelo de giros semanales. Se deja la
      ruta porque la app móvil publicada todavía la llama; ya no mueve plata. */
   @Patch(':id/banco')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, SoloTitularGuard)
   @Roles(UserRole.OWNER)
   async updateDatosBancarios(
     @Param('id') clubId: string,

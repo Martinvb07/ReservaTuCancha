@@ -98,15 +98,27 @@ export class EpaycoConfirmationController {
     }
 
     if (estado === ACEPTADA) {
+      /* ePayco reintenta la confirmación; sin esta salida, una reserva ya
+         confirmada volvería a disparar el correo al jugador en cada reintento.
+         Va antes del monto: en un turno fijo ya confirmado el reintento trae
+         el total de la serie, y compararlo con una sola fecha daría 400 y
+         ePayco seguiría reintentando. */
+      if (booking.status !== 'pending') {
+        this.logger.log(`Confirmación repetida para ${booking.bookingCode}, se ignora`);
+        return { status: 'ok' };
+      }
+
       /* Lo cobrado tiene que coincidir con lo que vale la reserva. La firma ya
          garantiza que el evento es de ePayco, pero esto deja constancia si
          alguna vez el monto de la sesión deja de calzar con la reserva.
          ePayco manda el monto con decimales ("62000.00"), así que se redondea
          antes de comparar. */
+      /* Un turno fijo se cobra entero con el código de la primera fecha. */
+      const esperado = await this.bookingsService.totalACobrar(booking);
       const recibido = Math.round(Number(amount));
-      if (!Number.isFinite(recibido) || recibido !== Math.round(booking.totalPrice)) {
+      if (!Number.isFinite(recibido) || recibido !== Math.round(esperado)) {
         this.logger.error(
-          `Monto distinto en ${booking.bookingCode}: se esperaban ${booking.totalPrice} y llegaron ${amount}. No se confirma.`,
+          `Monto distinto en ${booking.bookingCode}: se esperaban ${esperado} y llegaron ${amount}. No se confirma.`,
         );
         throw new BadRequestException('El monto pagado no corresponde a la reserva');
       }
@@ -114,13 +126,6 @@ export class EpaycoConfirmationController {
       if (currency && currency.toUpperCase() !== 'COP') {
         this.logger.error(`Moneda inesperada en ${booking.bookingCode}: ${currency}`);
         throw new BadRequestException('Moneda no soportada');
-      }
-
-      /* ePayco reintenta la confirmación; sin esta salida, una reserva ya
-         confirmada volvería a disparar el correo al jugador en cada reintento. */
-      if (booking.status !== 'pending') {
-        this.logger.log(`Confirmación repetida para ${booking.bookingCode}, se ignora`);
-        return { status: 'ok' };
       }
 
       this.logger.log(`Pago aprobado para la reserva ${booking.bookingCode}`);

@@ -59,6 +59,24 @@ export class CreateBookingDto {
   notes?: string;
 
   /**
+   * Reserva fija: el mismo turno durante varias semanas seguidas, pagado en
+   * un solo cobro. 1 (o ausente) es una reserva normal.
+   */
+  @ApiProperty({ example: 4, required: false, minimum: 1, maximum: 12 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  semanas?: number;
+
+  /** Token push del teléfono, para avisar la confirmación y el recordatorio. */
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  @MaxLength(4096)
+  pushToken?: string;
+
+  /**
    * Se ignora: el total lo calcula el servidor con el precio de la cancha por
    * la duracion del turno. Se sigue aceptando para no romper a los clientes
    * que ya lo mandan, pero el valor que llegue aca no se usa nunca.

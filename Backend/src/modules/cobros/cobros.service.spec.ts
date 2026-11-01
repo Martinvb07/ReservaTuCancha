@@ -89,4 +89,34 @@ describe('CobrosService', () => {
       expect(c.pasarelaPorcentaje).toBe(2.64);
     });
   });
+
+  describe('reservas fijas (desglosarSerie)', () => {
+    it('una sola fecha es igual que una reserva suelta', () => {
+      expect(cobros.desglosarSerie([60_000])).toEqual([cobros.desglosar(60_000)]);
+    });
+
+    it('cobra la pasarela una sola vez sobre el total y le deja el ahorro al club', () => {
+      const serie = cobros.desglosarSerie([60_000, 60_000, 60_000, 60_000]);
+      const suelta = cobros.desglosar(60_000);
+
+      const total = serie.reduce((s, d) => s + d.totalPagado, 0);
+      const pasarela = serie.reduce((s, d) => s + d.costoPasarela, 0);
+      expect(total).toBe(4 * 62_000);
+      expect(pasarela).toBe(cobros.costoPasarela(total));
+
+      for (const d of serie) {
+        expect(d.tarifaServicio).toBe(2_000);
+        expect(d.gananciaPlataforma).toBe(2_250);
+        expect(d.netoDueno).toBeGreaterThan(suelta.netoDueno);
+        expect(d.costoPasarela + d.gananciaPlataforma + d.netoDueno).toBe(d.totalPagado);
+      }
+    });
+
+    it('cuadra al peso con precios distintos y redondeos', () => {
+      const serie = cobros.desglosarSerie([37_333, 41_667, 50_001]);
+      const total = serie.reduce((s, d) => s + d.totalPagado, 0);
+      expect(serie.reduce((s, d) => s + d.costoPasarela + d.gananciaPlataforma + d.netoDueno, 0)).toBe(total);
+      expect(serie.reduce((s, d) => s + d.costoPasarela, 0)).toBe(cobros.costoPasarela(total));
+    });
+  });
 });

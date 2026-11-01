@@ -9,7 +9,10 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
-import { Booking, BookingDocument, BookingStatus } from './schemas/booking.schema';
+import { Booking, BookingDocument, BookingOrigen, BookingStatus } from './schemas/booking.schema';
+import { ReservaManualDto } from './dto/reserva-manual.dto';
+import { PushService } from '../notifications/push.service';
+import { formatDateCO, toAmPm } from '../notifications/notifications.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { EpaycoService } from '../epayco/epayco.service';
@@ -50,6 +53,7 @@ export class BookingsService {
     private readonly epaycoService: EpaycoService,
     private readonly cobrosService: CobrosService,
     private readonly notificationsGateway: NotificationsGateway,
+    private readonly push: PushService,
   ) {}
 
   // --- MÉTODOS PARA EL WEBHOOK ---
@@ -100,21 +104,47 @@ export class BookingsService {
     if (epaycoRefPayco) updatePayload.epaycoRefPayco = epaycoRefPayco;
     if (epaycoTransactionId) updatePayload.epaycoTransactionId = epaycoTransactionId;
 
+    /* Un turno fijo se paga en un solo cobro: al confirmarse la primera fecha
+       se confirman también las demás que seguían pendientes. */
+    let serie: BookingDocument[] = [];
+    if (status === 'confirmed') {
+      const actual = await this.bookingModel.findById(id).select('serieId status');
+      if (actual?.serieId && actual.status === BookingStatus.PENDING) {
+        serie = await this.cobroDe(actual);
+        await this.bookingModel.updateMany(
+          { _id: { $in: serie.map((b) => b._id) } },
+          { $set: updatePayload },
+        );
+      }
+    }
+
     const updated = await this.bookingModel.findByIdAndUpdate(
       id,
       { $set: updatePayload },
       { new: true }
-    ).select('+cancelToken +reviewToken').populate('courtId', 'name sport ownerId');
+    ).select('+cancelToken +reviewToken +pushToken').populate('courtId', 'name sport ownerId');
 
     if (!updated) throw new NotFoundException('Reserva no encontrada');
 
     // Notificaciones automáticas según cambio de estado
     if (status === 'confirmed') {
-      await this.notificationsService.sendBookingConfirmation(updated as any);
+      const resumen = serie.length > 1
+        ? {
+            fechas: serie.map((b) => b.date),
+            total: serie.reduce((acc, b) => acc + b.totalPrice, 0),
+            netoTotal: serie.reduce((acc, b) => acc + (b.netoDueno ?? 0), 0),
+          }
+        : undefined;
+      await this.notificationsService.sendBookingConfirmation(updated as any, resumen);
+      await this.push.enviar([updated.pushToken], {
+        titulo: '¡Reserva confirmada!',
+        cuerpo: `${(updated.courtId as any)?.name ?? 'Tu cancha'} · ${formatDateCO(updated.date)}, ${toAmPm(updated.startTime)}${resumen ? ` (y ${resumen.fechas.length - 1} semanas más)` : ''}`,
+        datos: { tipo: 'reserva-confirmada', bookingCode: updated.bookingCode },
+      });
       /* Sin userId la confirmación viene de ePayco: es el momento en que la
          reserva existe de verdad para el club. Si la confirma el propio dueño
          desde el panel, no tiene sentido avisarle de lo que acaba de hacer. */
-      if (!userId) await this.avisarDueno(updated);
+      if (!userId) await this.avisarDueno(updated, resumen);
     }
 
     if (status === 'completed') {
@@ -150,6 +180,23 @@ export class BookingsService {
 
     const cancha = booking.courtId as any;
 
+    if (booking.status !== BookingStatus.PENDING) {
+      throw new BadRequestException('Esta reserva ya está pagada');
+    }
+
+    /* Un turno fijo se paga entero en un solo cobro, con el código de la
+       primera fecha como factura. */
+    const cobro = await this.cobroDe(booking);
+    const sumar = (campo: 'totalPrice' | 'netoDueno' | 'gananciaPlataforma' | 'costoPasarela') =>
+      cobro.reduce((acc, b) => acc + (b[campo] ?? 0), 0);
+    const montos = {
+      totalPrice: sumar('totalPrice'),
+      netoDueno: sumar('netoDueno'),
+      gananciaPlataforma: sumar('gananciaPlataforma'),
+      costoPasarela: sumar('costoPasarela'),
+    };
+    const semanas = cobro.length;
+
     /* Base pública de la API, con el prefijo /api incluido: no hay subdominio
        propio para el backend, nginx enruta /api/ del mismo dominio al 4000, y
        la app monta todo bajo setGlobalPrefix('api'). Si esta URL queda mal,
@@ -158,13 +205,17 @@ export class BookingsService {
 
     /* Con pagos divididos la plata no pasa por la empresa: ePayco le consigna
        al club en el mismo cobro, así que hace falta su id de receptor. */
-    const split = await this.resolverSplit(booking, cancha);
+    const split = await this.resolverSplit(booking, cancha, montos);
 
     const sessionId = await this.epaycoService.crearSesion({
-      total: booking.totalPrice,
+      total: montos.totalPrice,
       invoice: booking.bookingCode,
-      nombre: `Reserva ${cancha?.name ?? 'de cancha'}`,
-      descripcion: `${booking.startTime}–${booking.endTime} · código ${booking.bookingCode}`,
+      nombre: semanas > 1
+        ? `Turno fijo ${cancha?.name ?? 'de cancha'}`
+        : `Reserva ${cancha?.name ?? 'de cancha'}`,
+      descripcion: semanas > 1
+        ? `${semanas} semanas · ${booking.startTime}–${booking.endTime} · código ${booking.bookingCode}`
+        : `${booking.startTime}–${booking.endTime} · código ${booking.bookingCode}`,
       responseUrl: this.resolverRedirect(bookingId, redirectUrl),
       confirmationUrl: `${backend}/webhooks/epayco`,
       cliente: {
@@ -202,7 +253,11 @@ export class BookingsService {
    * ePayco lista, se corta acá: cobrarle al jugador sin tener a dónde girarle
    * al club dejaría la plata represada y la reserva en pie.
    */
-  private async resolverSplit(booking: BookingDocument, cancha: any) {
+  private async resolverSplit(
+    booking: BookingDocument,
+    cancha: any,
+    montos: { netoDueno: number; gananciaPlataforma: number; costoPasarela: number },
+  ) {
     if (!this.epaycoService.splitActivo) return undefined;
 
     const club = await this.clubModel
@@ -223,10 +278,10 @@ export class BookingsService {
        reparte ePayco es exactamente lo que se le mostró al jugador. */
     return {
       receptorId: club.epaycoReceptorId,
-      netoDueno: booking.netoDueno ?? 0,
-      gananciaPlataforma: booking.gananciaPlataforma ?? 0,
-      costoPasarela: booking.costoPasarela ?? 0,
-      brutoPlataforma: this.cobrosService.brutoPlataformaSplit(booking.gananciaPlataforma ?? 0),
+      netoDueno: montos.netoDueno,
+      gananciaPlataforma: montos.gananciaPlataforma,
+      costoPasarela: montos.costoPasarela,
+      brutoPlataforma: this.cobrosService.brutoPlataformaSplit(montos.gananciaPlataforma),
     };
   }
 
@@ -265,7 +320,86 @@ export class BookingsService {
 
   // --- GESTIÓN DE RESERVAS ---
 
-  async create(createBookingDto: CreateBookingDto): Promise<Booking> {
+  /**
+   * Fechas de la reserva: una sola, o la misma hora durante `semanas` semanas
+   * seguidas para un turno fijo.
+   */
+  private static fechasSemanales(ymd: string, semanas: number): Date[] {
+    const [year, month, day] = ymd.split('-').map(Number);
+    return Array.from({ length: semanas }, (_, i) => new Date(year, month - 1, day + 7 * i));
+  }
+
+  private static ymd(fecha: Date): string {
+    return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
+  }
+
+  /** Hoy y la hora actual en Colombia, para no reservar en el pasado. */
+  private static ahoraColombia() {
+    const fmt = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Bogota',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    });
+    const p = Object.fromEntries(fmt.formatToParts(new Date()).map((x) => [x.type, x.value]));
+    return { hoy: `${p.year}-${p.month}-${p.day}`, minutos: Number(p.hour) * 60 + Number(p.minute) };
+  }
+
+  /**
+   * Valida un turno y devuelve las fechas en que se puede reservar.
+   *
+   * Si alguna fecha de una reserva fija choca, se rechaza todo y se dice
+   * cuáles: reservar solo una parte de la serie confundiría al jugador.
+   */
+  private async validarTurno(
+    courtId: Types.ObjectId,
+    fechaYmd: string,
+    startTime: string,
+    endTime: string,
+    semanas: number,
+  ): Promise<{ fechas: Date[]; duracionMins: number }> {
+    const ini = aMinutos(startTime);
+    const fin = aMinutos(endTime);
+    const duracionMins = fin - ini;
+    if (duracionMins <= 0) {
+      throw new BadRequestException('La hora de fin debe ser posterior a la de inicio');
+    }
+
+    const ymd = String(fechaYmd).slice(0, 10);
+    const { hoy, minutos } = BookingsService.ahoraColombia();
+    if (ymd < hoy) throw new BadRequestException('No puedes reservar una fecha que ya pasó');
+    if (ymd === hoy && ini <= minutos) throw new BadRequestException('No puedes reservar un horario que ya pasó');
+
+    const fechas = BookingsService.fechasSemanales(ymd, semanas);
+    if (semanas === 1) {
+      await this.assertSlotLibre(courtId, fechas[0], ini, fin);
+      return { fechas, duracionMins };
+    }
+
+    const chocan: string[] = [];
+    for (const fecha of fechas) {
+      try {
+        await this.assertSlotLibre(courtId, fecha, ini, fin);
+      } catch (e) {
+        if (!(e instanceof ConflictException)) throw e;
+        chocan.push(fecha.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }));
+      }
+    }
+    if (chocan.length) {
+      throw new ConflictException(
+        `El turno fijo no se puede reservar: ${chocan.length === 1 ? 'esta fecha ya está ocupada' : 'estas fechas ya están ocupadas'}: ${chocan.join(', ')}`,
+      );
+    }
+    return { fechas, duracionMins };
+  }
+
+  private async codigoUnico(): Promise<string> {
+    for (;;) {
+      const bookingCode = generarCodigoReserva(8);
+      if (!(await this.bookingModel.exists({ bookingCode }))) return bookingCode;
+    }
+  }
+
+  async create(createBookingDto: CreateBookingDto): Promise<Booking & { serie?: any }> {
     const courtId = typeof createBookingDto.courtId === 'string'
       ? new Types.ObjectId(createBookingDto.courtId)
       : createBookingDto.courtId;
@@ -277,121 +411,163 @@ export class BookingsService {
       throw new NotFoundException('Cancha no encontrada');
     }
 
-    let localDate: Date;
-    if (typeof createBookingDto.date === 'string' && createBookingDto.date.length === 10) {
-      const [year, month, day] = createBookingDto.date.split('-').map(Number);
-      localDate = new Date(year, month - 1, day);
-    } else {
-      localDate = new Date(createBookingDto.date);
-    }
+    const semanas = Math.max(1, Math.min(12, createBookingDto.semanas ?? 1));
+    const { fechas, duracionMins } = await this.validarTurno(
+      courtId,
+      createBookingDto.date,
+      createBookingDto.startTime,
+      createBookingDto.endTime,
+      semanas,
+    );
 
-    const [reqStartHour, reqStartMin] = createBookingDto.startTime.split(':').map(Number);
-    const [reqEndHour, reqEndMin] = createBookingDto.endTime.split(':').map(Number);
-    const reqStartMins = reqStartHour * 60 + reqStartMin;
-    const reqEndMins = reqEndHour * 60 + reqEndMin;
-
-    const duracionMins = reqEndMins - reqStartMins;
-    if (duracionMins <= 0) {
-      throw new BadRequestException('La hora de fin debe ser posterior a la de inicio');
-    }
     /* El precio de lista es por hora; la tarifa de servicio es una sola por
-       reserva, no por hora, así que se suma después de prorratear el turno. */
+       reserva, no por hora, así que se suma después de prorratear el turno.
+       En un turno fijo cada fecha lleva su tarifa, y la pasarela, que cobra
+       una sola vez, se reparte entre todas (ver CobrosService.desglosarSerie). */
     const precioCancha = Math.round((cancha.pricePerHour * duracionMins) / 60);
-    const desglose = this.cobrosService.desglosar(precioCancha);
-    const totalPrice = desglose.totalPagado;
+    const desgloses = this.cobrosService.desglosarSerie(fechas.map(() => precioCancha));
+    const serieId = semanas > 1 ? uuidv4() : undefined;
 
-    // Validar que la reserva no sea en el pasado (hora Colombia)
-    const fmt = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'America/Bogota',
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', hour12: false,
-    });
-    const nowParts = Object.fromEntries(fmt.formatToParts(new Date()).map(p => [p.type, p.value]));
-    const todayYMD = `${nowParts.year}-${nowParts.month}-${nowParts.day}`;
-    const nowMins = Number(nowParts.hour) * 60 + Number(nowParts.minute);
-    const bookingYMD = typeof createBookingDto.date === 'string' && createBookingDto.date.length >= 10
-      ? createBookingDto.date.slice(0, 10)
-      : `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, '0')}-${String(localDate.getDate()).padStart(2, '0')}`;
+    const { semanas: _s, totalPrice: _t, paymentMethod: _p, ...datos } = createBookingDto;
 
-    if (bookingYMD < todayYMD) {
-      throw new BadRequestException('No puedes reservar una fecha que ya pasó');
-    }
-    if (bookingYMD === todayYMD && reqStartMins <= nowMins) {
-      throw new BadRequestException('No puedes reservar un horario que ya pasó');
-    }
-
-    const existingBookings = await this.bookingModel.find({
-      courtId,
-      date: {
-        $gte: new Date(localDate).setHours(0, 0, 0, 0),
-        $lt: new Date(localDate).setHours(23, 59, 59, 999),
-      },
-      status: { $in: [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.REAGENDADA] },
-    });
-
-    for (const booking of existingBookings) {
-      const [existHour, existMin] = booking.startTime.split(':').map(Number);
-      const [existEndHour, existEndMin] = booking.endTime.split(':').map(Number);
-      const existStartMins = existHour * 60 + existMin;
-      const existEndMins = existEndHour * 60 + existEndMin;
-
-      if (!(reqEndMins <= existStartMins || reqStartMins >= existEndMins)) {
-        throw new ConflictException('El horario seleccionado ya no está disponible');
-      }
+    const guardadas: BookingDocument[] = [];
+    for (let i = 0; i < fechas.length; i++) {
+      const desglose = desgloses[i];
+      const booking = new this.bookingModel({
+        ...datos,
+        courtId,
+        /* Congelado al crear: la liquidación suma estos campos tal cual, para
+           que un cambio de tarifa no reescriba lo que ya se cobró. */
+        precioCancha:       desglose.precioCancha,
+        tarifaServicio:     desglose.tarifaServicio,
+        totalPrice:         desglose.totalPagado,
+        costoPasarela:      desglose.costoPasarela,
+        gananciaPlataforma: desglose.gananciaPlataforma,
+        netoDueno:          desglose.netoDueno,
+        paymentMethod: 'epayco',
+        origen: BookingOrigen.ONLINE,
+        date: fechas[i],
+        cancelToken: uuidv4(),
+        reviewToken: uuidv4(),
+        bookingCode: await this.codigoUnico(),
+        status: BookingStatus.PENDING,
+        ...(serieId ? { serieId, serieOrden: i + 1 } : {}),
+      });
+      guardadas.push(await booking.save());
     }
 
-    // Verificar si el horario está bloqueado por el owner
-    const blocks = await this.blockedSlotModel.find({
-      courtId,
-      date: {
-        $gte: new Date(localDate).setHours(0, 0, 0, 0),
-        $lt: new Date(localDate).setHours(23, 59, 59, 999),
-      },
-    }).lean();
-
-    for (const block of blocks) {
-      const [bStartH, bStartM] = block.startTime.split(':').map(Number);
-      const [bEndH, bEndM] = block.endTime.split(':').map(Number);
-      const bStartMins = bStartH * 60 + bStartM;
-      const bEndMins = bEndH * 60 + bEndM;
-      if (!(reqEndMins <= bStartMins || reqStartMins >= bEndMins)) {
-        throw new ConflictException('Este horario está bloqueado por el propietario');
-      }
-    }
-
-    let bookingCode;
-    let exists = true;
-    while (exists) {
-      bookingCode = generarCodigoReserva(8);
-      exists = !!(await this.bookingModel.exists({ bookingCode }));
-    }
-
-    const booking = new this.bookingModel({
-      ...createBookingDto,
-      courtId,
-      /* Congelado al crear: la liquidación suma estos campos tal cual, para
-         que un cambio de tarifa no reescriba lo que ya se cobró. */
-      precioCancha:       desglose.precioCancha,
-      tarifaServicio:     desglose.tarifaServicio,
-      totalPrice,
-      costoPasarela:      desglose.costoPasarela,
-      gananciaPlataforma: desglose.gananciaPlataforma,
-      netoDueno:          desglose.netoDueno,
-      paymentMethod: 'epayco',
-      date: localDate,
-      cancelToken: uuidv4(),
-      reviewToken: uuidv4(),
-      bookingCode,
-      status: BookingStatus.PENDING,
-    });
-
-    const saved = await booking.save();
-
-    this.logger.log(`Reserva creada: ${saved.bookingCode} | método: ${createBookingDto.paymentMethod ?? 'no especificado'}`);
+    const primera = guardadas[0];
+    this.logger.log(
+      `Reserva creada: ${primera.bookingCode}${serieId ? ` (turno fijo de ${semanas} semanas)` : ''}`,
+    );
 
     /* Al dueño no se le avisa todavía: la reserva nace pendiente y, si el pago
        no pasa, se borra. Se le avisa cuando ePayco confirma (updateStatus). */
-    return this.sinTokens(saved);
+    const respuesta: any = this.sinTokens(primera);
+    delete respuesta.pushToken;
+    if (serieId) {
+      respuesta.serie = {
+        id: serieId,
+        semanas,
+        fechas: fechas.map(BookingsService.ymd),
+        total: guardadas.reduce((acc, b) => acc + b.totalPrice, 0),
+      };
+    }
+    return respuesta;
+  }
+
+  /**
+   * Las reservas que se cobran juntas con esta: ella sola, o todas las de su
+   * turno fijo que siguen pendientes de pago.
+   */
+  async cobroDe(booking: BookingDocument | any): Promise<BookingDocument[]> {
+    if (!booking?.serieId) return [booking];
+    const serie = await this.bookingModel
+      .find({ serieId: booking.serieId, status: BookingStatus.PENDING })
+      .sort({ serieOrden: 1 });
+    return serie.length ? serie : [booking];
+  }
+
+  /** Lo que tiene que llegar en la confirmación de ePayco para este cobro. */
+  async totalACobrar(booking: BookingDocument | any): Promise<number> {
+    const cobro = await this.cobroDe(booking);
+    return cobro.reduce((acc, b) => acc + (b.totalPrice ?? 0), 0);
+  }
+
+  // --- RESERVAS QUE ANOTA EL CLUB ---
+
+  /**
+   * El club anota una reserva tomada por teléfono o en el mostrador para que
+   * ocupe el horario y nadie más la pague en línea. Se cobra en el club: no
+   * lleva tarifa, pasarela ni ganancia, y queda confirmada de una.
+   */
+  async crearManual(ownerId: string, dto: ReservaManualDto) {
+    const courtId = aObjectId(dto.courtId, 'Cancha no encontrada');
+    const cancha = await this.courtModel.findById(courtId).lean();
+    if (!cancha) throw new NotFoundException('Cancha no encontrada');
+    if (String(cancha.ownerId) !== String(ownerId)) {
+      throw new ForbiddenException('Esta cancha no es de tu club');
+    }
+
+    const semanas = Math.max(1, Math.min(26, dto.semanas ?? 1));
+    const { fechas, duracionMins } = await this.validarTurno(courtId, dto.date, dto.startTime, dto.endTime, semanas);
+    const precio = dto.precio ?? Math.round((cancha.pricePerHour * duracionMins) / 60);
+    const serieId = semanas > 1 ? uuidv4() : undefined;
+
+    const creadas = [];
+    for (let i = 0; i < fechas.length; i++) {
+      const b = await new this.bookingModel({
+        courtId,
+        guestName: dto.guestName,
+        guestPhone: dto.guestPhone,
+        guestEmail: dto.guestEmail,
+        notes: dto.notes,
+        date: fechas[i],
+        startTime: dto.startTime,
+        endTime: dto.endTime,
+        origen: BookingOrigen.MANUAL,
+        paymentMethod: 'club',
+        status: BookingStatus.CONFIRMED,
+        precioCancha: precio,
+        totalPrice: precio,
+        tarifaServicio: 0,
+        costoPasarela: 0,
+        gananciaPlataforma: 0,
+        /* Lo que el club cobra en su caja es todo suyo. */
+        netoDueno: precio,
+        cancelToken: uuidv4(),
+        reviewToken: uuidv4(),
+        bookingCode: await this.codigoUnico(),
+        ...(serieId ? { serieId, serieOrden: i + 1 } : {}),
+      }).save();
+      creadas.push(this.sinTokens(b));
+    }
+
+    this.logger.log(`El club anotó ${creadas.length} reserva(s) en ${cancha.name}`);
+    return { creadas: creadas.length, reservas: creadas };
+  }
+
+  /**
+   * Anula una reserva que anotó el club (o, con `serie`, esa y las siguientes
+   * del mismo turno fijo). Las que se pagaron en línea no se anulan acá: esas
+   * se mueven de horario, no se borran.
+   */
+  async anularManual(ownerId: string, bookingId: string, serie = false) {
+    const booking = await this.bookingModel.findById(aObjectId(bookingId, 'Reserva no encontrada'))
+      .populate('courtId', 'ownerId');
+    if (!booking) throw new NotFoundException('Reserva no encontrada');
+    if (String((booking.courtId as any)?.ownerId) !== String(ownerId)) {
+      throw new ForbiddenException('No tienes permiso para modificar esta reserva');
+    }
+    if (booking.origen !== BookingOrigen.MANUAL) {
+      throw new BadRequestException('Solo se pueden anular las reservas que anotó el club');
+    }
+
+    const filtro: any = serie && booking.serieId
+      ? { serieId: booking.serieId, origen: BookingOrigen.MANUAL, date: { $gte: booking.date } }
+      : { _id: booking._id };
+    const { deletedCount } = await this.bookingModel.deleteMany(filtro);
+    return { anuladas: deletedCount };
   }
 
   /** Ver `NotificationsService.sendPagoHuerfano`. */
@@ -404,7 +580,7 @@ export class BookingsService {
    * correo. Nunca tumba la confirmación: si el aviso falla, el pago sigue
    * registrado y la reserva confirmada.
    */
-  private async avisarDueno(booking: any) {
+  private async avisarDueno(booking: any, serie?: { fechas: Date[]; netoTotal: number }) {
     try {
       const court = booking.courtId;
       if (!court?.ownerId) return;
@@ -412,9 +588,15 @@ export class BookingsService {
 
       this.notificationsGateway.notifyNewBooking(ownerId, booking.toObject?.() ?? booking);
 
+      this.push.enviarAlClub(ownerId, {
+        titulo: serie ? 'Nuevo turno fijo pagado' : 'Nueva reserva pagada',
+        cuerpo: `${booking.guestName} · ${court.name ?? 'Cancha'} · ${formatDateCO(booking.date)}, ${toAmPm(booking.startTime)}${serie ? ` · ${serie.fechas.length} semanas` : ''}`,
+        datos: { tipo: 'nueva-reserva', bookingId: String(booking._id) },
+      }).catch((e) => this.logger.error(`Error push owner: ${e.message}`));
+
       const owner = await this.userModel.findById(ownerId).select('email').lean();
       if (owner?.email) {
-        this.notificationsService.sendOwnerNewBookingNotification(booking, owner.email).catch(
+        this.notificationsService.sendOwnerNewBookingNotification(booking, owner.email, serie).catch(
           (e) => this.logger.error(`Error email owner: ${e.message}`),
         );
       }
@@ -446,15 +628,28 @@ export class BookingsService {
   }
 
   private static readonly CAMPOS_PUBLICOS =
-    '_id courtId date startTime endTime status totalPrice precioCancha tarifaServicio bookingCode paymentMethod players createdAt';
+    '_id courtId date startTime endTime status totalPrice precioCancha tarifaServicio bookingCode paymentMethod players origen serieId serieOrden createdAt';
 
-  async findById(id: string): Promise<Booking> {
-    const booking = await this.bookingModel
+  async findById(id: string): Promise<Booking & { serie?: any }> {
+    const booking: any = await this.bookingModel
       .findById(id)
       .select(BookingsService.CAMPOS_PUBLICOS)
       .populate('courtId', 'name sport location pricePerHour')
       .lean();
     if (!booking) throw new NotFoundException('Reserva no encontrada');
+    /* La pantalla de confirmación muestra el turno fijo completo. */
+    if (booking.serieId) {
+      const fechas = await this.bookingModel
+        .find({ serieId: booking.serieId })
+        .select('date totalPrice')
+        .sort({ serieOrden: 1 })
+        .lean();
+      booking.serie = {
+        semanas: fechas.length,
+        fechas: fechas.map((f) => BookingsService.ymd(new Date(f.date))),
+        total: fechas.reduce((acc, f) => acc + (f.totalPrice ?? 0), 0),
+      };
+    }
     return booking;
   }
 
@@ -604,6 +799,13 @@ export class BookingsService {
    * "cancelada", asi que la reserva desaparece y el horario queda libre.
    */
   async eliminar(id: string): Promise<void> {
+    const booking = await this.bookingModel.findById(id).select('serieId status');
+    if (!booking) return;
+    /* Si el cobro de un turno fijo no pasa, se caen todas sus fechas. */
+    if (booking.serieId && booking.status === BookingStatus.PENDING) {
+      await this.bookingModel.deleteMany({ serieId: booking.serieId, status: BookingStatus.PENDING });
+      return;
+    }
     await this.bookingModel.findByIdAndDelete(id);
   }
 

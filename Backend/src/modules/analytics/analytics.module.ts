@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AnalyticsController } from './analytics.controller';
+import { BlockedSlot, BlockedSlotSchema } from '../courts/schemas/blocked-slot.schema';
 import { AnalyticsService } from './analytics.service';
 import { Booking, BookingSchema } from '../bookings/schemas/booking.schema';
 import { Court, CourtSchema } from '../courts/schemas/court.schema';
@@ -14,6 +15,7 @@ import { Solicitud, SolicitudSchema } from '../solicitudes/solicitudes.schema';
       { name: Court.name, schema: CourtSchema },
       { name: User.name, schema: UserSchema },
       { name: Solicitud.name, schema: SolicitudSchema },
+      { name: BlockedSlot.name, schema: BlockedSlotSchema },
     ]),
   ],
   controllers: [AnalyticsController],

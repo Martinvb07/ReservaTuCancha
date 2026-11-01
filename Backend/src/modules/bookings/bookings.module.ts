@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BookingsController } from './bookings.controller';
 import { BookingsService } from './bookings.service';
+import { ListaEsperaService } from './lista-espera.service';
+import { ListaEspera, ListaEsperaSchema } from './schemas/lista-espera.schema';
 import { Booking, BookingSchema } from './schemas/booking.schema';
 import { Club, ClubSchema } from '../clubs/schemas/club.schema';
 import { Court, CourtSchema } from '../courts/schemas/court.schema';
@@ -18,12 +20,13 @@ import { EpaycoModule } from '../epayco/epayco.module';
       { name: Court.name, schema: CourtSchema },
       { name: BlockedSlot.name, schema: BlockedSlotSchema },
       { name: User.name, schema: UserSchema },
+      { name: ListaEspera.name, schema: ListaEsperaSchema },
     ]),
     NotificationsModule,
     EpaycoModule,
   ],
   controllers: [BookingsController],
-  providers: [BookingsService],
+  providers: [BookingsService, ListaEsperaService],
   exports: [BookingsService],
 })
 export class BookingsModule {}

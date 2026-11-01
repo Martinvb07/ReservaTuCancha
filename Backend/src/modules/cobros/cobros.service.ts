@@ -141,6 +141,42 @@ export class CobrosService {
   }
 
   /**
+   * Desglose de una reserva fija: varias fechas que se pagan en un solo cobro.
+   *
+   * Cada fecha lleva su tarifa de servicio y su ganancia, igual que si se
+   * reservara suelta. La pasarela, en cambio, cobra una sola vez sobre el
+   * total (un solo fijo por transacción), así que su costo real se reparte
+   * entre las fechas en proporción a lo que vale cada una. Lo que se ahorra en
+   * fijos le queda al club, y las partes de cada fecha siguen sumando exacto
+   * lo que se le cobró por ella.
+   */
+  desglosarSerie(precios: number[]): DesgloseCobro[] {
+    const base = precios.map((p) => this.desglosar(p));
+    if (base.length <= 1) return base;
+
+    const total = base.reduce((s, d) => s + d.totalPagado, 0);
+    const costoReal = this.costoPasarela(total);
+
+    let asignado = 0;
+    return base.map((d, i) => {
+      const ultima = i === base.length - 1;
+      const costoPasarela = ultima
+        ? costoReal - asignado
+        : total > 0 ? Math.round((costoReal * d.totalPagado) / total) : 0;
+      asignado += costoPasarela;
+
+      const repartible = d.totalPagado - costoPasarela;
+      const gananciaPlataforma = Math.max(0, Math.min(this.gananciaPlataforma, repartible));
+      return {
+        ...d,
+        costoPasarela,
+        gananciaPlataforma,
+        netoDueno: repartible - gananciaPlataforma,
+      };
+    });
+  }
+
+  /**
    * Lo que el club deja de recibir frente a su precio de lista, en plata y en
    * porcentaje. Es el numero que le interesa al dueno, no la tarifa nominal.
    */

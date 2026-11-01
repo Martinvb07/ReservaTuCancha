@@ -1,5 +1,5 @@
 import {
-  Controller, Post, Get, Patch, Body, Query,
+  Controller, Post, Get, Patch, Delete, Body, Query,
   Param, UseGuards, Request,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
@@ -7,6 +7,9 @@ import { Throttle } from '@nestjs/throttler';
 import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { ReprogramarBookingDto } from './dto/reprogramar-booking.dto';
+import { ReservaManualDto } from './dto/reserva-manual.dto';
+import { ListaEsperaDto } from './dto/lista-espera.dto';
+import { ListaEsperaService } from './lista-espera.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -15,7 +18,10 @@ import { UserRole } from '../users/schemas/user.schema';
 @ApiTags('Reservas')
 @Controller('bookings')
 export class BookingsController {
-  constructor(private readonly bookingsService: BookingsService) {}
+  constructor(
+    private readonly bookingsService: BookingsService,
+    private readonly listaEspera: ListaEsperaService,
+  ) {}
 
   @Get('public')
   /* Buscar por correo no devuelve el cancelToken (ver booking.schema): con el
@@ -37,6 +43,31 @@ export class BookingsController {
   @ApiOperation({ summary: 'Crear reserva (sin login)' })
   create(@Body() dto: CreateBookingDto) {
     return this.bookingsService.create(dto);
+  }
+
+  @Post('lista-espera')
+  @Throttle({ default: { limit: 10, ttl: 600000 } })
+  @ApiOperation({ summary: 'Pedir aviso si un turno ocupado se libera (sin login)' })
+  unirseListaEspera(@Body() dto: ListaEsperaDto) {
+    return this.listaEspera.unirse(dto);
+  }
+
+  @Post('manual')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'El club anota una reserva tomada por teléfono o en el mostrador' })
+  crearManual(@Body() dto: ReservaManualDto, @Request() req) {
+    return this.bookingsService.crearManual(req.user.userId, dto);
+  }
+
+  @Delete('manual/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Anular una reserva anotada por el club (?serie=1: también las siguientes)' })
+  anularManual(@Param('id') id: string, @Query('serie') serie: string, @Request() req) {
+    return this.bookingsService.anularManual(req.user.userId, id, serie === '1' || serie === 'true');
   }
 
   @Post('reprogramar')

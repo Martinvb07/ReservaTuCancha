@@ -9,6 +9,10 @@ import { CourtsModule } from '../courts/courts.module';
 import { ClubsModule } from '../clubs/clubs.module';
 import { Booking, BookingSchema } from '../bookings/schemas/booking.schema';
 import { User, UserSchema } from '../users/schemas/user.schema';
+import { DispositivoPush, DispositivoPushSchema } from './schemas/dispositivo-push.schema';
+import { PushService } from './push.service';
+import { PushController } from './push.controller';
+import { WhatsappService } from './whatsapp.service';
 
 @Module({
   imports: [
@@ -20,6 +24,7 @@ import { User, UserSchema } from '../users/schemas/user.schema';
     MongooseModule.forFeature([
       { name: Booking.name, schema: BookingSchema },
       { name: User.name, schema: UserSchema },
+      { name: DispositivoPush.name, schema: DispositivoPushSchema },
     ]),
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => ({
@@ -28,7 +33,8 @@ import { User, UserSchema } from '../users/schemas/user.schema';
       inject: [ConfigService],
     }),
   ],
-  providers: [NotificationsService, NotificationsGateway, RemindersCron],
-  exports: [NotificationsService, NotificationsGateway],
+  controllers: [PushController],
+  providers: [NotificationsService, NotificationsGateway, RemindersCron, PushService, WhatsappService],
+  exports: [NotificationsService, NotificationsGateway, PushService, WhatsappService],
 })
 export class NotificationsModule {}

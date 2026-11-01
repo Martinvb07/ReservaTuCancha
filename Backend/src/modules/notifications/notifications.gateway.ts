@@ -45,7 +45,9 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
         secret: this.configService.get<string>('JWT_SECRET'),
       });
 
-      const userId = payload.sub;
+      /* Un empleado escucha los avisos de su club, que llegan al cuarto del
+         dueño. */
+      const userId = payload.staff === true && payload.ownerId ? payload.ownerId : payload.sub;
       const role = payload.role;
 
       // Unir al room del usuario (para notificaciones personales)

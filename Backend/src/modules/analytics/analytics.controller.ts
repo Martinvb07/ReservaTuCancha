@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, UseGuards, Request, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AnalyticsService } from './analytics.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -33,6 +33,15 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Ingresos mensuales del propietario' })
   getOwnerMonthly(@Request() req) {
     return this.analyticsService.getMonthlyRevenue(req.user.userId);
+  }
+
+  @Get('owner/ocupacion')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  @Roles(UserRole.OWNER)
+  @ApiOperation({ summary: 'Ocupación por día y hora (?semanas=8&courtId=)' })
+  getOcupacion(@Request() req, @Query('semanas') semanas?: string, @Query('courtId') courtId?: string) {
+    return this.analyticsService.getOcupacion(req.user.userId, Number(semanas) || 8, courtId);
   }
 
   @Get('admin')

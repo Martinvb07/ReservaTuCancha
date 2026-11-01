@@ -21,8 +21,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Token no valido para esta operacion');
     }
 
+    /* `userId` es siempre el dueño del club sobre el que se actúa: así todas
+       las rutas del panel sirven igual para el dueño y para sus empleados.
+       `cuentaId` es quien inició sesión de verdad. */
+    const esStaff = payload.staff === true && !!payload.ownerId;
     return {
-      userId: payload.sub,
+      userId: esStaff ? payload.ownerId : payload.sub,
+      cuentaId: payload.sub,
+      esStaff,
       email: payload.email,
       role: payload.role,
       name: payload.name,

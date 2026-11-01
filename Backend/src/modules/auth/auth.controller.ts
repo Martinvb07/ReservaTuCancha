@@ -33,7 +33,7 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Cerrar sesión e invalidar refresh token' })
   logout(@Request() req) {
-    return this.authService.logout(req.user.userId);
+    return this.authService.logout(req.user.cuentaId ?? req.user.userId);
   }
 
   @Get('me')

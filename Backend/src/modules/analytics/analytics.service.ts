@@ -5,6 +5,8 @@ import { Booking, BookingDocument, BookingStatus } from '../bookings/schemas/boo
 import { Court, CourtDocument } from '../courts/schemas/court.schema';
 import { User, UserDocument, UserRole } from '../users/schemas/user.schema';
 import { Solicitud } from '../solicitudes/solicitudes.schema';
+import { BlockedSlot, BlockedSlotDocument } from '../courts/schemas/blocked-slot.schema';
+import { calcularOcupacion } from './ocupacion';
 
 const MONTH_NAMES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const DAY_NAMES   = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
@@ -20,7 +22,52 @@ export class AnalyticsService {
     @InjectModel(Court.name)      private courtModel:      Model<CourtDocument>,
     @InjectModel(User.name)       private userModel:       Model<UserDocument>,
     @InjectModel(Solicitud.name)  private solicitudModel:  Model<Solicitud>,
+    @InjectModel(BlockedSlot.name) private blockedSlotModel: Model<BlockedSlotDocument>,
   ) {}
+
+  /**
+   * Qué tan llenas están las canchas del club por día de la semana y hora,
+   * en las últimas `semanas` semanas completas (hasta ayer).
+   */
+  async getOcupacion(ownerId: string, semanas = 8, courtId?: string) {
+    const n = Math.max(1, Math.min(26, Math.round(semanas) || 8));
+    const filtro: any = { ownerId: new Types.ObjectId(ownerId) };
+    if (courtId && Types.ObjectId.isValid(courtId)) filtro._id = new Types.ObjectId(courtId);
+    const canchas = await this.courtModel.find(filtro).select('_id name availability').lean();
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const dias = n * 7;
+    const desde = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - dias);
+    const ids = canchas.map((c) => c._id);
+
+    const [reservas, bloqueos] = await Promise.all([
+      this.bookingModel.find({
+        courtId: { $in: ids },
+        date: { $gte: desde, $lt: hoy },
+        status: { $in: [BookingStatus.CONFIRMED, BookingStatus.REAGENDADA, BookingStatus.COMPLETED] },
+      }).select('courtId date startTime endTime').lean(),
+      this.blockedSlotModel.find({ courtId: { $in: ids }, date: { $gte: desde, $lt: hoy } })
+        .select('courtId date startTime endTime').lean(),
+    ]);
+
+    const tramo = (o: any) => ({ courtId: String(o.courtId), date: o.date, startTime: o.startTime, endTime: o.endTime });
+    const resultado = calcularOcupacion({
+      canchas: new Map(canchas.map((c: any) => [String(c._id), c])),
+      reservas: reservas.map(tramo),
+      bloqueos: bloqueos.map(tramo),
+      desde,
+      dias,
+    });
+
+    return {
+      semanas: n,
+      desde: desde.toISOString().slice(0, 10),
+      hasta: new Date(hoy.getTime() - 1).toISOString().slice(0, 10),
+      canchas: canchas.map((c: any) => ({ _id: c._id, name: c.name })),
+      ...resultado,
+    };
+  }
 
   async getOwnerStats(ownerId: string) {
     const courts   = await this.courtModel.find({ ownerId: new Types.ObjectId(ownerId) }).select('_id name');
@@ -113,6 +160,9 @@ export class AnalyticsService {
     if (ownerId) {
       const courts = await this.courtModel.find({ ownerId: new Types.ObjectId(ownerId) }).select('_id');
       matchStage.courtId = { $in: courts.map(c => c._id) };
+    } else {
+      /* Lo que el club cobra en su caja no pasó por la plataforma. */
+      matchStage.origen = { $ne: 'manual' };
     }
 
     const raw = await this.bookingModel.aggregate([
