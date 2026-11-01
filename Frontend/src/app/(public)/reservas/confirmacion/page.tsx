@@ -3,12 +3,42 @@
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { CheckCircle, Clock, ChevronRight } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { CheckCircle, Clock, ChevronRight, Repeat } from 'lucide-react';
+import api from '@/lib/api/axios';
+import type { Booking } from '@/types';
+
+/** Si la reserva es un turno fijo, muestra todas las fechas que se pagaron. */
+function ResumenSerie({ bookingId }: { bookingId: string }) {
+  const { data } = useQuery<Booking>({
+    queryKey: ['reserva-confirmada', bookingId],
+    queryFn: async () => (await api.get(`/bookings/${bookingId}`)).data,
+    retry: false,
+  });
+  const serie = data?.serie;
+  if (!serie || serie.semanas < 2) return null;
+  const corta = (ymd: string) => {
+    const [y, m, d] = ymd.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+  };
+  return (
+    <div className="bg-gray-800 border border-lime-400/30 rounded-2xl px-5 py-4 text-left space-y-2">
+      <p className="flex items-center gap-2 text-xs font-bold text-lime-400 uppercase tracking-widest">
+        <Repeat className="h-4 w-4" /> Turno fijo · {serie.semanas} semanas
+      </p>
+      <p className="text-white text-sm font-semibold">{serie.fechas.map(corta).join(' · ')}</p>
+      <p className="text-gray-400 text-xs">
+        {data?.startTime} – {data?.endTime} · Total ${serie.total.toLocaleString('es-CO')} COP
+      </p>
+    </div>
+  );
+}
 
 function ConfirmacionContent() {
   const params = useSearchParams();
   const method = params.get('method');
   const code = params.get('code');
+  const bookingId = params.get('bookingId');
   const isEfectivo = method === 'efectivo';
 
   return (
@@ -32,7 +62,7 @@ function ConfirmacionContent() {
           <p className="text-gray-400 text-sm leading-relaxed">
             {isEfectivo
               ? 'Tu reserva fue registrada. Preséntate con tu código de reserva y realiza el pago en efectivo al llegar.'
-              : 'Tu pago fue recibido. Te enviamos los detalles al correo con el link para cancelar si lo necesitas.'
+              : 'Tu pago fue recibido. Te enviamos los detalles al correo con el link para cambiar de horario si lo necesitas.'
             }
           </p>
         </div>
@@ -48,6 +78,8 @@ function ConfirmacionContent() {
             </p>
           </div>
         )}
+
+        {bookingId && !isEfectivo && <ResumenSerie bookingId={bookingId} />}
 
         {/* Nota de correo */}
         <div className="bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-xs text-gray-400">

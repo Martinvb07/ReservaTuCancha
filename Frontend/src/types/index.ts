@@ -76,6 +76,16 @@ export interface CreateBookingPayload {
      de servicio: mandarlo desde acá no cambia lo que se cobra. */
   totalPrice?: number;
   paymentMethod?: 'epayco';
+  /** Turno fijo: el mismo horario durante varias semanas, en un solo cobro. */
+  semanas?: number;
+}
+
+/** Resumen de un turno fijo (varias semanas pagadas juntas). */
+export interface SerieReserva {
+  id?: string;
+  semanas: number;
+  fechas: string[];
+  total: number;
 }
 
 export interface Booking {
@@ -101,6 +111,12 @@ export interface Booking {
   cancelToken: string;
   reviewToken: string;
   reviewTokenUsed: boolean;
+  /** 'manual' = la anotó el club y se cobra en el club. */
+  origen?: 'online' | 'manual';
+  paymentMethod?: 'epayco' | 'wompi' | 'club';
+  serieId?: string;
+  serieOrden?: number;
+  serie?: SerieReserva;
   createdAt: string;
 }
 

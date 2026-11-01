@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   CalendarDays, Clock, User, Mail, Phone, CreditCard, ChevronRight,
   ArrowLeft, Lock, AlertCircle, Banknote, Pencil, ChevronLeft, ChevronDown,
+  Repeat, BellRing, X,
 } from 'lucide-react';
 import { bookingsApi } from '@/lib/api/bookings.api';
 import type { AvailabilitySlot } from '@/types/court.types';
@@ -29,6 +30,9 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 const DAYS_ES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+/** Opciones de turno fijo: cuántas semanas seguidas se reserva el mismo horario. */
+const OPCIONES_SEMANAS = [1, 4, 8, 12];
 
 /** Lo que el backend expone sobre el cobro antes de reservar. */
 interface PagosConfig {
@@ -102,6 +106,11 @@ export default function BookingForm({
   const [processing, setProcessing]     = useState(false);
   /** Desplegable de '¿De dónde sale el precio?' */
   const [desglose, setDesglose]         = useState(false);
+  /** Turno fijo: 1 es una reserva normal. */
+  const [semanas, setSemanas]           = useState(1);
+  /** Turno ocupado sobre el que el jugador pidió aviso. */
+  const [espera, setEspera]             = useState<string | null>(null);
+  const [esperaEmail, setEsperaEmail]   = useState('');
 
   const { data: pagosConfig } = useQuery<PagosConfig>({
     queryKey: ['pagos-config', courtId],
@@ -135,7 +144,13 @@ export default function BookingForm({
   /* La cancha se cobra por hora; la tarifa de servicio es una sola por
      reserva, no una por hora. Mismo criterio que usa el backend. */
   const precioCancha = Math.round(pricePerHour * slotDurationH * (selectedSlots.length || 1));
-  const totalPrice   = precioCancha + tarifaServicio;
+  /* Por fecha. En un turno fijo cada semana lleva su propia tarifa: el total
+     es el de una fecha por las semanas (el backend cobra exactamente eso). */
+  const totalFecha   = precioCancha + tarifaServicio;
+  const totalPrice   = totalFecha * semanas;
+  const fechasSerie  = selectedDate
+    ? Array.from({ length: semanas }, (_, i) => addHours(startOfDay(selectedDate), i * 7 * 24))
+    : [];
 
   const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string }[]>({
     queryKey: ['booked-slots', courtId, selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null],
@@ -180,6 +195,9 @@ export default function BookingForm({
   };
   const isUnavailable = (slot: string) =>
     bookedTimes.includes(slot) || blockedTimes.includes(slot) || isSlotPast(slot);
+  /* Reservado por otro (no bloqueado ni pasado): se puede pedir aviso. */
+  const admiteEspera = (slot: string) =>
+    bookedTimes.includes(slot) && !blockedTimes.includes(slot) && !isSlotPast(slot);
 
   // ── Preselección desde el buscador ───────────────────────────
   const appliedDate = useRef(false);
@@ -217,6 +235,7 @@ export default function BookingForm({
 
   // ── Selección contigua de horarios ───────────────────────────
   function toggleSlot(slot: string) {
+    if (admiteEspera(slot)) { setEspera(slot); return; }
     if (isUnavailable(slot)) return;
     if (selectedSlots.includes(slot)) {
       const i = selectedSlots.indexOf(slot);
@@ -233,7 +252,23 @@ export default function BookingForm({
   function pickDate(d: Date) {
     setSelectedDate(d);
     setSelectedSlots([]);
+    setEspera(null);
   }
+
+  const esperaMutation = useMutation({
+    mutationFn: async (slot: string) => {
+      const fin = format(addMinutes(parse(slot, 'HH:mm', new Date()), slotDuration), 'HH:mm');
+      const { data } = await api.post('/bookings/lista-espera', {
+        courtId, date: format(selectedDate!, 'yyyy-MM-dd'), startTime: slot, endTime: fin, email: esperaEmail.trim(),
+      });
+      return data as { enEspera: number };
+    },
+    onSuccess: () => {
+      toast.success('Listo: te escribimos si ese turno se libera');
+      setEspera(null);
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || 'No se pudo anotarte en la lista'),
+  });
 
   // ── Mutaciones ───────────────────────────────────────────────
   const createBookingMutation = useMutation({
@@ -242,6 +277,7 @@ export default function BookingForm({
       guestPhone: values.guestPhone, date: format(selectedDate!, 'yyyy-MM-dd'),
       startTime: selectedSlots[0], endTime, notes: values.notes,
       paymentMethod: 'epayco',
+      ...(semanas > 1 ? { semanas } : {}),
     }),
   });
 
@@ -368,14 +404,17 @@ export default function BookingForm({
                       {timeSlots.map((slot) => {
                         const selected = selectedSlots.includes(slot);
                         const unavailable = isUnavailable(slot);
+                        const esperable = admiteEspera(slot);
                         const slot12h = format(parse(slot, 'HH:mm', new Date()), 'h:mm a');
                         return (
-                          <button key={slot} type="button" disabled={unavailable} onClick={() => toggleSlot(slot)}
-                            title={unavailable ? 'No disponible' : slot12h}
+                          <button key={slot} type="button" disabled={unavailable && !esperable} onClick={() => toggleSlot(slot)}
+                            title={esperable ? 'Ocupado · toca para que te avisemos si se libera' : unavailable ? 'No disponible' : slot12h}
                             className={`py-2.5 rounded-xl border text-xs font-semibold transition-all ${
                               selected
                                 ? 'border-green-600 bg-green-600 text-white rtc-pick'
-                                : unavailable
+                                : esperable
+                                  ? `border-gray-100 bg-gray-50 text-gray-400 line-through hover:border-amber-300 hover:text-amber-700 ${espera === slot ? 'ring-2 ring-amber-300' : ''}`
+                                  : unavailable
                                   ? 'border-gray-100 bg-gray-50 text-gray-300 line-through cursor-not-allowed'
                                   : 'border-gray-200 text-gray-700 hover:border-green-400 hover:bg-green-50'
                             }`}>
@@ -389,8 +428,54 @@ export default function BookingForm({
                       <span className="flex items-center gap-1"><span className="w-3 h-3 rounded border border-gray-200 inline-block" /> Libre</span>
                       <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-gray-100 inline-block" /> Ocupado</span>
                     </div>
-                    <p className="text-[11px] text-gray-400 mt-1.5">Toca varias horas seguidas para reservar más tiempo.</p>
+                    <p className="text-[11px] text-gray-400 mt-1.5">Toca varias horas seguidas para reservar más tiempo. ¿Está ocupado el que quieres? Tócalo y te avisamos si se libera.</p>
+
+                    {espera && (
+                      <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-3.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="flex items-center gap-1.5 text-sm font-semibold text-amber-900">
+                            <BellRing className="h-4 w-4" /> Avísame si se libera el de las {fmt12(espera)}
+                          </p>
+                          <button type="button" onClick={() => setEspera(null)} aria-label="Cerrar" className="text-amber-700 hover:text-amber-900">
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                        <p className="text-xs text-amber-800 mt-1">Si el pago de quien lo tiene no pasa o mueve su reserva, te escribimos. El primero que lo pague se lo queda.</p>
+                        <form
+                          className="mt-2.5 flex gap-2"
+                          onSubmit={(e) => { e.preventDefault(); if (esperaEmail.includes('@')) esperaMutation.mutate(espera); else toast.error('Escribe tu correo'); }}
+                        >
+                          <input type="email" required value={esperaEmail} onChange={(e) => setEsperaEmail(e.target.value)}
+                            placeholder="tu@correo.com" className={`${inp} py-2`} />
+                          <button type="submit" disabled={esperaMutation.isPending}
+                            className="shrink-0 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 text-white text-xs font-semibold px-4 rounded-xl">
+                            {esperaMutation.isPending ? '…' : 'Avisarme'}
+                          </button>
+                        </form>
+                      </div>
+                    )}
                   </>
+                )}
+              </div>
+            )}
+
+            {/* Turno fijo — la misma hora varias semanas seguidas, un solo pago. */}
+            {selectedDate && selectedSlots.length > 0 && (
+              <div>
+                <label className={lbl}><Repeat className="h-3.5 w-3.5" /> ¿Cada semana?</label>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {OPCIONES_SEMANAS.map((n) => (
+                    <button key={n} type="button" onClick={() => setSemanas(n)}
+                      className={`py-2 rounded-xl border text-xs font-semibold transition-all ${semanas === n ? 'border-green-600 bg-green-50 text-green-800' : 'border-gray-200 text-gray-600 hover:border-green-400'}`}>
+                      {n === 1 ? 'Solo esta' : `${n} semanas`}
+                    </button>
+                  ))}
+                </div>
+                {semanas > 1 && (
+                  <p className="text-[11px] text-gray-500 mt-1.5 leading-snug">
+                    Turno fijo los {format(selectedDate, 'EEEE', { locale: es })} a las {fmt12(selectedSlots[0])}:{' '}
+                    {fechasSerie.map((f) => format(f, 'd MMM', { locale: es })).join(' · ')}. Se paga todo junto y cada fecha se puede mover por separado.
+                  </p>
                 )}
               </div>
             )}
@@ -403,7 +488,7 @@ export default function BookingForm({
                 <div className="text-sm min-w-0">
                   <p className="font-semibold text-green-900 capitalize truncate">{dateLabel}</p>
                   <p className="text-green-700 text-xs whitespace-nowrap">
-                    {fmt12(selectedSlots[0])} – {fmt12(endTime)} · {slotDuration * selectedSlots.length} min
+                    {fmt12(selectedSlots[0])} – {fmt12(endTime)} · {slotDuration * selectedSlots.length} min{semanas > 1 ? ` · ${semanas} semanas` : ''}
                   </p>
                 </div>
                 <span className="font-bold text-green-800 text-lg whitespace-nowrap shrink-0">
@@ -439,6 +524,12 @@ export default function BookingForm({
                       <span className="text-gray-500">Tarifa de servicio</span>
                       <span className="text-gray-900 font-medium whitespace-nowrap">${tarifaServicio.toLocaleString('es-CO')}</span>
                     </div>
+                    {semanas > 1 && (
+                      <div className="flex items-center justify-between gap-3 text-sm">
+                        <span className="text-gray-500">× {semanas} semanas</span>
+                        <span className="text-gray-900 font-medium whitespace-nowrap">${totalFecha.toLocaleString('es-CO')} c/u</span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between gap-3 pt-2 border-t border-gray-200">
                       <span className="text-sm font-semibold text-gray-700">Total</span>
                       <span className="text-base font-bold text-gray-900 whitespace-nowrap">${totalPrice.toLocaleString('es-CO')}</span>
@@ -467,7 +558,7 @@ export default function BookingForm({
             <div className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3">
               <div className="text-sm min-w-0">
                 <p className="font-semibold text-gray-900 capitalize truncate">{dateLabel}</p>
-                <p className="text-gray-500 text-xs">{fmt12(selectedSlots[0])} – {fmt12(endTime)} · {courtName}</p>
+                <p className="text-gray-500 text-xs">{fmt12(selectedSlots[0])} – {fmt12(endTime)} · {courtName}{semanas > 1 ? ` · ${semanas} semanas` : ''}</p>
               </div>
               <button type="button" onClick={() => setStep('when')}
                 className="flex items-center gap-1 text-xs font-medium text-green-700 hover:text-green-800 shrink-0">
@@ -537,6 +628,12 @@ export default function BookingForm({
                 <span className="text-gray-500">Tarifa de servicio</span>
                 <span className="text-gray-900 font-medium">${tarifaServicio.toLocaleString('es-CO')}</span>
               </div>
+              {semanas > 1 && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">Turno fijo · {semanas} semanas</span>
+                  <span className="text-gray-900 font-medium">× {semanas}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between pt-1.5 border-t border-gray-100">
                 <span className="text-sm font-semibold text-gray-700">Total</span>
                 <span className="text-2xl font-bold text-gray-900">${totalPrice.toLocaleString('es-CO')} <span className="text-sm font-normal text-gray-500">COP</span></span>
