@@ -13,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   CalendarDays, Clock, User, Mail, Phone, CreditCard, ChevronRight,
   ArrowLeft, Lock, AlertCircle, Banknote, Pencil, ChevronLeft, ChevronDown,
-  Repeat, BellRing, X,
+  BellRing, X, ShieldCheck,
 } from 'lucide-react';
 import { bookingsApi } from '@/lib/api/bookings.api';
 import type { AvailabilitySlot } from '@/types/court.types';
@@ -31,8 +31,7 @@ type FormValues = z.infer<typeof schema>;
 
 const DAYS_ES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
-/** Opciones de turno fijo: cuántas semanas seguidas se reserva el mismo horario. */
-const OPCIONES_SEMANAS = [1, 4, 8, 12];
+
 
 /** Lo que el backend expone sobre el cobro antes de reservar. */
 interface PagosConfig {
@@ -106,8 +105,6 @@ export default function BookingForm({
   const [processing, setProcessing]     = useState(false);
   /** Desplegable de '¿De dónde sale el precio?' */
   const [desglose, setDesglose]         = useState(false);
-  /** Turno fijo: 1 es una reserva normal. */
-  const [semanas, setSemanas]           = useState(1);
   /** Turno ocupado sobre el que el jugador pidió aviso. */
   const [espera, setEspera]             = useState<string | null>(null);
   const [esperaEmail, setEsperaEmail]   = useState('');
@@ -144,13 +141,7 @@ export default function BookingForm({
   /* La cancha se cobra por hora; la tarifa de servicio es una sola por
      reserva, no una por hora. Mismo criterio que usa el backend. */
   const precioCancha = Math.round(pricePerHour * slotDurationH * (selectedSlots.length || 1));
-  /* Por fecha. En un turno fijo cada semana lleva su propia tarifa: el total
-     es el de una fecha por las semanas (el backend cobra exactamente eso). */
-  const totalFecha   = precioCancha + tarifaServicio;
-  const totalPrice   = totalFecha * semanas;
-  const fechasSerie  = selectedDate
-    ? Array.from({ length: semanas }, (_, i) => addHours(startOfDay(selectedDate), i * 7 * 24))
-    : [];
+  const totalPrice   = precioCancha + tarifaServicio;
 
   const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string }[]>({
     queryKey: ['booked-slots', courtId, selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null],
@@ -277,7 +268,6 @@ export default function BookingForm({
       guestPhone: values.guestPhone, date: format(selectedDate!, 'yyyy-MM-dd'),
       startTime: selectedSlots[0], endTime, notes: values.notes,
       paymentMethod: 'epayco',
-      ...(semanas > 1 ? { semanas } : {}),
     }),
   });
 
@@ -459,27 +449,6 @@ export default function BookingForm({
               </div>
             )}
 
-            {/* Turno fijo — la misma hora varias semanas seguidas, un solo pago. */}
-            {selectedDate && selectedSlots.length > 0 && (
-              <div>
-                <label className={lbl}><Repeat className="h-3.5 w-3.5" /> ¿Cada semana?</label>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {OPCIONES_SEMANAS.map((n) => (
-                    <button key={n} type="button" onClick={() => setSemanas(n)}
-                      className={`py-2 rounded-xl border text-xs font-semibold transition-all ${semanas === n ? 'border-green-600 bg-green-50 text-green-800' : 'border-gray-200 text-gray-600 hover:border-green-400'}`}>
-                      {n === 1 ? 'Solo esta' : `${n} semanas`}
-                    </button>
-                  ))}
-                </div>
-                {semanas > 1 && (
-                  <p className="text-[11px] text-gray-500 mt-1.5 leading-snug">
-                    Turno fijo los {format(selectedDate, 'EEEE', { locale: es })} a las {fmt12(selectedSlots[0])}:{' '}
-                    {fechasSerie.map((f) => format(f, 'd MMM', { locale: es })).join(' · ')}. Se paga todo junto y cada fecha se puede mover por separado.
-                  </p>
-                )}
-              </div>
-            )}
-
             {/* Resumen vivo — solo lo elegido y el total. El desglose vive en
                 el desplegable de abajo: metido acá, la fecha y la hora se
                 partían en tres líneas y el bloque quedaba ilegible. */}
@@ -488,7 +457,7 @@ export default function BookingForm({
                 <div className="text-sm min-w-0">
                   <p className="font-semibold text-green-900 capitalize truncate">{dateLabel}</p>
                   <p className="text-green-700 text-xs whitespace-nowrap">
-                    {fmt12(selectedSlots[0])} – {fmt12(endTime)} · {slotDuration * selectedSlots.length} min{semanas > 1 ? ` · ${semanas} semanas` : ''}
+                    {fmt12(selectedSlots[0])} – {fmt12(endTime)} · {slotDuration * selectedSlots.length} min
                   </p>
                 </div>
                 <span className="font-bold text-green-800 text-lg whitespace-nowrap shrink-0">
@@ -524,12 +493,6 @@ export default function BookingForm({
                       <span className="text-gray-500">Tarifa de servicio</span>
                       <span className="text-gray-900 font-medium whitespace-nowrap">${tarifaServicio.toLocaleString('es-CO')}</span>
                     </div>
-                    {semanas > 1 && (
-                      <div className="flex items-center justify-between gap-3 text-sm">
-                        <span className="text-gray-500">× {semanas} semanas</span>
-                        <span className="text-gray-900 font-medium whitespace-nowrap">${totalFecha.toLocaleString('es-CO')} c/u</span>
-                      </div>
-                    )}
                     <div className="flex items-center justify-between gap-3 pt-2 border-t border-gray-200">
                       <span className="text-sm font-semibold text-gray-700">Total</span>
                       <span className="text-base font-bold text-gray-900 whitespace-nowrap">${totalPrice.toLocaleString('es-CO')}</span>
@@ -558,7 +521,7 @@ export default function BookingForm({
             <div className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3">
               <div className="text-sm min-w-0">
                 <p className="font-semibold text-gray-900 capitalize truncate">{dateLabel}</p>
-                <p className="text-gray-500 text-xs">{fmt12(selectedSlots[0])} – {fmt12(endTime)} · {courtName}{semanas > 1 ? ` · ${semanas} semanas` : ''}</p>
+                <p className="text-gray-500 text-xs">{fmt12(selectedSlots[0])} – {fmt12(endTime)} · {courtName}</p>
               </div>
               <button type="button" onClick={() => setStep('when')}
                 className="flex items-center gap-1 text-xs font-medium text-green-700 hover:text-green-800 shrink-0">
@@ -594,7 +557,6 @@ export default function BookingForm({
                 cosa que en efectivo no hay forma de hacer. */}
             <div className="space-y-2.5">
               <p className={lbl}><Lock className="h-3.5 w-3.5" /> Método de pago</p>
-              <MediosPago />
 
               {pagosConfig && !pagosConfig.configured ? (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2 text-xs text-amber-800">
@@ -602,17 +564,19 @@ export default function BookingForm({
                   <span>El pago en línea no está disponible en este momento. Intenta de nuevo en unos minutos.</span>
                 </div>
               ) : (
-                <div className="w-full flex items-center justify-between border border-green-600 bg-green-50 rounded-2xl p-4">
-                  <span className="flex items-center gap-3">
-                    <span className="w-5 h-5 rounded-full border-2 border-green-600 bg-green-600 flex items-center justify-center">
-                      <span className="w-2 h-2 rounded-full bg-white" />
+                /* Una sola tarjeta: todo se paga en ePayco, no hay nada que
+                   elegir, así que va sin radio y con los medios en una fila. */
+                <div className="w-full border border-gray-200 bg-white rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <span className="w-9 h-9 rounded-xl bg-green-50 grid place-items-center shrink-0">
+                      <ShieldCheck className="h-4 w-4 text-green-600" />
                     </span>
                     <span>
                       <span className="block font-semibold text-gray-900 text-sm">Pago seguro con ePayco</span>
-                      <span className="block text-xs text-gray-500">Tarjeta débito o crédito, Nequi, PSE y DaviPlata</span>
+                      <span className="block text-xs text-gray-500">Eliges el medio al pagar</span>
                     </span>
-                  </span>
-                  <CreditCard className="h-5 w-5 text-gray-500" />
+                  </div>
+                  <MediosPago />
                 </div>
               )}
             </div>
@@ -628,12 +592,6 @@ export default function BookingForm({
                 <span className="text-gray-500">Tarifa de servicio</span>
                 <span className="text-gray-900 font-medium">${tarifaServicio.toLocaleString('es-CO')}</span>
               </div>
-              {semanas > 1 && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Turno fijo · {semanas} semanas</span>
-                  <span className="text-gray-900 font-medium">× {semanas}</span>
-                </div>
-              )}
               <div className="flex items-center justify-between pt-1.5 border-t border-gray-100">
                 <span className="text-sm font-semibold text-gray-700">Total</span>
                 <span className="text-2xl font-bold text-gray-900">${totalPrice.toLocaleString('es-CO')} <span className="text-sm font-normal text-gray-500">COP</span></span>
