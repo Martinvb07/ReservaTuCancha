@@ -10,7 +10,7 @@ import {
   LayoutDashboard, CalendarDays, Building2, BarChart3,
   Users, LogOut, Home, FileText, PenLine,
   CreditCard, Image as ImageIcon, MessageSquare, Zap, Ban,
-  ChevronLeft, ChevronRight, UsersRound,
+  ChevronLeft, ChevronRight, UsersRound, KeyRound,
 } from 'lucide-react';
 import api from '@/lib/api/axios';
 import { useApiAuth } from '@/hooks/useApiAuth';
@@ -31,6 +31,7 @@ const ADMIN_SECTIONS: NavSection[] = [
   { label: 'Sistema', items: [
     { href: '/dashboard/admin/cambios',  label: 'Cambios',  icon: PenLine   },
     { href: '/dashboard/admin/reportes', label: 'Reportes', icon: BarChart3 },
+    { href: '/dashboard/cuenta',         label: 'Mi cuenta', icon: KeyRound },
   ]},
 ];
 
@@ -50,6 +51,7 @@ const OWNER_SECTIONS: NavSection[] = [
     { href: '/dashboard/propetario/mi-club',     label: 'Mi Club', icon: Building2     },
     { href: '/dashboard/propetario/equipo',      label: 'Equipo',  icon: UsersRound, soloTitular: true },
     { href: '/dashboard/propetario/soporte',     label: 'Soporte', icon: MessageSquare },
+    { href: '/dashboard/cuenta',                 label: 'Mi cuenta', icon: KeyRound },
   ]},
 ];
 

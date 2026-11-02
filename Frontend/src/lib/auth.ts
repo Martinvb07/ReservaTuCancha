@@ -1,5 +1,6 @@
 import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import GoogleProvider from 'next-auth/providers/google';
 
 // URL del backend NestJS para llamadas internas server-side (no depende de NEXTAUTH_URL).
 // En prod/dev el backend corre en el mismo host que Next.
@@ -41,8 +42,34 @@ async function refreshAccessToken(token: any) {
   }
 }
 
+/** Lo que el backend devuelve al abrir sesión, en la forma que guarda next-auth. */
+function usuarioDeSesion(data: any) {
+  return {
+    id: data.user.id,
+    name: data.user.name,
+    email: data.user.email,
+    role: data.user.role,
+    esStaff: !!data.user.esStaff,
+    debeCambiarClave: !!data.user.debeCambiarClave,
+    avatarUrl: data.user.avatarUrl,
+    accessToken: data.accessToken,
+    refreshToken: data.refreshToken,
+  };
+}
+
+/* Entrar con Google: solo si están las credenciales del cliente OAuth. El
+   backend verifica el ID token y abre la sesión de la cuenta con ese correo;
+   no crea cuentas nuevas. */
+const googleProvider = process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+  ? [GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    })]
+  : [];
+
 export const authOptions: NextAuthOptions = {
   providers: [
+    ...googleProvider,
     CredentialsProvider({
       name: 'credentials',
       credentials: {
@@ -75,6 +102,7 @@ export const authOptions: NextAuthOptions = {
             role: data.user.role,
             /* Empleado del club: usa el panel del dueño sin pagos ni equipo. */
             esStaff: !!data.user.esStaff,
+            debeCambiarClave: !!data.user.debeCambiarClave,
             avatarUrl: data.user.avatarUrl,
             accessToken: data.accessToken,
             refreshToken: data.refreshToken,
@@ -86,12 +114,35 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }: any) {
+    /* Con Google, el ID token se canjea en el backend por la sesión del
+       panel. Si el correo no tiene cuenta, se vuelve al login con el aviso. */
+    async signIn({ account, user }: any) {
+      if (account?.provider !== 'google') return true;
+      try {
+        const res = await fetch(`${BACKEND_INTERNAL_URL}/api/cuenta/google`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken: account.id_token }),
+        });
+        if (!res.ok) return '/auth/login?error=google';
+        Object.assign(user, usuarioDeSesion(await res.json()));
+        return true;
+      } catch {
+        return '/auth/login?error=google';
+      }
+    },
+    async jwt({ token, user, trigger, session: cambios }: any) {
+      /* Después de cambiar la clave el panel avisa con update(): deja de
+         pedir el cambio sin cerrar la sesión. */
+      if (trigger === 'update' && cambios?.debeCambiarClave === false) {
+        token.debeCambiarClave = false;
+      }
       // Login inicial: guardar tokens
       if (user) {
         token.id = user.id;
         token.role = user.role;
         token.esStaff = !!user.esStaff;
+        token.debeCambiarClave = !!user.debeCambiarClave;
         token.avatarUrl = user.avatarUrl;
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;
@@ -112,6 +163,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id;
         session.user.role = token.role;
         session.user.esStaff = !!token.esStaff;
+        session.user.debeCambiarClave = !!token.debeCambiarClave;
         session.user.avatarUrl = token.avatarUrl;
       }
       session.accessToken = token.accessToken;

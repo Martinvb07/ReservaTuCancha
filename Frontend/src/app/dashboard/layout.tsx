@@ -1,6 +1,6 @@
 "use client";
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import api from '@/lib/api/axios';
 
@@ -10,6 +10,7 @@ import RealtimeNotifications from '@/components/dashboard/RealtimeNotifications'
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
 
   // Inyectar token en axios una sola vez para todo el dashboard
   // Evita 401s en páginas que hacen llamadas API antes de montar useApiAuth
@@ -48,6 +49,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (!session) {
     router.replace("/auth/login");
+    return null;
+  }
+
+  /* Con la clave temporal del correo no se usa el panel: primero se elige
+     una propia en Mi cuenta. */
+  if ((session.user as any).debeCambiarClave && pathname !== '/dashboard/cuenta') {
+    router.replace('/dashboard/cuenta');
     return null;
   }
 
