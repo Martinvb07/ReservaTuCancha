@@ -84,7 +84,13 @@ export function modeloEnMemoria(opciones: { poblar?: Record<string, () => any[]>
     return q;
   };
 
-  const aplicar = (d: any, cambio: any) => Object.assign(d, cambio.$set ?? cambio);
+  const aplicar = (d: any, cambio: any) => {
+    const operadores = Object.keys(cambio).some((k) => k.startsWith('$'));
+    if (!operadores) return Object.assign(d, cambio);
+    Object.assign(d, cambio.$set ?? {});
+    for (const k of Object.keys(cambio.$unset ?? {})) delete d[k];
+    return d;
+  };
 
   function Modelo(this: any, datos: any) {
     const d = envolver({ _id: new Types.ObjectId(), createdAt: new Date(), ...datos });

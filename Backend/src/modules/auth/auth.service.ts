@@ -28,7 +28,15 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    /* Un empleado entra solo mientras su club siga activo. */
+    return this.emitirSesion(user);
+  }
+
+  /**
+   * Abre la sesión de un usuario ya autenticado (por clave o por Google):
+   * tokens nuevos, refresh guardado con hash y los datos que usan la web y
+   * la app.
+   */
+  async emitirSesion(user: any) {
     if (user.role === UserRole.STAFF && !(await this.clubActivo(user))) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
@@ -52,6 +60,9 @@ export class AuthService {
            "owner" con `esStaff`, y las pantallas sensibles se esconden. */
         role: user.role === UserRole.STAFF ? UserRole.OWNER : user.role,
         esStaff: user.role === UserRole.STAFF,
+        /* Entró con la clave temporal del correo: la web y la app lo llevan
+           a ponerse una propia antes de usar el panel. */
+        debeCambiarClave: !!user.debeCambiarClave,
         avatarUrl: user.avatarUrl,
       },
     };

@@ -56,6 +56,7 @@ export class EquipoService {
       clubOwnerId: new Types.ObjectId(ownerId),
       passwordHash: await bcrypt.hash(clave, 10),
       isActive: true,
+      debeCambiarClave: true,
     });
 
     await this.notifications.sendInvitacionEquipo({
@@ -85,6 +86,7 @@ export class EquipoService {
     const clave = generarPasswordTemporal();
     persona.passwordHash = await bcrypt.hash(clave, 10);
     persona.refreshToken = undefined;
+    persona.debeCambiarClave = true;
     await persona.save();
     await this.notifications.sendInvitacionEquipo({
       email: persona.email, nombre: persona.name, club: await this.nombreClub(ownerId), clave, esNueva: false,

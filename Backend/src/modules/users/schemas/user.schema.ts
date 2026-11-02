@@ -60,6 +60,18 @@ export class User {
      refresh que mataba toda sesion a los 15 minutos. */
   @Prop({ select: false })
   refreshToken?: string;
+
+  /** Entra con una clave que le mandamos por correo: se le pide cambiarla. */
+  @Prop({ default: false })
+  debeCambiarClave: boolean;
+
+  /* Recuperación de contraseña: solo el hash del token (el token viaja en
+     el correo) y hasta cuándo sirve. */
+  @Prop({ select: false })
+  resetClaveHash?: string;
+
+  @Prop({ select: false })
+  resetClaveVence?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

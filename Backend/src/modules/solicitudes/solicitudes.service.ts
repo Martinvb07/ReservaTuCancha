@@ -65,6 +65,7 @@ export class SolicitudesService {
       role: 'owner',
       phone: solicitud.phone,
       isActive: true,
+      debeCambiarClave: true,
     });
     const savedUser = await user.save();
 
@@ -128,7 +129,7 @@ export class SolicitudesService {
     // Actualizar contraseña del usuario
     await this.userModel.findOneAndUpdate(
       { email: solicitud.email.toLowerCase() },
-      { passwordHash },
+      { passwordHash, debeCambiarClave: true },
     );
 
     await this.notificationsService.sendApprovalEmail(

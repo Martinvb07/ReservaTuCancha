@@ -980,6 +980,29 @@ export class NotificationsService {
     });
   }
 
+  /** Enlace para ponerse una contraseña nueva. Sirve una sola vez, 1 hora. */
+  async sendRecuperarClave(datos: { email: string; nombre: string; url: string }) {
+    await this.send({
+      to: datos.email,
+      from: this.fromEmail,
+      subject: 'Recupera tu contraseña — ReservaTuCancha',
+      html: buildEmailHtml({
+        iconBg: '#a3e635', iconContent: '🔑', iconColor: '#111827',
+        title: 'NUEVA CONTRASEÑA',
+        subtitle: `Hola <strong>${escapeHtml(datos.nombre)}</strong>, pediste recuperar el acceso a tu panel. Toca el botón para elegir una contraseña nueva.`,
+        rows: [
+          { label: 'Cuenta', value: datos.email },
+          { label: 'El enlace vence en', value: '1 hora' },
+        ],
+        alertBox: {
+          bg: '#fef3c7', color: '#92400e',
+          text: '¿No lo pediste tú? Ignora este correo: tu contraseña sigue igual.',
+        },
+        ctaText: 'Elegir contraseña nueva', ctaUrl: datos.url, ctaBg: '#16a34a',
+      }),
+    });
+  }
+
   /** Acceso de un empleado al panel del club, con su clave temporal. */
   async sendInvitacionEquipo(datos: {
     email: string;
