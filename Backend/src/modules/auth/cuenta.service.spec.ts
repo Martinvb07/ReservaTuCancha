@@ -48,12 +48,11 @@ describe('CuentaService', () => {
       expect(ana.resetClaveHash).toBeUndefined();
     });
 
-    it('responde igual si el correo no existe, sin mandar nada', async () => {
-      const r1 = await service.olvide('nadie@x.com');
-      await service.olvide('ana@club.com');
-      const r2 = notifications.sendRecuperarClave.mock.calls.length;
-      expect(r1).toEqual(await service.olvide('otro@x.com'));
-      expect(r2).toBe(1);
+    it('si el correo no tiene cuenta activa, lo dice y no manda nada', async () => {
+      await expect(service.olvide('nadie@x.com')).rejects.toThrow('No hay ninguna cuenta');
+      ana.isActive = false;
+      await expect(service.olvide('ana@club.com')).rejects.toThrow('No hay ninguna cuenta');
+      expect(notifications.sendRecuperarClave).not.toHaveBeenCalled();
     });
 
     it('el enlace pone la clave nueva, cierra las sesiones y no sirve dos veces', async () => {

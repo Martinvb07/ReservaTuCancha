@@ -35,7 +35,7 @@ export default function OlvideClavePage() {
           <MailCheck className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
           <div className="text-sm text-green-900">
             <p className="font-bold">Revisa tu correo</p>
-            <p className="mt-1">Si <strong>{email}</strong> tiene una cuenta, te llegó un enlace que sirve durante 1 hora. Mira también en spam.</p>
+            <p className="mt-1">Te mandamos un enlace a <strong>{email}</strong> que sirve durante 1 hora. Si no lo ves, mira en spam.</p>
           </div>
         </div>
       ) : (
