@@ -83,22 +83,22 @@ const CIUDADES = [
 ];
 
 const CLUBES = [
-  { nombre: 'Golazo Sports Center', slogan: 'Donde se juega en serio' },
-  { nombre: 'La Bombonera Llanera', slogan: 'Fútbol con sabor a llano' },
-  { nombre: 'Pádel Club Altos', slogan: 'Tu punto de encuentro' },
-  { nombre: 'Arena Beach Club', slogan: 'Arena, sol y partido' },
-  { nombre: 'Complejo Deportivo El Estadio', slogan: 'Canchas de primera' },
-  { nombre: 'Sintéticas La 40', slogan: 'Juega de día y de noche' },
-  { nombre: 'Punto de Oro Pádel', slogan: 'Saque, volea y punto' },
-  { nombre: 'Club Deportivo Los Pinos', slogan: 'Deporte en familia' },
-  { nombre: 'Cancha Total', slogan: 'Reserva, juega, repite' },
-  { nombre: 'Fútbol Park Norte', slogan: 'El mejor césped de la zona' },
-  { nombre: 'Smash Pádel Center', slogan: 'Pádel para todos los niveles' },
-  { nombre: 'Playa Seca Vóley', slogan: 'La playa en la ciudad' },
-  { nombre: 'Distrito Fútbol 5', slogan: 'Partidos rápidos, goles seguros' },
-  { nombre: 'La Cancha del Barrio', slogan: 'Como en casa' },
-  { nombre: 'Centro Deportivo Horizonte', slogan: 'Más que canchas' },
-  { nombre: 'Club Raqueta y Balón', slogan: 'Tu deporte, tu horario' },
+  { nombre: 'Golazo Sports Center', deporte: 'futbol', slogan: 'Donde se juega en serio' },
+  { nombre: 'La Bombonera Llanera', deporte: 'futbol', slogan: 'Fútbol con sabor a llano' },
+  { nombre: 'Pádel Club Altos', deporte: 'padel', slogan: 'Tu punto de encuentro' },
+  { nombre: 'Arena Beach Club', deporte: 'voley_playa', slogan: 'Arena, sol y partido' },
+  { nombre: 'Complejo Deportivo El Estadio', deporte: 'futbol', slogan: 'Canchas de primera' },
+  { nombre: 'Sintéticas La 40', deporte: 'futbol', slogan: 'Juega de día y de noche' },
+  { nombre: 'Punto de Oro Pádel', deporte: 'padel', slogan: 'Saque, volea y punto' },
+  { nombre: 'Club Deportivo Los Pinos', deporte: 'futbol', slogan: 'Deporte en familia' },
+  { nombre: 'Cancha Total', deporte: 'futbol', slogan: 'Reserva, juega, repite' },
+  { nombre: 'Fútbol Park Norte', deporte: 'futbol', slogan: 'El mejor césped de la zona' },
+  { nombre: 'Smash Pádel Center', deporte: 'padel', slogan: 'Pádel para todos los niveles' },
+  { nombre: 'Playa Seca Vóley', deporte: 'voley_playa', slogan: 'La playa en la ciudad' },
+  { nombre: 'Distrito Fútbol 5', deporte: 'futbol', slogan: 'Partidos rápidos, goles seguros' },
+  { nombre: 'La Cancha del Barrio', deporte: 'futbol', slogan: 'Como en casa' },
+  { nombre: 'Centro Deportivo Horizonte', deporte: 'padel', slogan: 'Más que canchas' },
+  { nombre: 'Club Raqueta y Balón', deporte: 'padel', slogan: 'Tu deporte, tu horario' },
 ];
 
 const CANCHAS = {
@@ -224,8 +224,12 @@ async function sembrar(db) {
     });
 
     /* Cada club tiene un deporte fuerte y a veces alguno más. */
-    const principal = elegir(['futbol', 'futbol', 'padel', 'voley_playa']);
-    const deportes = [principal, principal, elegir(['futbol', 'padel', 'voley_playa'])].slice(0, entre(2, 3));
+    /* El deporte principal es el que dice el nombre del club ("Pádel Club
+       Altos" tiene pádel); los complejos generales suman a veces otro. */
+    const principal = club.deporte;
+    const otro = elegir(['futbol', 'padel', 'voley_playa'].filter((d) => d !== principal));
+    const general = /Complejo|Centro|Club Deportivo|Cancha Total|Raqueta/.test(club.nombre);
+    const deportes = general ? [principal, principal, otro] : [principal, principal];
     const fotosClub = [];
 
     deportes.forEach((sport, k) => {
