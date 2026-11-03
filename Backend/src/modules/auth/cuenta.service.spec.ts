@@ -19,7 +19,7 @@ describe('CuentaService', () => {
       passwordHash: await bcrypt.hash('Temporal1', 4), debeCambiarClave: true, refreshToken: 'x',
     };
     users.docs.push(ana);
-    notifications = { sendRecuperarClave: jest.fn(async () => undefined) };
+    notifications = { sendRecuperarClave: jest.fn(async () => true) };
     auth = { emitirSesion: jest.fn(async (u: any) => ({ accessToken: 'a', user: { email: u.email } })) };
     service = new CuentaService(users, notifications as any, auth as any, configCon({
       FRONTEND_URL: 'https://reservatucancha.site',
@@ -40,6 +40,12 @@ describe('CuentaService', () => {
       expect(ana.resetClaveHash).toBeDefined();
       expect(ana.resetClaveHash).not.toBe(token);
       expect(ana.resetClaveVence.getTime()).toBeGreaterThan(Date.now());
+    });
+
+    it('si el correo no sale, avisa en vez de decir "revisa tu correo" y no deja token', async () => {
+      notifications.sendRecuperarClave.mockResolvedValueOnce(false);
+      await expect(service.olvide('ana@club.com')).rejects.toThrow('No pudimos enviar el correo');
+      expect(ana.resetClaveHash).toBeUndefined();
     });
 
     it('responde igual si el correo no existe, sin mandar nada', async () => {

@@ -1,4 +1,6 @@
-import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException, Injectable, Logger, ServiceUnavailableException, UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -56,12 +58,23 @@ export class CuentaService {
         { $set: { resetClaveHash: hash(token), resetClaveVence: new Date(Date.now() + VIGENCIA_RESET_MS) } },
       );
       const web = (this.config.get<string>('FRONTEND_URL') ?? 'https://reservatucancha.site').replace(/\/+$/, '');
-      await this.notifications.sendRecuperarClave({
+      const enviado = await this.notifications.sendRecuperarClave({
         email: user.email,
         nombre: user.name,
         url: `${web}/auth/restablecer?token=${encodeURIComponent(token)}`,
       });
+      if (!enviado) {
+        /* Antes se respondía "revisa tu correo" aunque el envío hubiera
+           fallado, y la persona esperaba un correo que nunca iba a llegar. */
+        await this.userModel.updateOne({ _id: user._id }, { $unset: { resetClaveHash: 1, resetClaveVence: 1 } });
+        this.logger.error(`No se pudo enviar el enlace de recuperación a la cuenta ${user._id}`);
+        throw new ServiceUnavailableException(
+          'No pudimos enviar el correo en este momento. Intenta de nuevo en unos minutos.',
+        );
+      }
       this.logger.log(`Enlace de recuperación enviado a la cuenta ${user._id}`);
+    } else {
+      this.logger.log(`Recuperación pedida para un correo sin cuenta activa del panel`);
     }
     return { ok: true, mensaje: 'Si el correo tiene una cuenta, te llegará un enlace para recuperarla.' };
   }

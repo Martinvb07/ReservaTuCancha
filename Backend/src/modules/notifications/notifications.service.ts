@@ -1,5 +1,5 @@
 // src/modules/notifications/notifications.service.ts
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -385,7 +385,7 @@ function buildChangelogHtml(opts: {
 // ─── Service ────────────────────────────────────────────────────────────────
 
 @Injectable()
-export class NotificationsService {
+export class NotificationsService implements OnModuleInit {
   private readonly logger = new Logger(NotificationsService.name);
   private readonly frontendUrl: string;
   private readonly fromEmail: string;
@@ -404,20 +404,92 @@ export class NotificationsService {
     this.resend = new Resend(this.configService.get<string>('RESEND_API_KEY'));
   }
 
-  private async send(msg: { to: string; from: string; subject: string; html: string }) {
+  /**
+   * Revisa al arrancar que Resend pueda mandar correos. Antes un correo mal
+   * configurado (sin clave, remitente vacío o dominio sin verificar) fallaba
+   * en silencio: la pantalla decía "revisa tu correo" y nunca llegaba nada.
+   */
+  async onModuleInit() {
+    if (process.env.NODE_ENV === 'test') return;
+    const apiKey = this.configService.get<string>('RESEND_API_KEY');
+    if (!apiKey) {
+      this.logger.error('RESEND_API_KEY no está configurada: no sale ningún correo.');
+      return;
+    }
+    const dominio = this.dominioRemitente;
+    if (!dominio) {
+      this.logger.error('RESEND_FROM_EMAIL no está configurado o no es un correo válido: no sale ningún correo.');
+      return;
+    }
+    if (dominio === 'resend.dev') {
+      this.logger.warn(
+        'RESEND_FROM_EMAIL usa resend.dev (modo prueba): Resend solo entrega al correo dueño de la cuenta de Resend. Verifica tu dominio y úsalo como remitente.',
+      );
+      return;
+    }
     try {
-      const { data, error } = await this.resend.emails.send({
-        to: msg.to, from: msg.from, subject: msg.subject, html: msg.html,
-      });
+      const { data, error } = await this.resend.domains.list();
       if (error) {
-        this.logger.error(`Error de Resend API: ${error.name} - ${error.message}`);
+        /* Una clave "solo envío" no puede listar dominios: no es un fallo. */
+        this.logger.log(`No se pudo revisar el dominio en Resend (${error.message}). Remitente: ${this.fromEmail}`);
         return;
       }
-      this.logger.log(`Email enviado a ${msg.to}. ID: ${data?.id}`);
-    } catch (error) {
-      this.logger.error(`Error critico enviando email: ${error.message}`);
+      const lista: any[] = (data as any)?.data ?? [];
+      const encontrado = lista.find((d) => String(d.name).toLowerCase() === dominio);
+      if (!encontrado) {
+        this.logger.error(
+          `El dominio ${dominio} de RESEND_FROM_EMAIL no está en la cuenta de Resend: los correos se rechazan. Dominios: ${lista.map((d) => `${d.name} (${d.status})`).join(', ') || 'ninguno'}`,
+        );
+      } else if (encontrado.status !== 'verified') {
+        this.logger.error(
+          `El dominio ${dominio} está en Resend pero en estado "${encontrado.status}": hasta que quede "verified" los correos se rechazan. Revisa los registros DNS (SPF/DKIM).`,
+        );
+      } else {
+        this.logger.log(`Correo listo: remitente ${this.fromEmail}, dominio ${dominio} verificado.`);
+      }
+    } catch (e: any) {
+      this.logger.warn(`No se pudo revisar Resend al arrancar: ${e?.message}`);
     }
   }
+
+  /** Dominio del remitente, en minúsculas (acepta "Nombre <correo@dominio>"). */
+  private get dominioRemitente(): string | null {
+    const m = String(this.fromEmail ?? '').match(/@([^\s>]+)>?\s*$/);
+    return m ? m[1].toLowerCase() : null;
+  }
+
+  /**
+   * Remitente con nombre visible. Con solo "correo@dominio" la bandeja muestra
+   * el correo pelado y algunos filtros lo miran con peor cara.
+   */
+  private get remitente(): string {
+    const from = String(this.fromEmail ?? '').trim();
+    return from.includes('<') ? from : `ReservaTuCancha <${from}>`;
+  }
+
+  /** Devuelve true si Resend aceptó el correo. Nunca lanza. */
+  private async send(msg: { to: string; from: string; subject: string; html: string }): Promise<boolean> {
+    if (!msg.from || !this.dominioRemitente) {
+      this.logger.error(`No se envió "${msg.subject}" a ${msg.to}: RESEND_FROM_EMAIL no está configurado.`);
+      return false;
+    }
+    try {
+      const from = msg.from === this.fromEmail ? this.remitente : msg.from;
+      const { data, error } = await this.resend.emails.send({
+        to: msg.to, from, subject: msg.subject, html: msg.html,
+      });
+      if (error) {
+        this.logger.error(`Resend rechazó "${msg.subject}" a ${msg.to}: ${error.name} - ${error.message}`);
+        return false;
+      }
+      this.logger.log(`Email enviado a ${msg.to}. ID: ${data?.id}`);
+      return true;
+    } catch (error) {
+      this.logger.error(`Error critico enviando email a ${msg.to}: ${error.message}`);
+      return false;
+    }
+  }
+
 
   private async getCourtAndClub(booking: Booking & { _id: any }) {
     const courtIdStr = (booking.courtId as any)?._id?.toString() ?? booking.courtId.toString();
@@ -981,8 +1053,8 @@ export class NotificationsService {
   }
 
   /** Enlace para ponerse una contraseña nueva. Sirve una sola vez, 1 hora. */
-  async sendRecuperarClave(datos: { email: string; nombre: string; url: string }) {
-    await this.send({
+  async sendRecuperarClave(datos: { email: string; nombre: string; url: string }): Promise<boolean> {
+    return this.send({
       to: datos.email,
       from: this.fromEmail,
       subject: 'Recupera tu contraseña — ReservaTuCancha',
