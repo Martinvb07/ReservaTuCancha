@@ -43,7 +43,8 @@ export const SPORTS: SportMeta[] = [
 /** Ícono ilustrado de cada deporte: lo usan las pestañas del inicio y el menú
  *  de deportes del buscador. Son imágenes (public/deportes) y no emojis de
  *  texto porque cada sistema dibuja los emojis distinto; así se ven iguales en
- *  todos lados. Salen de Noto Emoji (Google, licencia Apache 2.0).
+ *  todos lados. Los de deporte son ilustraciones 3D generadas con IA para
+ *  ReservaTuCancha; el pin de "Cerca de mí" sale de Noto Emoji (Apache 2.0).
  *  '' es "todos". */
 export const SPORT_ICONO: Record<string, string> = {
   '': '/deportes/todos.png',
