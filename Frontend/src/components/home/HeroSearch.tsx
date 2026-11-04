@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { format, parse, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Search, Clock, ChevronLeft, ChevronRight, Check, Sunrise, Sun, Moon } from 'lucide-react';
-import { SPORTS, CITIES, getSport } from '@/lib/constants';
+import { SPORTS, CITIES, getSport, SPORT_ICONO } from '@/lib/constants';
 import SportIcon from '@/components/ui/SportIcon';
 import CityGlyph, { cityKey } from '@/components/ui/CityGlyph';
 
@@ -170,8 +170,10 @@ export default function HeroSearch({ initialSport, initialCity, initialDate, ini
             className={`rtc-item flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-left transition-colors ${active ? 'bg-green-50' : 'hover:bg-gray-50'}`}
             style={{ animationDelay: `${i * 35}ms` }}>
             <span className="w-10 h-10 rounded-xl grid place-items-center shrink-0"
-              style={{ background: meta?.bg ?? '#f0fdf4', color: meta?.color ?? '#16a34a' }}>
-              <SportIcon sport={o.key || undefined} size={21} stroke={2} />
+              style={{ background: meta?.bg ?? '#f0fdf4' }} aria-hidden>
+              {SPORT_ICONO[o.key]
+                ? <img src={SPORT_ICONO[o.key]} alt="" width={26} height={26} className="h-[26px] w-[26px]" />
+                : <SportIcon sport={o.key || undefined} size={21} stroke={2} />}
             </span>
             <span className="flex-1 min-w-0">
               <span className="block truncate text-sm font-semibold text-gray-800">{o.label}</span>

@@ -117,7 +117,9 @@ export default function Navbar() {
         {/* Logo */}
         <Link href="/" className="shrink-0 flex items-center gap-3 lg:justify-self-start">
           <img src={LOGO_URL} alt="ReservaTuCancha" className="h-11 w-11 object-contain" />
-          <span className="font-black text-xl text-gray-900 tracking-tight hidden sm:block">
+          {/* En celular el nombre se ve mientras el navbar está libre; cuando
+              baja el buscador acoplado se esconde para dejarle el espacio. */}
+          <span className={`font-black text-lg sm:text-xl text-gray-900 tracking-tight ${docked && !mobileOpen ? 'hidden sm:block' : 'block'}`}>
             Reserva<span className="text-green-600">TuCancha</span>
           </span>
         </Link>

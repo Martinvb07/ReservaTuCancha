@@ -10,6 +10,7 @@ import MobileSearchTrigger from '@/components/home/MobileSearchTrigger';
 import { TarjetaGrande, FilaCancha } from '@/components/courts/TarjetasCancha';
 import { SEARCH_ANCHOR_ID } from '@/hooks/useSearchDock';
 import { courtsApi } from '@/lib/api/courts.api';
+import { SPORT_ICONO } from '@/lib/constants';
 import type { Court } from '@/types';
 
 /*
@@ -26,13 +27,13 @@ const FAQ = [
   { q: '¿Cómo recibo la confirmación?', a: 'Al instante por email. Incluye los datos de la cancha, horario y el link para cancelar si lo necesitas.' },
 ];
 
-/** Pestañas de arriba. El ícono es un emoji: se ve ilustrado en cada sistema. */
+/** Pestañas de arriba, con el ícono ilustrado de cada una. */
 const PESTANAS = [
-  { key: '', label: 'Todo', icono: '🏟️' },
-  { key: 'futbol', label: 'Fútbol', icono: '⚽' },
-  { key: 'padel', label: 'Pádel', icono: '🎾' },
-  { key: 'voley_playa', label: 'Vóley playa', icono: '🏐' },
-  { key: 'cerca', label: 'Cerca de mí', icono: '📍' },
+  { key: '', label: 'Todo', icono: SPORT_ICONO[''] },
+  { key: 'futbol', label: 'Fútbol', icono: SPORT_ICONO.futbol },
+  { key: 'padel', label: 'Pádel', icono: SPORT_ICONO.padel },
+  { key: 'voley_playa', label: 'Vóley playa', icono: SPORT_ICONO.voley_playa },
+  { key: 'cerca', label: 'Cerca de mí', icono: SPORT_ICONO.cerca },
 ] as const;
 
 interface PublicStats {
@@ -139,8 +140,10 @@ export default function HomeClient({ stats }: { stats: PublicStats }) {
                     activa ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'
                   }`}
                 >
-                  <span className={`text-[26px] leading-none transition-transform duration-200 md:text-[30px] ${activa ? 'scale-110' : 'grayscale-[35%] group-hover:scale-110 group-hover:grayscale-0'}`} aria-hidden>
-                    {p.key === 'cerca' && ubicando ? <Loader2 className="h-7 w-7 animate-spin text-gray-500" /> : p.icono}
+                  <span className={`grid h-8 w-8 place-items-center transition-transform duration-200 md:h-9 md:w-9 ${activa ? 'scale-110' : 'grayscale-[35%] group-hover:scale-110 group-hover:grayscale-0'}`} aria-hidden>
+                    {p.key === 'cerca' && ubicando
+                      ? <Loader2 className="h-7 w-7 animate-spin text-gray-500" />
+                      : <img src={p.icono} alt="" width={36} height={36} className="h-full w-full object-contain" />}
                   </span>
                   <span className="whitespace-nowrap">{p.label}</span>
                   <span className={`absolute inset-x-0 -bottom-px h-[3px] rounded-full bg-gray-900 transition-opacity ${activa ? 'opacity-100' : 'opacity-0 group-hover:opacity-20'}`} />
