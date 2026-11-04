@@ -11,6 +11,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        /* Fondos de la app móvil: gris apenas verdoso, y las tarjetas
+           blancas flotan encima sin bordes. */
+        fondo: {
+          DEFAULT: '#F1F4F2',
+          suave: '#E6EBE8',
+        },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

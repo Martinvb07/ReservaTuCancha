@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { format, parse, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Search, MapPin, Calendar, Clock, ChevronDown, ChevronLeft, ChevronRight, Check, Sunrise, Sun, Moon } from 'lucide-react';
+import { Search, Clock, ChevronLeft, ChevronRight, Check, Sunrise, Sun, Moon } from 'lucide-react';
 import { SPORTS, CITIES, getSport } from '@/lib/constants';
 import SportIcon from '@/components/ui/SportIcon';
 import CityGlyph, { cityKey } from '@/components/ui/CityGlyph';
@@ -332,131 +332,100 @@ export default function HeroSearch({ initialSport, initialCity, initialDate, ini
     );
   }
 
-  // estilos compartidos — estética de barra única: campo activo con tinte,
-  // borde de la barra que se ilumina cuando hay un panel abierto
-  const fieldActive = (p: Panel) => (panel === p ? 'bg-green-50' : 'hover:bg-gray-50');
-  const fieldLabel = 'block text-[11px] font-extrabold uppercase tracking-[.1em] text-green-600';
-  const fieldValue = (filled: boolean) => `block text-sm font-semibold truncate ${filled ? 'text-gray-900' : 'text-gray-500'}`;
-  const dropBase = 'rtc-drop absolute z-50 top-[calc(100%+8px)] left-0 w-full min-w-[280px] md:min-w-0 bg-white rounded-2xl overflow-hidden';
-  const dropStyle = { border: '1.5px solid #e5e7eb', boxShadow: '0 20px 48px rgba(0,0,0,.14)' };
-  const divider = <div className="h-px md:h-auto md:w-px bg-gray-100 md:bg-gray-200 mx-4 md:mx-0 md:my-3 flex-none" />;
+  /* Píldora estilo Airbnb: cuatro campos con etiqueta arriba y valor abajo.
+     Con un panel abierto la barra se pone gris y el campo activo sube como
+     una tarjeta blanca. */
+  const field = (p: Panel) =>
+    `w-full h-full flex flex-col justify-center px-7 py-3 text-left rounded-full transition-all duration-200 ${
+      panel === p
+        ? 'bg-white shadow-[0_6px_20px_rgba(0,0,0,0.14)]'
+        : panel ? 'hover:bg-gray-200/70' : 'hover:bg-gray-100'
+    }`;
+  const fieldLabel = 'block text-xs font-bold text-gray-900';
+  const fieldValue = (filled: boolean) => `block text-sm truncate ${filled ? 'font-semibold text-gray-900' : 'text-gray-500'}`;
+  const dropBase = 'rtc-drop absolute z-50 top-[calc(100%+12px)] bg-white rounded-[28px] overflow-hidden';
+  const dropStyle = { boxShadow: '0 12px 40px rgba(0,0,0,.16)' };
+  /* La rayita entre campos se esconde junto al campo activo, como en Airbnb. */
+  const divider = (antes: Panel, despues: Panel) => (
+    <div className={`w-px my-3.5 flex-none transition-opacity ${panel === antes || panel === despues ? 'opacity-0' : 'bg-gray-200'}`} />
+  );
 
   return (
     <div ref={wrapRef} className="text-left">
-      {/* ── Barra de búsqueda: horizontal en desktop, apilada en móvil ── */}
       <div
-        className="bg-white rounded-2xl flex flex-col md:flex-row md:items-stretch"
-        style={{
-          border: `1.5px solid ${panel ? '#86efac' : '#e5e7eb'}`,
-          boxShadow: panel ? '0 0 0 3px rgba(22,163,74,.10), 0 6px 28px rgba(0,0,0,.10)' : '0 6px 28px rgba(0,0,0,.14)',
-          transition: 'border-color .15s, box-shadow .15s',
-        }}
+        className={`relative flex items-stretch rounded-full border transition-colors duration-200 ${
+          panel ? 'bg-gray-100 border-transparent' : 'bg-white border-gray-200'
+        }`}
+        style={{ boxShadow: '0 3px 12px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04)' }}
       >
         {/* ── DEPORTE ── */}
         <div className="relative flex-1 min-w-0">
-          <button type="button" onClick={() => toggle('deporte')}
-            className={`w-full h-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors rounded-t-2xl md:rounded-none md:rounded-l-2xl ${fieldActive('deporte')}`}>
-            <span className="w-9 h-9 rounded-full bg-green-50 text-green-600 grid place-items-center shrink-0">
-              <SportIcon sport={sport || undefined} size={17} />
-            </span>
-            <span className="flex-1 min-w-0">
-              <span className={fieldLabel}>Deporte</span>
-              <span className={fieldValue(!!sport)}>{sportLabel}</span>
-            </span>
-            <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${panel === 'deporte' ? 'rotate-180' : ''}`} />
+          <button type="button" onClick={() => toggle('deporte')} className={field('deporte')}>
+            <span className={fieldLabel}>Deporte</span>
+            <span className={fieldValue(!!sport)}>{sportLabel}</span>
           </button>
           {panel === 'deporte' && (
-            <div className={`${dropBase} md:w-[320px] md:left-[calc(50%-160px)]`} style={dropStyle}>
-              <div className="p-2">{deporteList}</div>
+            <div className={`${dropBase} left-0 w-[340px]`} style={dropStyle}>
+              <div className="p-3">{deporteList}</div>
             </div>
           )}
         </div>
 
-        {divider}
+        {divider('deporte', 'ciudad')}
 
         {/* ── UBICACIÓN ── */}
         <div className="relative flex-1 min-w-0">
-          <button type="button" onClick={() => toggle('ciudad')}
-            className={`w-full h-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${fieldActive('ciudad')}`}>
-            <span className="w-9 h-9 rounded-full bg-green-50 text-green-600 grid place-items-center shrink-0">
-              <MapPin className="h-[17px] w-[17px]" />
-            </span>
-            <span className="flex-1 min-w-0">
-              <span className={fieldLabel}>Ubicación</span>
-              <span className={fieldValue(!!city)}>{city || 'Elige tu ciudad'}</span>
-            </span>
-            <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${panel === 'ciudad' ? 'rotate-180' : ''}`} />
+          <button type="button" onClick={() => toggle('ciudad')} className={field('ciudad')}>
+            <span className={fieldLabel}>Dónde</span>
+            <span className={fieldValue(!!city)}>{city || 'Elige tu ciudad'}</span>
           </button>
           {panel === 'ciudad' && (
-            <div className={`${dropBase} md:w-[320px] md:left-[calc(50%-160px)]`} style={dropStyle}>
-              <div className="p-2 max-h-[340px] overflow-y-auto no-scrollbar">{ciudadList}</div>
+            <div className={`${dropBase} left-0 w-[340px]`} style={dropStyle}>
+              <div className="p-3 max-h-[360px] overflow-y-auto no-scrollbar">{ciudadList}</div>
             </div>
           )}
         </div>
 
-        {divider}
+        {divider('ciudad', 'fecha')}
 
         {/* ── FECHA ── */}
         <div className="relative flex-1 min-w-0">
-          <button type="button" onClick={() => toggle('fecha')}
-            className={`w-full h-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${fieldActive('fecha')}`}>
-            <span className="w-9 h-9 rounded-full bg-green-50 text-green-600 grid place-items-center shrink-0">
-              <Calendar className="h-[17px] w-[17px]" />
-            </span>
-            <span className="flex-1 min-w-0">
-              <span className={fieldLabel}>Fecha</span>
-              <span className={`${fieldValue(!!date)} capitalize`}>{dateLabel}</span>
-            </span>
-            <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${panel === 'fecha' ? 'rotate-180' : ''}`} />
+          <button type="button" onClick={() => toggle('fecha')} className={field('fecha')}>
+            <span className={fieldLabel}>Fecha</span>
+            <span className={`${fieldValue(!!date)} capitalize`}>{dateLabel}</span>
           </button>
           {panel === 'fecha' && (
-            <div className={`${dropBase} md:w-[300px] md:left-[calc(50%-150px)]`} style={dropStyle}>
+            <div className={`${dropBase} left-1/2 -translate-x-1/2 w-[320px]`} style={dropStyle}>
               {fechaInner}
             </div>
           )}
         </div>
 
-        {divider}
+        {divider('fecha', 'hora')}
 
-        {/* ── HORA ── */}
-        <div className="relative flex-1 min-w-0">
-          <button type="button" onClick={() => toggle('hora')}
-            className={`w-full h-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${fieldActive('hora')}`}>
-            <span className="w-9 h-9 rounded-full bg-green-50 text-green-600 grid place-items-center shrink-0">
-              <Clock className="h-[17px] w-[17px]" />
-            </span>
-            <span className="flex-1 min-w-0">
+        {/* ── HORA + BUSCAR — el botón vive dentro del último campo, como en Airbnb ── */}
+        <div className="relative flex-[1.25] min-w-0">
+          <div className={`${field('hora')} !flex-row items-center gap-2 !pr-2`}>
+            <button type="button" onClick={() => toggle('hora')} className="flex-1 min-w-0 text-left">
               <span className={fieldLabel}>Hora</span>
               <span className={fieldValue(!!time)}>{time ? to12h(time) : 'Cualquier hora'}</span>
-            </span>
-            <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${panel === 'hora' ? 'rotate-180' : ''}`} />
-          </button>
+            </button>
+            <button type="button" onClick={search} aria-label="Buscar canchas"
+              className={`flex h-12 shrink-0 items-center justify-center rounded-full bg-green-600 font-bold text-sm text-white transition-all duration-300 ease-out hover:bg-green-700 active:scale-95 ${
+                ready || panel ? 'px-5' : 'w-12'
+              }`}>
+              <Search className="h-[18px] w-[18px] shrink-0" strokeWidth={2.5} />
+              <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${ready || panel ? 'ml-2 max-w-[80px] opacity-100' : 'max-w-0 opacity-0'}`}>
+                Buscar
+              </span>
+            </button>
+          </div>
           {panel === 'hora' && (
-            <div className={`${dropBase} md:w-[320px] md:left-[calc(50%-160px)]`} style={dropStyle}>
+            <div className={`${dropBase} right-0 w-[340px]`} style={dropStyle}>
               <div className="p-3 max-h-[440px] overflow-y-auto no-scrollbar">{horaInner}</div>
             </div>
           )}
         </div>
-
-        {/* ── BOTÓN BUSCAR — en desktop: círculo con solo la lupa; se expande a
-            píldora con texto cuando ya hay algo seleccionado. En móvil: full-width ── */}
-        <div className="p-2 md:p-0 md:flex md:items-center md:pr-2.5 md:pl-1 flex-none">
-          <button type="button" onClick={search} aria-label="Buscar canchas"
-            className={`w-full md:w-auto flex items-center justify-center gap-2 md:gap-0 bg-green-600 hover:bg-green-700 active:scale-[.98] text-white font-bold text-sm py-3 rounded-xl md:rounded-full transition-all duration-300 ease-out ${ready ? 'px-6 md:px-5 rtc-ready' : 'px-6 md:px-3'}`}>
-            <Search className="h-4 w-4 shrink-0" />
-            <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-out ${ready ? 'md:max-w-[130px] md:opacity-100 md:ml-2' : 'md:max-w-0 md:opacity-0'}`}>
-              Buscar canchas
-            </span>
-          </button>
-        </div>
-      </div>
-
-      {/* ── Indicador de progreso ── */}
-      <div className="flex items-center gap-1.5 mt-3 justify-center">
-        {[!!sport, !!city, !!date, !!time].map((done, i) => (
-          <div key={i} className="h-1 rounded-full transition-all duration-300"
-            style={{ width: done ? 22 : 8, background: done ? '#22c55e' : 'rgba(255,255,255,.4)' }} />
-        ))}
       </div>
     </div>
   );

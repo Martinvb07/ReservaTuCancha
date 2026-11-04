@@ -1,13 +1,27 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import localFont from 'next/font/local';
 import { Toaster } from 'sonner';
 import Providers from '@/components/layout/Providers';
 import ProgressBar from '@/components/layout/ProgressBar';
 import { cn } from "@/lib/utils";
 import { SITE_URL } from '@/lib/site';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
+/* Geist, la misma letra de la app móvil. Va local (no de Google Fonts) para
+   que el build no dependa de bajarla. */
+const geist = localFont({
+  src: [
+    { path: './fonts/Geist-Regular.ttf', weight: '400', style: 'normal' },
+    { path: './fonts/Geist-Medium.ttf', weight: '500', style: 'normal' },
+    { path: './fonts/Geist-SemiBold.ttf', weight: '600', style: 'normal' },
+    { path: './fonts/Geist-Bold.ttf', weight: '700', style: 'normal' },
+    // La app pinta los títulos w800 con la Black: aquí igual.
+    { path: './fonts/Geist-Black.ttf', weight: '800', style: 'normal' },
+    { path: './fonts/Geist-Black.ttf', weight: '900', style: 'normal' },
+  ],
+  variable: '--font-sans',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   /* Base para las URLs absolutas de Open Graph y las canónicas. */
@@ -29,7 +43,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" suppressHydrationWarning className={cn("font-sans", inter.variable)}>
+    <html lang="es" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
       <head>
         <link rel="icon" type="image/png" sizes="96x96" href="/favicon/favicon-96x96.png" />
         <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon/favicon.svg" />
@@ -40,7 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
       </head>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${geist.variable} font-sans antialiased`}>
         <Providers>
           <ProgressBar />
           {children}

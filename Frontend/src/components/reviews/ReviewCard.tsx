@@ -7,7 +7,7 @@ interface ReviewCardProps { review: Review; }
 
 export default function ReviewCard({ review }: ReviewCardProps) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 hover:border-green-200 transition-all p-4 space-y-3">
+    <div className="bg-white rounded-3xl p-5 space-y-3">
       <div className="flex items-start justify-between gap-3">
         {/* Avatar + nombre */}
         <div className="flex items-center gap-3">

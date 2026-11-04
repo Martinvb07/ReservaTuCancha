@@ -321,7 +321,7 @@ export default function BookingForm({
     : '';
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-[28px] overflow-hidden">
       {/* Header */}
       <div className="px-6 py-5 border-b border-gray-100">
         <div className="flex items-baseline justify-between">

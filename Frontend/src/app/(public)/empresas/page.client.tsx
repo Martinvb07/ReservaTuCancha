@@ -198,7 +198,7 @@ export default function EmpresasPageClient() {
     `inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-semibold border whitespace-nowrap transition-all ${
       active
         ? 'bg-green-600 border-green-600 text-white'
-        : 'border-gray-200 text-gray-600 hover:border-green-400 hover:bg-green-50'
+        : 'bg-white border-transparent text-gray-700 hover:border-green-300'
     }`;
   const dropCls = 'rtc-drop absolute top-[calc(100%+8px)] left-0 z-50 bg-white rounded-2xl overflow-hidden';
   const dropStyle = { border: '1.5px solid #e5e7eb', boxShadow: '0 20px 48px rgba(0,0,0,.14)' };
@@ -212,12 +212,12 @@ export default function EmpresasPageClient() {
     { key: 'mapa',  label: 'Mapa',     Icon: MapIcon },
   ];
   const viewToggle = (
-    <div className="inline-flex items-center bg-gray-100 rounded-full p-0.5 flex-none">
+    <div className="inline-flex items-center bg-white rounded-full p-1 flex-none">
       {VIEWS.map(({ key, label, Icon, wideOnly }) => (
         <button key={key} type="button" onClick={() => setView(key)}
           aria-pressed={view === key}
           className={`${wideOnly ? 'hidden lg:inline-flex' : 'inline-flex'} items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-bold transition-all ${
-            view === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+            view === key ? 'bg-fondo text-gray-900' : 'text-gray-500 hover:text-gray-800'
           }`}>
           <Icon className="h-3.5 w-3.5" />
           {/* Entre md y lg la barra va justa de ancho: ahí el toggle queda solo
@@ -296,10 +296,10 @@ export default function EmpresasPageClient() {
   /* ── Bloques de resultados, compartidos por la vista de lista y la dividida ──
      `cols` cambia porque en la dividida las tarjetas viven en media pantalla. */
   const skeletonGrid = (cols: string) => (
-    <div className={`grid ${cols} gap-x-5 gap-y-8`}>
+    <div className={`grid ${cols} gap-4 md:gap-5`}>
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="animate-pulse">
-          <div className="aspect-[4/3] bg-gray-200 rounded-2xl" />
+          <div className="aspect-[16/11] bg-fondo-suave rounded-[28px]" />
           <div className="pt-3 space-y-2">
             <div className="h-4 bg-gray-200 rounded w-3/4" />
             <div className="h-3 bg-gray-100 rounded w-1/2" />
@@ -310,7 +310,7 @@ export default function EmpresasPageClient() {
   );
 
   const emptyState = (
-    <div className="text-center py-20 bg-gray-50 rounded-2xl border border-gray-100">
+    <div className="text-center py-20 bg-white rounded-[28px]">
       <Search className="h-10 w-10 text-gray-300 mx-auto mb-3" />
       <p className="text-lg font-semibold text-gray-900">Sin canchas para estos filtros</p>
       <p className="text-gray-500 text-sm mt-1">Prueba quitando alguna amenidad o cambiando de deporte o ciudad.</p>
@@ -322,7 +322,7 @@ export default function EmpresasPageClient() {
   );
 
   const courtsGrid = (cols: string) => (
-    <div className={`grid ${cols} gap-x-5 gap-y-8`}>
+    <div className={`grid ${cols} gap-4 md:gap-5`}>
       {visible.map((court, i) => (
         <div key={court._id} className="rtc-fade" style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}
           onMouseEnter={() => setHoveredId(court._id)}
@@ -336,21 +336,21 @@ export default function EmpresasPageClient() {
   const pagination = pageCount > 1 && (
     <div className="flex justify-center items-center gap-2 mt-12">
       <button disabled={safePage <= 1} onClick={() => setClientPage(safePage - 1)}
-        className="text-sm font-medium border border-gray-200 hover:border-gray-400 text-gray-700 px-4 py-2 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+        className="text-sm font-medium bg-white hover:bg-gray-900 hover:text-white text-gray-700 px-4 py-2 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed">
         ← Anterior
       </button>
       <div className="flex items-center gap-1">
         {Array.from({ length: pageCount }, (_, i) => i + 1).map((p) => (
           <button key={p} onClick={() => setClientPage(p)}
             className={`w-9 h-9 text-sm font-semibold rounded-xl transition-all ${
-              p === safePage ? 'bg-gray-900 text-white' : 'border border-gray-200 hover:border-gray-400 text-gray-700'
+              p === safePage ? 'bg-gray-900 text-white' : 'bg-white hover:bg-gray-900 hover:text-white text-gray-700'
             }`}>
             {p}
           </button>
         ))}
       </div>
       <button disabled={safePage >= pageCount} onClick={() => setClientPage(safePage + 1)}
-        className="text-sm font-medium border border-gray-200 hover:border-gray-400 text-gray-700 px-4 py-2 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+        className="text-sm font-medium bg-white hover:bg-gray-900 hover:text-white text-gray-700 px-4 py-2 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed">
         Siguiente →
       </button>
     </div>
@@ -363,31 +363,22 @@ export default function EmpresasPageClient() {
       : <>{courtsGrid(cols)}{pagination}</>;
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen">
       {/* ── HERO + BUSCADOR ───────────────────────────────────── */}
       {/* El overflow-hidden va solo alrededor del fondo: en la sección recortaba
           los dropdowns del buscador. Y con el buscador abierto la sección sube
           por encima de la barra de filtros sticky (z-30) para que no los tape.
           z-[35] deja el navbar (z-40) por encima. */}
-      <section className={`relative bg-gray-900 ${search.open ? 'z-[35]' : ''}`}>
-        <div className="absolute inset-0 overflow-hidden">
-          <img
-            src="https://images.unsplash.com/photo-1459865264687-595d652de67e?w=1600&q=80"
-            alt="canchas"
-            className="absolute inset-0 w-full h-full object-cover opacity-20"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-gray-900/70 to-gray-900" />
-        </div>
-
-        <div className="relative z-10 max-w-7xl mx-auto px-4 py-12 md:py-14">
-          <h1 className="text-3xl md:text-4xl font-bold text-white">Encuentra tu cancha</h1>
-          <p className="text-gray-300 mt-2 text-sm md:text-base">
+      <section className={`relative ${search.open ? 'z-[35]' : ''}`}>
+        <div className="relative max-w-7xl mx-auto px-5 pt-6 pb-2 md:pt-10">
+          <h1 className="text-[28px] md:text-5xl font-extrabold tracking-tight leading-[1.15] text-gray-900">Explora canchas</h1>
+          <p className="text-gray-500 mt-1 text-sm md:text-base">
             {isLoading ? 'Buscando…' : `${data?.total ?? 0} canchas disponibles en Colombia`}
           </p>
 
           {/* El id lo lee el navbar: cuando este bloque pasa por encima de la
               barra, el buscador se acopla al navbar (ver useSearchDock). */}
-          <div id={SEARCH_ANCHOR_ID} className="mt-6">
+          <div id={SEARCH_ANCHOR_ID} className="mt-5 md:mt-6">
             {/* Desktop: píldora resumen → clic para expandir la barra completa.
                 min-h reserva el alto de la barra expandida, así el intercambio
                 píldora ⇄ barra no empuja la página hacia abajo. */}
@@ -399,14 +390,14 @@ export default function EmpresasPageClient() {
                       onSearch={search.hide} />
                   </div>
                   <button type="button" onClick={search.hide} aria-label="Cerrar buscador"
-                    className="mt-3 w-10 h-10 rounded-full border border-white/25 text-white grid place-items-center hover:bg-white/20 hover:border-white/40 hover:rotate-90 active:scale-90 transition-all duration-200 flex-none">
+                    className="mt-3 w-10 h-10 rounded-full bg-white text-gray-700 grid place-items-center hover:bg-gray-900 hover:text-white hover:rotate-90 active:scale-90 transition-all duration-200 flex-none">
                     <X className="h-4 w-4" />
                   </button>
                 </div>
               ) : (
                 <button type="button" onClick={search.show}
                   className="nav-search-in inline-flex items-center gap-2.5 bg-white rounded-full pl-5 pr-2 py-2 text-sm text-left hover:shadow-xl transition-shadow"
-                  style={{ boxShadow: '0 10px 30px rgba(0,0,0,.25)' }}>
+                  style={{ boxShadow: '0 1px 2px rgba(17,24,39,.04)' }}>
                   <span className={sport ? 'font-semibold text-gray-900' : 'text-gray-500'}>{sport ? getSport(sport).label : 'Deporte'}</span>
                   <span className="text-gray-300">·</span>
                   <span className={city ? 'font-semibold text-gray-900' : 'text-gray-500'}>{city || 'Ciudad'}</span>
@@ -426,15 +417,15 @@ export default function EmpresasPageClient() {
             </div>
 
             <div className="lg:hidden">
-              <MobileSearchTrigger initialSport={sport} initialCity={city} initialDate={dateParam} initialTime={startParam} />
+              <MobileSearchTrigger suave initialSport={sport} initialCity={city} initialDate={dateParam} initialTime={startParam} />
             </div>
           </div>
         </div>
       </section>
 
       {/* ── BARRA DE FILTROS (sticky, desplegables estilo Rently) ───────────── */}
-      <div className="sticky top-16 z-30 bg-white/95 backdrop-blur border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4">
+      <div className="sticky top-16 z-30 bg-fondo/95 backdrop-blur">
+        <div className="max-w-7xl mx-auto px-5">
 
           {/* DESKTOP: píldoras con dropdown anclado */}
           <div ref={filterRef} className="hidden md:flex items-center gap-2 py-3">
@@ -494,7 +485,7 @@ export default function EmpresasPageClient() {
             </div>
 
             {/* DERECHA — limpiar, contador y orden */}
-            <div className="flex items-center gap-2 flex-none border-l border-gray-100 pl-3 ml-1">
+            <div className="flex items-center gap-2 flex-none pl-3 ml-1">
               {activeFilters > 0 && (
                 <button type="button" onClick={clearFilters}
                   className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11.5px] font-bold bg-green-50 text-green-700 border border-green-300 hover:bg-green-100 transition-all whitespace-nowrap flex-none">
@@ -534,7 +525,7 @@ export default function EmpresasPageClient() {
               className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full border text-[13px] font-semibold whitespace-nowrap transition-all ${
                 activeFilters > 0
                   ? 'bg-green-600 border-green-600 text-white'
-                  : 'border-gray-200 bg-white text-gray-700 hover:border-green-400'
+                  : 'border-transparent bg-white text-gray-700 hover:border-green-300'
               }`}
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
@@ -601,10 +592,10 @@ export default function EmpresasPageClient() {
       )}
 
       {/* ── CONTENIDO ─────────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-4 pt-2 pb-10 md:pt-2.5 md:pb-12">
+      <section className="max-w-7xl mx-auto px-5 pt-2 pb-10 md:pt-2.5 md:pb-12">
         {/* Banner de fecha/hora elegida */}
         {(niceDate || startParam) && (
-          <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl px-4 py-2.5 mb-3 text-sm">
+          <div className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3 mb-3 text-sm">
             <CalendarDays className="h-5 w-5 text-green-600 shrink-0" />
             <p className="text-green-800">
               {niceDate || dateParam

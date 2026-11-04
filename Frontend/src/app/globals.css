@@ -426,3 +426,9 @@ body.sheet-open .fab-float {
     outline-offset: 2px;
   }
 }
+
+/* Con la barra fija de "Reservar" de la ficha (solo celular), los botones
+   flotantes de soporte y WhatsApp suben para no taparla. */
+@media (max-width: 1023px) {
+  body:has(.barra-reserva) .fab-float { margin-bottom: 76px; }
+}
