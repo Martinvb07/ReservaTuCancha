@@ -115,14 +115,26 @@ interface HeroSearchProps {
      Limpiar/Buscar. `onSearch` cierra el sheet al buscar. */
   mobile?: boolean;
   onSearch?: () => void;
+  /** Avisa cuando se elige un deporte en el buscador (las pestañas del
+   *  inicio lo siguen). Si cambia `initialSport` desde afuera, el campo se
+   *  actualiza. */
+  onSportChange?: (sport: string) => void;
 }
 
-export default function HeroSearch({ initialSport, initialCity, initialDate, initialTime, mobile = false, onSearch }: HeroSearchProps) {
+export default function HeroSearch({ initialSport, initialCity, initialDate, initialTime, mobile = false, onSearch, onSportChange }: HeroSearchProps) {
   const router = useRouter();
   const wrapRef = useRef<HTMLDivElement>(null);
 
   const [panel, setPanel] = useState<Panel>(mobile ? 'deporte' : null);
-  const [sport, setSport] = useState(initialSport ?? '');
+  const [sport, setSportInterno] = useState(initialSport ?? '');
+  const setSport = (v: string) => {
+    setSportInterno(v);
+    onSportChange?.(v);
+  };
+  /* La pestaña de deporte del inicio manda: si cambia, el campo la sigue. */
+  useEffect(() => {
+    if (initialSport !== undefined) setSportInterno(initialSport);
+  }, [initialSport]);
   const [city, setCity] = useState(initialCity ?? '');
   const [date, setDate] = useState<Date | null>(
     initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate) ? parse(initialDate, 'yyyy-MM-dd', new Date()) : null,
@@ -141,6 +153,28 @@ export default function HeroSearch({ initialSport, initialCity, initialDate, ini
   }, [mobile]);
 
   const toggle = (p: Panel) => setPanel((cur) => (cur === p ? null : p));
+
+  /* Píldora blanca que se desliza al campo activo (escritorio). Se mide el
+     campo y la píldora viaja con transición, en vez de que cada campo
+     cambie de fondo de golpe. */
+  const barRef = useRef<HTMLDivElement>(null);
+  const [pildora, setPildora] = useState<{ left: number; width: number; deslizar: boolean } | null>(null);
+  const panelAnterior = useRef<Panel>(null);
+  useEffect(() => {
+    /* Al abrir desde cerrado la píldora aparece en su campo (solo fundido);
+       de un campo a otro se desliza. */
+    const venia = panelAnterior.current;
+    panelAnterior.current = panel;
+    if (mobile || !panel || !barRef.current) return;
+    const medir = (deslizar: boolean) => {
+      const el = barRef.current?.querySelector<HTMLElement>(`[data-campo="${panel}"]`);
+      if (el) setPildora({ left: el.offsetLeft, width: el.offsetWidth, deslizar });
+    };
+    medir(!!venia);
+    const alCambiarTamano = () => medir(false);
+    window.addEventListener('resize', alCambiarTamano);
+    return () => window.removeEventListener('resize', alCambiarTamano);
+  }, [panel, mobile]);
   const ready = !!(sport || city || date || time);
 
   const search = () => {
@@ -338,10 +372,8 @@ export default function HeroSearch({ initialSport, initialCity, initialDate, ini
      Con un panel abierto la barra se pone gris y el campo activo sube como
      una tarjeta blanca. */
   const field = (p: Panel) =>
-    `w-full h-full flex flex-col justify-center px-7 py-3 text-left rounded-full transition-all duration-200 ${
-      panel === p
-        ? 'bg-white shadow-[0_6px_20px_rgba(0,0,0,0.14)]'
-        : panel ? 'hover:bg-gray-200/70' : 'hover:bg-gray-100'
+    `relative z-[1] w-full h-full flex flex-col justify-center px-7 py-3 text-left rounded-full transition-colors duration-200 ${
+      panel === p ? '' : panel ? 'hover:bg-gray-200/70' : 'hover:bg-gray-100'
     }`;
   const fieldLabel = 'block text-xs font-bold text-gray-900';
   const fieldValue = (filled: boolean) => `block text-sm truncate ${filled ? 'font-semibold text-gray-900' : 'text-gray-500'}`;
@@ -349,19 +381,32 @@ export default function HeroSearch({ initialSport, initialCity, initialDate, ini
   const dropStyle = { boxShadow: '0 12px 40px rgba(0,0,0,.16)' };
   /* La rayita entre campos se esconde junto al campo activo, como en Airbnb. */
   const divider = (antes: Panel, despues: Panel) => (
-    <div className={`w-px my-3.5 flex-none transition-opacity ${panel === antes || panel === despues ? 'opacity-0' : 'bg-gray-200'}`} />
+    <div className={`w-px my-3.5 flex-none transition-opacity duration-300 ${panel === antes || panel === despues ? 'opacity-0' : 'bg-gray-200'}`} />
   );
 
   return (
     <div ref={wrapRef} className="text-left">
       <div
-        className={`relative flex items-stretch rounded-full border transition-colors duration-200 ${
+        ref={barRef}
+        className={`relative flex items-stretch rounded-full border transition-colors duration-300 ${
           panel ? 'bg-gray-100 border-transparent' : 'bg-white border-gray-200'
         }`}
         style={{ boxShadow: '0 3px 12px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04)' }}
       >
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 rounded-full bg-white shadow-[0_6px_20px_rgba(0,0,0,0.14)]"
+          style={{
+            left: pildora?.left ?? 0,
+            width: pildora?.width ?? 0,
+            opacity: panel && pildora ? 1 : 0,
+            transition: pildora?.deslizar
+              ? 'left .38s cubic-bezier(.2,.8,.2,1), width .38s cubic-bezier(.2,.8,.2,1), opacity .2s ease'
+              : 'opacity .2s ease',
+          }}
+        />
         {/* ── DEPORTE ── */}
-        <div className="relative flex-1 min-w-0">
+        <div data-campo="deporte" className="relative flex-1 min-w-0">
           <button type="button" onClick={() => toggle('deporte')} className={field('deporte')}>
             <span className={fieldLabel}>Deporte</span>
             <span className={fieldValue(!!sport)}>{sportLabel}</span>
@@ -376,7 +421,7 @@ export default function HeroSearch({ initialSport, initialCity, initialDate, ini
         {divider('deporte', 'ciudad')}
 
         {/* ── UBICACIÓN ── */}
-        <div className="relative flex-1 min-w-0">
+        <div data-campo="ciudad" className="relative flex-1 min-w-0">
           <button type="button" onClick={() => toggle('ciudad')} className={field('ciudad')}>
             <span className={fieldLabel}>Dónde</span>
             <span className={fieldValue(!!city)}>{city || 'Elige tu ciudad'}</span>
@@ -391,13 +436,15 @@ export default function HeroSearch({ initialSport, initialCity, initialDate, ini
         {divider('ciudad', 'fecha')}
 
         {/* ── FECHA ── */}
-        <div className="relative flex-1 min-w-0">
+        <div data-campo="fecha" className="relative flex-1 min-w-0">
           <button type="button" onClick={() => toggle('fecha')} className={field('fecha')}>
             <span className={fieldLabel}>Fecha</span>
             <span className={`${fieldValue(!!date)} capitalize`}>{dateLabel}</span>
           </button>
           {panel === 'fecha' && (
-            <div className={`${dropBase} left-1/2 -translate-x-1/2 w-[320px]`} style={dropStyle}>
+            /* Centrado con left y no con translate: la animación rtc-drop usa
+               transform y lo pisaba, y el calendario quedaba corrido. */
+            <div className={`${dropBase} left-[calc(50%-160px)] w-[320px]`} style={dropStyle}>
               {fechaInner}
             </div>
           )}
@@ -406,7 +453,7 @@ export default function HeroSearch({ initialSport, initialCity, initialDate, ini
         {divider('fecha', 'hora')}
 
         {/* ── HORA + BUSCAR — el botón vive dentro del último campo, como en Airbnb ── */}
-        <div className="relative flex-[1.25] min-w-0">
+        <div data-campo="hora" className="relative flex-[1.25] min-w-0">
           <div className={`${field('hora')} !flex-row items-center gap-2 !pr-2`}>
             <button type="button" onClick={() => toggle('hora')} className="flex-1 min-w-0 text-left">
               <span className={fieldLabel}>Hora</span>

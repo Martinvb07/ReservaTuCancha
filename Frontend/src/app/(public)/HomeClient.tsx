@@ -111,6 +111,20 @@ export default function HomeClient({ stats }: { stats: PublicStats }) {
     [canchas],
   );
   const consulta = pestana && pestana !== 'cerca' ? `?sport=${pestana}` : '';
+  const deporteBuscador = pestana && pestana !== 'cerca' ? pestana : '';
+
+  /* Posición del subrayado de la pestaña activa. */
+  const navRef = useRef<HTMLElement>(null);
+  const [raya, setRaya] = useState<{ left: number; width: number } | null>(null);
+  useEffect(() => {
+    const medir = () => {
+      const el = navRef.current?.querySelector<HTMLElement>(`[data-pestana="${pestana || 'todo'}"]`);
+      if (el) setRaya({ left: el.offsetLeft, width: el.offsetWidth });
+    };
+    medir();
+    window.addEventListener('resize', medir);
+    return () => window.removeEventListener('resize', medir);
+  }, [pestana]);
 
   return (
     <div>
@@ -121,18 +135,20 @@ export default function HomeClient({ stats }: { stats: PublicStats }) {
             buscadores: la lee el navbar para acoplar la píldora al bajar. */}
         <div className="mx-auto flex max-w-6xl flex-col px-5 pb-6 pt-4 md:pb-8 md:pt-6">
           <div id={SEARCH_ANCHOR_ID} className="order-1 lg:order-2">
-            <MobileSearchTrigger pildora />
+            <MobileSearchTrigger pildora initialSport={deporteBuscador} />
             <div className="mx-auto mt-5 hidden max-w-[880px] lg:block">
-              <HeroSearch />
+              {/* La pestaña y el campo Deporte van sincronizados en los dos sentidos. */}
+              <HeroSearch initialSport={deporteBuscador} onSportChange={(v) => setPestana(v)} />
             </div>
           </div>
 
-          <nav aria-label="Deportes" className="order-2 mt-4 lg:order-1 flex justify-start gap-6 overflow-x-auto [scrollbar-width:none] sm:justify-center sm:gap-10 md:mt-0 [&::-webkit-scrollbar]:hidden">
+          <nav ref={navRef} aria-label="Deportes" className="relative order-2 mt-4 lg:order-1 flex justify-start gap-6 overflow-x-auto [scrollbar-width:none] sm:justify-center sm:gap-10 md:mt-0 [&::-webkit-scrollbar]:hidden">
             {PESTANAS.map((p) => {
               const activa = pestana === p.key || (p.key === 'cerca' && pestana === 'cerca');
               return (
                 <button
                   key={p.key || 'todo'}
+                  data-pestana={p.key || 'todo'}
                   type="button"
                   onClick={() => elegir(p.key)}
                   aria-pressed={activa}
@@ -146,42 +162,55 @@ export default function HomeClient({ stats }: { stats: PublicStats }) {
                       : <img src={p.icono} alt="" width={36} height={36} className="h-full w-full object-contain" />}
                   </span>
                   <span className="whitespace-nowrap">{p.label}</span>
-                  <span className={`absolute inset-x-0 -bottom-px h-[3px] rounded-full bg-gray-900 transition-opacity ${activa ? 'opacity-100' : 'opacity-0 group-hover:opacity-20'}`} />
+                  <span className="absolute inset-x-0 bottom-0 h-[3px] rounded-full bg-gray-900 opacity-0 transition-opacity group-hover:opacity-20" />
                 </button>
               );
             })}
+            {/* Un solo subrayado que se desliza a la pestaña activa. */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute bottom-0 h-[3px] rounded-full bg-gray-900"
+              style={{
+                left: raya?.left ?? 0,
+                width: raya?.width ?? 0,
+                opacity: raya ? 1 : 0,
+                transition: 'left .35s cubic-bezier(.2,.8,.2,1), width .35s cubic-bezier(.2,.8,.2,1), opacity .2s',
+              }}
+            />
           </nav>
         </div>
       </section>
 
       {/* ── Debajo: el diseño de la app (carrusel y lista) ────────── */}
-      <div className="mx-auto w-full max-w-6xl pb-16">
-        <Titulo texto="Canchas para hoy" href={`/empresas${consulta}`} className="mt-7 md:mt-10" />
-        {cargando && visibles.length === 0 ? (
-          <div className="mt-3 flex gap-4 overflow-hidden px-5">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="h-[400px] w-[82%] shrink-0 animate-pulse rounded-[32px] bg-fondo-suave sm:w-[340px]" />
-            ))}
+      <div className="w-full pb-16">
+        {/* El carrusel corre de borde a borde de la ventana: en pantallas
+            anchas la primera tarjeta se alinea con el contenido y las demás
+            se pierden en el borde de la ventana, no a mitad de página. */}
+        <Carrusel titulo="Canchas para hoy" href={`/empresas${consulta}`}>
+          {cargando && visibles.length === 0
+            ? [0, 1, 2, 3].map((i) => (
+                <div key={i} className="h-[400px] w-[82%] shrink-0 animate-pulse rounded-[32px] bg-fondo-suave sm:w-[340px] md:h-[420px]" />
+              ))
+            : visibles.map((c) => {
+                const d = pestana === 'cerca' && posicion ? km(posicion, c) : null;
+                return (
+                  <div key={c._id} className="w-[82%] shrink-0 snap-start sm:w-[340px]">
+                    <TarjetaGrande court={c} distancia={d != null ? textoKm(d) : undefined} />
+                  </div>
+                );
+              })}
+        </Carrusel>
+        {!cargando && visibles.length === 0 && (
+          <div className="mx-auto max-w-6xl px-5">
+            <div className="mt-3 flex flex-col items-center rounded-[28px] bg-white px-6 py-10 text-center">
+              <SearchX className="h-9 w-9 text-gray-300" />
+              <p className="mt-3 font-bold text-gray-900">Aún no hay canchas de este deporte</p>
+              <p className="mt-1 text-sm text-gray-500">Prueba con otro o mira todas las canchas.</p>
+            </div>
           </div>
-        ) : visibles.length === 0 ? (
-          <div className="mx-5 mt-3 flex flex-col items-center rounded-[28px] bg-white px-6 py-10 text-center">
-            <SearchX className="h-9 w-9 text-gray-300" />
-            <p className="mt-3 font-bold text-gray-900">Aún no hay canchas de este deporte</p>
-            <p className="mt-1 text-sm text-gray-500">Prueba con otro o mira todas las canchas.</p>
-          </div>
-        ) : (
-          <Carrusel>
-            {visibles.map((c) => {
-              const d = pestana === 'cerca' && posicion ? km(posicion, c) : null;
-              return (
-                <div key={c._id} className="w-[82%] shrink-0 snap-start sm:w-[340px]">
-                  <TarjetaGrande court={c} distancia={d != null ? textoKm(d) : undefined} />
-                </div>
-              );
-            })}
-          </Carrusel>
         )}
 
+        <div className="mx-auto max-w-6xl">
         {populares.length > 0 && (
           <>
             <Titulo texto="Mejor calificadas" href="/empresas" className="mt-9 md:mt-12" />
@@ -217,6 +246,7 @@ export default function HomeClient({ stats }: { stats: PublicStats }) {
             questionClassName="font-semibold text-gray-900"
           />
         </section>
+        </div>
       </div>
     </div>
   );
@@ -235,32 +265,62 @@ function Titulo({ texto, href, className = '' }: { texto: string; href?: string;
   );
 }
 
-/** Fila con scroll horizontal; en escritorio suma flechas. */
-function Carrusel({ children }: { children: React.ReactNode }) {
+/** Título con "Ver todas" y flechas, y la fila de tarjetas que se desliza. */
+function Carrusel({ titulo, href, children }: { titulo: string; href?: string; children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
-  const mover = (dir: 1 | -1) => ref.current?.scrollBy({ left: dir * 360, behavior: 'smooth' });
+  const [bordes, setBordes] = useState({ inicio: true, fin: false });
+  const leer = () => {
+    const el = ref.current;
+    if (!el) return;
+    setBordes({ inicio: el.scrollLeft < 8, fin: el.scrollLeft + el.clientWidth >= el.scrollWidth - 8 });
+  };
+  useEffect(() => {
+    leer();
+    window.addEventListener('resize', leer);
+    return () => window.removeEventListener('resize', leer);
+  }, [children]);
+  const mover = (dir: 1 | -1) => {
+    const el = ref.current;
+    if (el) el.scrollBy({ left: dir * Math.min(el.clientWidth * 0.8, 1080), behavior: 'smooth' });
+  };
+
   return (
-    <div className="relative mt-3">
+    <section className="mt-7 md:mt-10">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-5">
+        <h2 className="text-lg font-bold text-gray-900 md:text-2xl">{titulo}</h2>
+        <div className="flex shrink-0 items-center gap-3">
+          {href && (
+            <Link href={href} className="py-1 text-sm font-medium text-gray-500 transition-colors hover:text-green-700">
+              Ver todas
+            </Link>
+          )}
+          <div className="hidden gap-2 md:flex">
+            {([-1, 1] as const).map((d) => (
+              <button
+                key={d}
+                type="button"
+                aria-label={d < 0 ? 'Anteriores' : 'Siguientes'}
+                disabled={d < 0 ? bordes.inicio : bordes.fin}
+                onClick={() => mover(d)}
+                className="grid h-9 w-9 place-items-center rounded-full bg-white text-gray-800 transition-colors hover:bg-gray-900 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-gray-800"
+              >
+                {d < 0 ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      {/* El relleno lateral alinea la primera tarjeta con el contenido
+          (max-w-6xl = 72rem). El pb grande con -mb deja respirar la sombra
+          de las tarjetas, que el scroll horizontal recortaría. */}
       <div
         ref={ref}
-        className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-5 px-5 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        onScroll={leer}
+        className="-mb-10 mt-3 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-12 pt-1 scroll-px-5 [scrollbar-width:none] lg:px-[max(1.25rem,calc((100%-72rem)/2+1.25rem))] lg:scroll-px-[max(1.25rem,calc((100%-72rem)/2+1.25rem))] [&::-webkit-scrollbar]:hidden"
       >
         {children}
         <div className="w-1 shrink-0" />
       </div>
-      {([-1, 1] as const).map((d) => (
-        <button
-          key={d}
-          type="button"
-          aria-label={d < 0 ? 'Anteriores' : 'Siguientes'}
-          onClick={() => mover(d)}
-          className={`absolute top-[188px] hidden h-11 w-11 place-items-center rounded-full bg-white text-gray-800 shadow-[0_6px_18px_rgba(0,0,0,0.18)] transition-colors hover:bg-green-600 hover:text-white md:grid ${
-            d < 0 ? 'left-1' : 'right-1'
-          }`}
-        >
-          {d < 0 ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-        </button>
-      ))}
-    </div>
+    </section>
   );
 }

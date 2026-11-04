@@ -8,10 +8,10 @@ export default function Footer() {
 
       {/* Main */}
       <div className="max-w-7xl mx-auto px-6 py-14">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
 
           {/* Brand */}
-          <div className="md:col-span-1 space-y-4">
+          <div className="space-y-4">
             <Link href="/" className="flex items-center gap-3">
               <img src={LOGO_URL} alt="ReservaTuCancha" className="h-11 w-11 object-contain" />
               <span className="font-black text-lg tracking-tight">
@@ -99,7 +99,7 @@ export default function Footer() {
             <div className="pt-2 space-y-2">
               <h4 className="font-black text-sm tracking-widest text-gray-300">Contacto</h4>
               <a href="mailto:martinvelasquezdev@gmail.com"
-                className="flex items-center gap-2 text-sm text-gray-400 hover:text-lime-400 transition-colors">
+                className="flex items-center gap-2 text-sm text-gray-400 hover:text-lime-400 transition-colors min-w-0 [overflow-wrap:anywhere]">
                 <Mail className="h-3.5 w-3.5 shrink-0" /> martinvelasquezdev@gmail.com
               </a>
               <a href="https://wa.me/573124352786" target="_blank" rel="noopener noreferrer"
