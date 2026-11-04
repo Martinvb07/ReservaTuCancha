@@ -9,7 +9,7 @@ import { SPORTS, CITIES, getSport, SPORT_ICONO } from '@/lib/constants';
 import SportIcon from '@/components/ui/SportIcon';
 import CityGlyph, { cityKey } from '@/components/ui/CityGlyph';
 
-type Panel = 'deporte' | 'ciudad' | 'fecha' | 'hora' | null;
+export type Panel = 'deporte' | 'ciudad' | 'fecha' | 'hora' | null;
 
 /* Tile de color + tagline por deporte (mismos tonos que sus chips en constants) */
 const SPORT_META: Record<string, { tag: string; bg: string; color: string }> = {
@@ -119,13 +119,15 @@ interface HeroSearchProps {
    *  inicio lo siguen). Si cambia `initialSport` desde afuera, el campo se
    *  actualiza. */
   onSportChange?: (sport: string) => void;
+  /** Campo que se abre de entrada (el buscador del navbar abre el que se tocó). */
+  initialPanel?: Panel;
 }
 
-export default function HeroSearch({ initialSport, initialCity, initialDate, initialTime, mobile = false, onSearch, onSportChange }: HeroSearchProps) {
+export default function HeroSearch({ initialSport, initialCity, initialDate, initialTime, mobile = false, onSearch, onSportChange, initialPanel = null }: HeroSearchProps) {
   const router = useRouter();
   const wrapRef = useRef<HTMLDivElement>(null);
 
-  const [panel, setPanel] = useState<Panel>(mobile ? 'deporte' : null);
+  const [panel, setPanel] = useState<Panel>(mobile ? 'deporte' : initialPanel);
   const [sport, setSportInterno] = useState(initialSport ?? '');
   const setSport = (v: string) => {
     setSportInterno(v);

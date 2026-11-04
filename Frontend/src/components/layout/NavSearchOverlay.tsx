@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import HeroSearch from '@/components/home/HeroSearch';
+import HeroSearch, { type Panel } from '@/components/home/HeroSearch';
 
 /** Debe coincidir con la duración de `.rtc-search-out` en globals.css */
 export const NAV_SEARCH_EXIT_MS = 260;
@@ -12,6 +12,8 @@ const NAV_HEIGHT = 64; // h-16
 interface Props {
   closing: boolean;
   onClose: () => void;
+  /** Campo del buscador que se abre de entrada. */
+  panel?: Panel;
 }
 
 /**
@@ -19,7 +21,7 @@ interface Props {
  * pegada a la barra: la página se atenúa por debajo del navbar y la búsqueda cae
  * como tarjeta flotante, separada por un gap.
  */
-export default function NavSearchOverlay({ closing, onClose }: Props) {
+export default function NavSearchOverlay({ closing, onClose, panel = null }: Props) {
   /* Prellenar con lo que ya está buscando (en /empresas los filtros viven en la
      URL). Se lee de window en lugar de useSearchParams porque el navbar vive en
      el layout: el hook obligaría a envolverlo en Suspense y desactivaría el
@@ -65,7 +67,7 @@ export default function NavSearchOverlay({ closing, onClose }: Props) {
           className={`w-full max-w-[980px] ${closing ? 'rtc-search-out' : 'rtc-search-expand'}`}
           onClick={(e) => e.stopPropagation()}
         >
-          <HeroSearch {...defaults} onSearch={onClose} />
+          <HeroSearch {...defaults} initialPanel={panel} onSearch={onClose} />
         </div>
       </div>
     </div>,

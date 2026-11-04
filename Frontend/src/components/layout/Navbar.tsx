@@ -13,6 +13,7 @@ import { useSearchDock } from '@/hooks/useSearchDock';
 import { useAnimatedDisclosure } from '@/hooks/useAnimatedDisclosure';
 import { NavSearchPill, NavSearchPillCompact } from './NavSearchPill';
 import NavSearchOverlay, { NAV_SEARCH_EXIT_MS } from './NavSearchOverlay';
+import type { Panel } from '@/components/home/HeroSearch';
 import MobileSearchSheet, { SHEET_EXIT_MS } from '@/components/home/MobileSearchSheet';
 
 const USER_LINKS = [
@@ -81,6 +82,8 @@ export default function Navbar() {
      scroll, el navbar cambia sus links por una píldora compacta. */
   const docked    = useSearchDock();
   const navSearch = useAnimatedDisclosure(NAV_SEARCH_EXIT_MS); // panel desktop
+  /* Campo que se tocó en el buscador del navbar: el panel abre ahí. */
+  const [panelBuscador, setPanelBuscador] = useState<Panel>(null);
   const navSheet  = useAnimatedDisclosure(SHEET_EXIT_MS);      // sheet móvil
 
   /* Si el buscador grande vuelve a estar visible, cerramos el panel de golpe:
@@ -138,7 +141,11 @@ export default function Navbar() {
           {docked ? (
             <NavSearchPill
               active={navSearch.open && !navSearch.closing}
-              onClick={() => (navSearch.open && !navSearch.closing ? navSearch.hide() : navSearch.show())}
+              onAbrir={(panel) => {
+                if (navSearch.open && !navSearch.closing) return navSearch.hide();
+                setPanelBuscador(panel);
+                navSearch.show();
+              }}
             />
           ) : (
           <AnimatePresence mode="wait" initial={false}>
@@ -375,7 +382,7 @@ export default function Navbar() {
       {/* Buscador desplegado desde el navbar. Va dentro del header (que es
           sticky, no transformado) así que los overlays fixed se posicionan
           contra el viewport igual. */}
-      {navSearch.open && <NavSearchOverlay closing={navSearch.closing} onClose={navSearch.hide} />}
+      {navSearch.open && <NavSearchOverlay closing={navSearch.closing} onClose={navSearch.hide} panel={panelBuscador} />}
       {navSheet.open  && <MobileSearchSheet closing={navSheet.closing}  onClose={navSheet.hide} />}
     </header>
   );

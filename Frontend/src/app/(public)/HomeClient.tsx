@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import FaqAccordion from '@/components/ui/FaqAccordion';
 import HeroSearch from '@/components/home/HeroSearch';
 import MobileSearchTrigger from '@/components/home/MobileSearchTrigger';
+import ExploraCiudades from '@/components/home/ExploraCiudades';
 import { TarjetaGrande, FilaCancha } from '@/components/courts/TarjetasCancha';
 import { SEARCH_ANCHOR_ID } from '@/hooks/useSearchDock';
 import { courtsApi } from '@/lib/api/courts.api';
@@ -222,6 +223,8 @@ export default function HomeClient({ stats }: { stats: PublicStats }) {
             </div>
           </>
         )}
+
+        <ExploraCiudades />
 
         {/* ── Para clubes ──────────────────────────────────────────── */}
         <div className="mt-6 px-5 md:mt-10">
