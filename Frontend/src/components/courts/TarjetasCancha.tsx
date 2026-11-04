@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { MapPin, Star, ChevronRight, Heart } from 'lucide-react';
+import { MapPin, Star, ChevronRight } from 'lucide-react';
 import type { Court } from '@/types';
 import { getSport } from '@/lib/constants';
 import SportIcon from '@/components/ui/SportIcon';
@@ -112,62 +112,3 @@ export function FilaCancha({ court }: { court: Court }) {
   );
 }
 
-/**
- * Tarjeta de las filas del inicio, estilo Airbnb: foto cuadrada redondeada
- * con el corazón de favoritas y, si la cancha es de las mejor puntuadas, la
- * etiqueta "Favorita". Debajo, nombre, deporte · ciudad y precio
- * con la nota.
- */
-export function TarjetaCuadrada({
-  court, detalle, favorita, onFavorita,
-}: {
-  court: Court;
-  /** Reemplaza "deporte · ciudad" (por ejemplo, la distancia). */
-  detalle?: string;
-  favorita: boolean;
-  onFavorita: () => void;
-}) {
-  const sport = getSport(court.sport);
-  const foto = court.photos?.[0] || sport.img;
-  const destacada = court.averageRating >= 4.6 && court.totalReviews >= 4;
-  return (
-    <div className="group relative">
-      <Link href={`/canchas/${court._id}`} className="block rounded-[20px] outline-none focus-visible:ring-4 focus-visible:ring-green-500/30">
-        <div className="relative aspect-square overflow-hidden rounded-[20px] bg-gray-100">
-          <FotoRemota src={foto} alt={court.name} sizes="(max-width: 640px) 45vw, 220px" className="object-cover transition-transform duration-500 group-hover:scale-105" />
-          {destacada && (
-            <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-gray-900 shadow-sm">
-              Favorita
-            </span>
-          )}
-        </div>
-        <p className="mt-2.5 truncate text-[15px] font-semibold text-gray-900">{court.name}</p>
-        <p className="truncate text-[13px] text-gray-500">{detalle ?? `${sport.label} · ${court.location.city}`}</p>
-        <p className="mt-0.5 text-[13px] text-gray-500">
-          <span className="font-semibold text-gray-900">{precio(court.pricePerHour)}</span> por hora
-          {court.averageRating > 0 && (
-            <>
-              {' · '}
-              <span className="inline-flex items-center gap-0.5 text-gray-700">
-                <Star className="h-3 w-3 fill-gray-900 text-gray-900" />
-                {court.averageRating.toFixed(1).replace('.', ',')}
-              </span>
-            </>
-          )}
-        </p>
-      </Link>
-      <button
-        type="button"
-        onClick={onFavorita}
-        aria-label={favorita ? 'Quitar de favoritas' : 'Guardar en favoritas'}
-        aria-pressed={favorita}
-        className="absolute right-3 top-3 grid h-8 w-8 place-items-center transition-transform hover:scale-110 active:scale-90"
-      >
-        <Heart
-          className={`h-6 w-6 drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)] ${favorita ? 'fill-red-500 text-white' : 'fill-black/30 text-white'}`}
-          strokeWidth={2}
-        />
-      </button>
-    </div>
-  );
-}
