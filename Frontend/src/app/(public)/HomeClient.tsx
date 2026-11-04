@@ -7,10 +7,11 @@ import { toast } from 'sonner';
 import FaqAccordion from '@/components/ui/FaqAccordion';
 import HeroSearch from '@/components/home/HeroSearch';
 import MobileSearchTrigger from '@/components/home/MobileSearchTrigger';
-import { TarjetaGrande, FilaCancha } from '@/components/courts/TarjetasCancha';
+import { TarjetaGrande, FilaCancha, TarjetaAirbnb, TarjetaCategoria } from '@/components/courts/TarjetasCancha';
+import { useFavoritas } from '@/hooks/useFavoritas';
 import { SEARCH_ANCHOR_ID } from '@/hooks/useSearchDock';
 import { courtsApi } from '@/lib/api/courts.api';
-import { SPORT_ICONO } from '@/lib/constants';
+import { SPORT_ICONO, SPORTS } from '@/lib/constants';
 import type { Court } from '@/types';
 
 /*
@@ -111,6 +112,41 @@ export default function HomeClient({ stats }: { stats: PublicStats }) {
     [canchas],
   );
   const consulta = pestana && pestana !== 'cerca' ? `?sport=${pestana}` : '';
+
+  /* ── Datos del bloque de escritorio (estilo Airbnb) ── */
+  const { ids: favoritas, esFavorita, alternar } = useFavoritas();
+  const guardadas = useMemo(() => canchas.filter((c) => favoritas.includes(c._id)), [canchas, favoritas]);
+  const porCiudad = useMemo(() => {
+    const grupos = new Map<string, Court[]>();
+    for (const c of visibles) {
+      const ciudad = c.location?.city;
+      if (ciudad) grupos.set(ciudad, [...(grupos.get(ciudad) ?? []), c]);
+    }
+    return Array.from(grupos.entries()).sort((a, b) => b[1].length - a[1].length);
+  }, [visibles]);
+  const mejores = useMemo(
+    () => [...visibles].filter((c) => c.totalReviews > 0).sort((a, b) => b.averageRating - a.averageRating).slice(0, 14),
+    [visibles],
+  );
+  /* "Explora por deporte y ciudad": los deportes con su foto y las ciudades
+     con la foto de una de sus canchas. */
+  const categorias = useMemo(() => {
+    const ciudades = new Map<string, string>();
+    for (const c of canchas) {
+      const ciudad = c.location?.city;
+      if (ciudad && !ciudades.has(ciudad)) ciudades.set(ciudad, c.photos?.[0] || '');
+    }
+    return [
+      ...SPORTS.map((sp) => ({ href: `/empresas?sport=${sp.key}`, foto: sp.img, titulo: sp.label })),
+      ...Array.from(ciudades.entries()).filter(([, f]) => f).slice(0, 8).map(([ciudad, foto]) => ({
+        href: `/empresas?city=${encodeURIComponent(ciudad)}`, foto, titulo: `Canchas en ${ciudad}`,
+      })),
+    ];
+  }, [canchas]);
+  const tarjeta = (c: Court) => (
+    <TarjetaAirbnb key={c._id} court={c} favorita={esFavorita(c._id)} onFavorita={() => alternar(c._id)} />
+  );
+  const nombreDeporte = pestana && pestana !== 'cerca' ? PESTANAS.find((x) => x.key === pestana)?.label.toLowerCase() : undefined;
   const deporteBuscador = pestana && pestana !== 'cerca' ? pestana : '';
 
   /* Posición del subrayado de la pestaña activa. */
@@ -181,8 +217,65 @@ export default function HomeClient({ stats }: { stats: PublicStats }) {
         </div>
       </section>
 
-      {/* ── Debajo: el diseño de la app (carrusel y lista) ────────── */}
-      <div className="w-full pb-16">
+      {/* ── Escritorio: filas estilo Airbnb a lo ancho ────────────── */}
+      <div className="hidden bg-white pb-16 pt-8 lg:block">
+        <div className="mx-auto max-w-[1880px] space-y-11 px-10 xl:px-14">
+          {categorias.length > 0 && (
+            <FilaAncha titulo="Explora por deporte y ciudad" href="/empresas" columnas="cat">
+              {categorias.map((c) => <TarjetaCategoria key={c.href} {...c} />)}
+            </FilaAncha>
+          )}
+          {guardadas.length > 0 && !pestana && (
+            <FilaAncha titulo="Tus favoritas">{guardadas.map(tarjeta)}</FilaAncha>
+          )}
+          {visibles.length > 0 ? (
+            <FilaAncha
+              titulo={pestana === 'cerca' ? 'Canchas cerca de ti' : `Canchas${nombreDeporte ? ` de ${nombreDeporte}` : ''} para jugar hoy`}
+              href={`/empresas${consulta}`}
+            >
+              {visibles.slice(0, 14).map(tarjeta)}
+            </FilaAncha>
+          ) : !cargando && (
+            <p className="rounded-2xl border border-gray-200 px-6 py-10 text-center text-gray-500">Aún no hay canchas de este deporte.</p>
+          )}
+          {pestana !== 'cerca' && porCiudad.slice(0, 2).filter(([, l]) => l.length >= 2).map(([ciudad, lista]) => (
+            <FilaAncha
+              key={ciudad}
+              titulo={`Canchas${nombreDeporte ? ` de ${nombreDeporte}` : ''} en ${ciudad}`}
+              href={`/empresas?city=${encodeURIComponent(ciudad)}${pestana ? `&sport=${pestana}` : ''}`}
+            >
+              {lista.map(tarjeta)}
+            </FilaAncha>
+          ))}
+          {mejores.length > 0 && pestana !== 'cerca' && (
+            <FilaAncha titulo="Las mejor calificadas" href={`/empresas${consulta}`}>{mejores.map(tarjeta)}</FilaAncha>
+          )}
+
+          <Link href="/para-clubes" className="group flex items-center gap-4 rounded-3xl bg-gray-900 p-7">
+            <div className="min-w-0 flex-1">
+              <p className="text-lg font-bold text-white">¿Tienes una cancha?</p>
+              <p className="mt-1 text-sm text-gray-400">Recibe reservas pagadas en línea, sin mensualidad.</p>
+            </div>
+            <span className="shrink-0 rounded-full bg-lime-400 px-5 py-2.5 text-sm font-bold text-gray-900 transition-transform group-hover:scale-105">
+              Publica tu cancha
+            </span>
+          </Link>
+
+          <section>
+            <h2 className="text-[22px] font-semibold text-gray-900">Preguntas frecuentes</h2>
+            <FaqAccordion
+              items={FAQ}
+              className="mt-4 grid grid-cols-2 items-start gap-3"
+              itemClassName="w-full text-left bg-white rounded-2xl p-5 border border-gray-200 hover:border-gray-400"
+              openItemClassName="border-gray-900"
+              questionClassName="font-semibold text-gray-900"
+            />
+          </section>
+        </div>
+      </div>
+
+      {/* ── Celular y tablet: el diseño de la app (carrusel y lista) ── */}
+      <div className="w-full pb-16 lg:hidden">
         {/* El carrusel corre de borde a borde de la ventana: en pantallas
             anchas la primera tarjeta se alinea con el contenido y las demás
             se pierden en el borde de la ventana, no a mitad de página. */}
@@ -320,6 +413,70 @@ function Carrusel({ titulo, href, children }: { titulo: string; href?: string; c
       >
         {children}
         <div className="w-1 shrink-0" />
+      </div>
+    </section>
+  );
+}
+
+/** Fila estilo Airbnb: título con flecha, flechas a la derecha y tarjetas que
+ *  se deslizan de lado. Siete por fila en pantalla grande. */
+function FilaAncha({
+  titulo, href, columnas = 'tarjeta', children,
+}: { titulo: string; href?: string; columnas?: 'tarjeta' | 'cat'; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [bordes, setBordes] = useState({ inicio: true, fin: false });
+  const leer = () => {
+    const el = ref.current;
+    if (!el) return;
+    setBordes({ inicio: el.scrollLeft < 8, fin: el.scrollLeft + el.clientWidth >= el.scrollWidth - 8 });
+  };
+  useEffect(() => {
+    leer();
+    window.addEventListener('resize', leer);
+    return () => window.removeEventListener('resize', leer);
+  }, [children]);
+  const mover = (dir: 1 | -1) => {
+    const el = ref.current;
+    if (el) el.scrollBy({ left: dir * el.clientWidth, behavior: 'smooth' });
+  };
+  const cols = columnas === 'cat'
+    ? 'auto-cols-[calc((100%-4*0.75rem)/5)] xl:auto-cols-[calc((100%-6*0.75rem)/7)] 2xl:auto-cols-[calc((100%-8*0.75rem)/9)]'
+    : 'auto-cols-[calc((100%-3*0.75rem)/4)] xl:auto-cols-[calc((100%-4*0.75rem)/5)] 2xl:auto-cols-[calc((100%-6*0.75rem)/7)]';
+
+  return (
+    <section>
+      <div className="flex items-center justify-between gap-4">
+        {href ? (
+          <Link href={href} className="group inline-flex min-w-0 items-center gap-2">
+            <h2 className="truncate text-[22px] font-semibold text-gray-900">{titulo}</h2>
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gray-100 text-gray-900 transition-colors group-hover:bg-gray-900 group-hover:text-white">
+              <ChevronRight className="h-4 w-4" />
+            </span>
+          </Link>
+        ) : (
+          <h2 className="truncate text-[22px] font-semibold text-gray-900">{titulo}</h2>
+        )}
+        <div className="flex shrink-0 gap-2">
+          {([-1, 1] as const).map((d) => (
+            <button
+              key={d}
+              type="button"
+              aria-label={d < 0 ? 'Anteriores' : 'Siguientes'}
+              disabled={d < 0 ? bordes.inicio : bordes.fin}
+              onClick={() => mover(d)}
+              className="grid h-8 w-8 place-items-center rounded-full bg-gray-100 text-gray-900 transition hover:bg-gray-200 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-gray-100 disabled:hover:shadow-none"
+            >
+              {d < 0 ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div
+        ref={ref}
+        onScroll={leer}
+        className={`mt-4 grid grid-flow-col gap-3 overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*]:snap-start ${cols}`}
+      >
+        {children}
       </div>
     </section>
   );

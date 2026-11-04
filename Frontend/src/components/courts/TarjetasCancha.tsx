@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { MapPin, Star, ChevronRight } from 'lucide-react';
+import { MapPin, Star, ChevronRight, Heart } from 'lucide-react';
 import type { Court } from '@/types';
 import { getSport } from '@/lib/constants';
 import SportIcon from '@/components/ui/SportIcon';
@@ -112,3 +112,62 @@ export function FilaCancha({ court }: { court: Court }) {
   );
 }
 
+
+/**
+ * Tarjeta de las filas del inicio en escritorio, estilo Airbnb: foto casi
+ * cuadrada con el corazón de favoritas y, si la cancha es de las mejor
+ * puntuadas, "Favorita entre jugadores". Debajo, nombre, deporte · ciudad y
+ * precio con la nota.
+ */
+export function TarjetaAirbnb({
+  court, favorita, onFavorita,
+}: {
+  court: Court;
+  favorita: boolean;
+  onFavorita: () => void;
+}) {
+  const sport = getSport(court.sport);
+  const foto = court.photos?.[0] || sport.img;
+  const destacada = court.averageRating >= 4.6 && court.totalReviews >= 4;
+  return (
+    <div className="group relative">
+      <Link href={`/canchas/${court._id}`} className="block rounded-2xl outline-none focus-visible:ring-4 focus-visible:ring-green-500/30">
+        <div className="relative aspect-[20/19] overflow-hidden rounded-2xl bg-gray-100">
+          <FotoRemota src={foto} alt={court.name} sizes="(max-width: 1280px) 20vw, 260px" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+          {destacada && (
+            <span className="absolute left-3 top-3 max-w-[calc(100%-3.5rem)] truncate rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-gray-900 shadow-sm">
+              Favorita entre jugadores
+            </span>
+          )}
+        </div>
+        <p className="mt-2.5 truncate text-[15px] font-semibold text-gray-900">{court.name}</p>
+        <p className="truncate text-sm text-gray-500">{sport.label} · {court.location.city}</p>
+        <p className="text-sm text-gray-500">
+          {precio(court.pricePerHour)} COP por hora
+          {court.averageRating > 0 && <> · <Star className="mb-0.5 inline h-3 w-3 fill-gray-900 text-gray-900" /> {court.averageRating.toFixed(2).replace(/0$/, '')}</>}
+        </p>
+      </Link>
+      <button
+        type="button"
+        onClick={onFavorita}
+        aria-label={favorita ? 'Quitar de favoritas' : 'Guardar en favoritas'}
+        aria-pressed={favorita}
+        className="absolute right-3 top-3 grid h-8 w-8 place-items-center transition-transform hover:scale-110 active:scale-90"
+      >
+        <Heart className={`h-6 w-6 drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)] ${favorita ? 'fill-red-500 text-white' : 'fill-black/30 text-white'}`} strokeWidth={2} />
+      </button>
+    </div>
+  );
+}
+
+/** Foto con etiqueta debajo: la fila "Explora por deporte y ciudad". */
+export function TarjetaCategoria({ href, foto, titulo }: { href: string; foto: string; titulo: string }) {
+  return (
+    <Link href={href} className="group block outline-none">
+      <div className="relative aspect-[21/20] overflow-hidden rounded-2xl bg-gray-100">
+        <FotoRemota src={foto} alt={titulo} sizes="200px" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+      </div>
+      <p className="mt-2.5 truncate text-sm font-medium text-gray-900">{titulo}</p>
+    </Link>
+  );
+}
