@@ -15,6 +15,7 @@ import { AMEN_ICONS } from '@/lib/amenityIcons';
 import { SlidersHorizontal, X, CalendarDays, Search, ChevronDown, Check, Sparkles, Banknote, ArrowUpDown, Map as MapIcon, LayoutGrid, Columns2 } from 'lucide-react';
 import { useAnimatedDisclosure } from '@/hooks/useAnimatedDisclosure';
 import { SEARCH_ANCHOR_ID } from '@/hooks/useSearchDock';
+import { leerParaVolver, consumirVolver, guardarListado, marcarSalidaACancha } from '@/lib/listadoGuardado';
 import MobileStackSheet, { STACK_SHEET_EXIT_MS } from '@/components/ui/MobileStackSheet';
 import type { Court } from '@/types';
 
@@ -112,12 +113,19 @@ export default function EmpresasPageClient() {
   }, [dateParam, startParam]);
 
   // Amenidades, precio, orden y paginación son refinamientos locales (no van a la URL).
-  const [amenities, setAmenities] = useState<string[]>([]);
-  const [minPrice, setMinPrice] = useState(PRICE_MIN);
-  const [maxPrice, setMaxPrice] = useState(PRICE_MAX);
-  const [sort, setSort] = useState<(typeof SORT_ORDER)[number]>('destacados');
-  const [clientPage, setClientPage] = useState(1);
-  const [view, setView] = useState<ResultView>('lista');
+  /* Si se vuelve de una cancha abierta desde aquí, arrancan como se dejaron
+     (ver lib/listadoGuardado). Este componente solo se pinta en el cliente
+     (useSearchParams bajo Suspense), así que leer sessionStorage aquí es seguro. */
+  const urlListado = `/empresas${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+  const [guardado] = useState(() => leerParaVolver(urlListado));
+  const [amenities, setAmenities] = useState<string[]>(() => guardado?.amenities ?? []);
+  const [minPrice, setMinPrice] = useState(() => guardado?.minPrice ?? PRICE_MIN);
+  const [maxPrice, setMaxPrice] = useState(() => guardado?.maxPrice ?? PRICE_MAX);
+  const [sort, setSort] = useState<(typeof SORT_ORDER)[number]>(() =>
+    (SORT_ORDER as readonly string[]).includes(guardado?.sort ?? '') ? (guardado!.sort as (typeof SORT_ORDER)[number]) : 'destacados');
+  const [clientPage, setClientPage] = useState(() => guardado?.page ?? 1);
+  const [view, setView] = useState<ResultView>(() =>
+    (['lista', 'split', 'mapa'] as string[]).includes(guardado?.view ?? '') ? (guardado!.view as ResultView) : 'lista');
   /* Cancha bajo el cursor en la vista dividida: resalta su pin en el mapa. */
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -143,9 +151,38 @@ export default function EmpresasPageClient() {
   const search = useAnimatedDisclosure(SEARCH_EXIT_MS);
 
   // Una búsqueda nueva (cambia la URL) o un filtro nuevo vuelve a la página 1.
-  useEffect(() => { setClientPage(1); }, [sport, city, dateParam, startParam, minPrice, maxPrice, sort]);
+  /* Cambiar un filtro vuelve a la página 1, pero no en la primera pasada:
+     si no, al volver de una cancha se perdía la página en la que se estaba. */
+  const primeraPasada = useRef(true);
+  useEffect(() => {
+    if (primeraPasada.current) { primeraPasada.current = false; return; }
+    setClientPage(1);
+  }, [sport, city, dateParam, startParam, minPrice, maxPrice, sort]);
+
+  /* Memoria del listado: se guarda con cada cambio, la marca de "volver" se
+     usa una sola vez, y al abrir una cancha se anota el scroll. */
+  useEffect(() => { consumirVolver(); }, []);
+  useEffect(() => {
+    guardarListado(urlListado, { amenities, minPrice, maxPrice, sort, page: clientPage, view });
+  }, [amenities, minPrice, maxPrice, sort, clientPage, view, urlListado]);
+  useEffect(() => {
+    const alAbrir = (e: MouseEvent) => {
+      if ((e.target as HTMLElement).closest?.('a[href^="/canchas/"]')) marcarSalidaACancha();
+    };
+    document.addEventListener('click', alAbrir, true);
+    return () => document.removeEventListener('click', alAbrir, true);
+  }, []);
 
   const { data, isLoading, isError } = useCourts({ sport, city, minPrice: '', maxPrice: '', page: 1, limit: 48 });
+
+  /* Al volver, una vez que las canchas están pintadas, se baja hasta donde se estaba. */
+  const scrollPendiente = useRef(guardado?.scroll ?? 0);
+  useEffect(() => {
+    if (isLoading || !scrollPendiente.current) return;
+    const y = scrollPendiente.current;
+    scrollPendiente.current = 0;
+    requestAnimationFrame(() => window.scrollTo({ top: y, behavior: 'instant' as ScrollBehavior }));
+  }, [isLoading]);
 
   const sorted = useMemo<Court[]>(() => {
     const list = [...(data?.data ?? [])];

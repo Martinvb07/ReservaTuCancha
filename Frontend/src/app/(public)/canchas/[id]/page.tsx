@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
 import { MapPin, Star, ArrowLeft, Clock, Users, ShieldCheck } from 'lucide-react';
 import FotoRemota from '@/components/ui/FotoRemota';
+import VolverListado from '@/components/courts/VolverListado';
 import BookingForm from '@/components/bookings/BookingForm';
 import ReviewCard from '@/components/reviews/ReviewCard';
 import SportIcon from '@/components/ui/SportIcon';
@@ -95,18 +95,18 @@ export default async function CourtDetailPage({
           como en la app. Escritorio: galería redondeada. */}
       <section className="lg:max-w-6xl lg:mx-auto lg:px-5 lg:pt-6">
         <div className="hidden lg:flex items-center justify-between mb-4">
-          <Link href="/empresas" className="inline-flex items-center gap-2 bg-white hover:bg-gray-900 hover:text-white text-gray-800 text-sm font-semibold pl-3 pr-4 py-2 rounded-full transition-colors">
+          <VolverListado className="inline-flex items-center gap-2 bg-white hover:bg-gray-900 hover:text-white text-gray-800 text-sm font-semibold pl-3 pr-4 py-2 rounded-full transition-colors">
             <ArrowLeft className="h-4 w-4" /> Volver a canchas
-          </Link>
+          </VolverListado>
         </div>
         <div className={`relative grid gap-2 ${photos.length > 2 ? 'lg:grid-cols-[2fr_1fr]' : ''}`}>
           <div className="relative h-[340px] md:h-[400px] lg:h-[440px] overflow-hidden bg-gray-200 lg:rounded-[32px]">
             <FotoRemota src={photos[0]} alt={court.name} priority sizes="(max-width: 1024px) 100vw, 760px" className="object-cover" />
             <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/45 to-transparent lg:hidden" />
-            <Link href="/empresas" aria-label="Volver a canchas"
+            <VolverListado ariaLabel="Volver a canchas"
               className="lg:hidden absolute left-4 top-4 grid h-11 w-11 place-items-center rounded-full border border-white/25 bg-white/20 text-white backdrop-blur-md">
               <ArrowLeft className="h-5 w-5" />
-            </Link>
+            </VolverListado>
           </div>
           {photos.length > 2 && (
             <div className="hidden lg:grid grid-rows-2 gap-2">
