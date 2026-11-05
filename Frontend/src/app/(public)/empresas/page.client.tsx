@@ -417,13 +417,13 @@ export default function EmpresasPageClient() {
           {/* DESKTOP: píldoras con dropdown anclado */}
           {/* PC con el buscador abierto: ocupa la fila hasta buscar o cerrar. */}
           {search.open && (
-            <div className={`hidden lg:flex items-start gap-3 py-3 ${search.closing ? 'rtc-search-out' : 'rtc-search-expand'}`}>
+            <div className={`hidden lg:flex items-center gap-3 py-3 ${search.closing ? 'rtc-search-out' : 'rtc-search-expand'}`}>
               <div className="flex-1 min-w-0 max-w-5xl">
                 <HeroSearch initialSport={sport} initialCity={city} initialDate={dateParam} initialTime={startParam}
                   onSearch={search.hide} />
               </div>
               <button type="button" onClick={search.hide} aria-label="Cerrar buscador"
-                className="mt-3 w-10 h-10 rounded-full bg-white text-gray-700 grid place-items-center hover:bg-gray-900 hover:text-white hover:rotate-90 active:scale-90 transition-all duration-200 flex-none">
+                className="w-11 h-11 rounded-full bg-white text-gray-700 grid place-items-center hover:bg-gray-900 hover:text-white hover:rotate-90 active:scale-90 transition-all duration-200 flex-none">
                 <X className="h-4 w-4" />
               </button>
             </div>
