@@ -9,6 +9,7 @@ import { useCourts } from '@/hooks/useCourts';
 import CourtCard from '@/components/courts/CourtCard';
 import HeroSearch from '@/components/home/HeroSearch';
 import MobileSearchTrigger from '@/components/home/MobileSearchTrigger';
+import FotoCiudad from '@/components/ui/FotoCiudad';
 import { AMENITIES, getSport } from '@/lib/constants';
 import { AMEN_ICONS } from '@/lib/amenityIcons';
 import { SlidersHorizontal, X, CalendarDays, Search, ChevronDown, Check, Sparkles, Banknote, ArrowUpDown, Map as MapIcon, LayoutGrid, Columns2 } from 'lucide-react';
@@ -371,10 +372,30 @@ export default function EmpresasPageClient() {
           z-[35] deja el navbar (z-40) por encima. */}
       <section className={`relative ${search.open ? 'z-[35]' : ''}`}>
         <div className="relative max-w-7xl mx-auto px-5 pt-6 pb-2 md:pt-10">
-          <h1 className="text-[28px] md:text-5xl font-extrabold tracking-tight leading-[1.15] text-gray-900">Explora canchas</h1>
-          <p className="text-gray-500 mt-1 text-sm md:text-base">
-            {isLoading ? 'Buscando…' : `${data?.total ?? 0} canchas disponibles en Colombia`}
-          </p>
+          {city ? (
+            /* Con una ciudad elegida (desde "Explora por ciudad" o el
+               buscador), la cabecera es una portada con la foto de la ciudad. */
+            <div className="relative h-[200px] overflow-hidden rounded-[28px] bg-gradient-to-br from-green-700 to-gray-900 md:h-[280px]">
+              <FotoCiudad ciudad={city} prioridad />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/10" />
+              <div className="absolute inset-x-5 bottom-5 md:inset-x-8 md:bottom-7">
+                <p className="text-sm font-semibold text-lime-300 md:text-base">
+                  {sport ? `Canchas de ${getSport(sport).label.toLowerCase()} en` : 'Canchas en'}
+                </p>
+                <h1 className="text-[32px] font-extrabold leading-tight tracking-tight text-white md:text-5xl">{city}</h1>
+                <p className="mt-1 text-sm text-white/85 md:text-base">
+                  {isLoading ? 'Buscando…' : `${data?.total ?? 0} ${(data?.total ?? 0) === 1 ? 'cancha disponible' : 'canchas disponibles'}`}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <h1 className="text-[28px] md:text-5xl font-extrabold tracking-tight leading-[1.15] text-gray-900">Explora canchas</h1>
+              <p className="text-gray-500 mt-1 text-sm md:text-base">
+                {isLoading ? 'Buscando…' : `${data?.total ?? 0} canchas disponibles en Colombia`}
+              </p>
+            </>
+          )}
 
           {/* El id lo lee el navbar: cuando este bloque pasa por encima de la
               barra, el buscador se acopla al navbar (ver useSearchDock). */}
@@ -606,11 +627,6 @@ export default function EmpresasPageClient() {
           </div>
         )}
 
-        {city && (
-          <p className="text-sm text-gray-500 mb-5 md:hidden">
-            Canchas en <span className="font-semibold text-gray-900">{city}</span>
-          </p>
-        )}
 
         {/* Error */}
         {isError && (
