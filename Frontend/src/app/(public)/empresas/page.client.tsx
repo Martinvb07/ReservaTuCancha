@@ -415,9 +415,13 @@ export default function EmpresasPageClient() {
         <div className="max-w-7xl mx-auto px-5">
 
           {/* DESKTOP: píldoras con dropdown anclado */}
-          {/* PC con el buscador abierto: ocupa la fila hasta buscar o cerrar. */}
+          {/* PC: el buscador abierto va encima de la fila de filtros, en el
+              mismo lugar (no la empuja). El alto de la fila se anima y, al
+              cerrar, los filtros vuelven con un fundido mientras el buscador
+              se recoge hacia la píldora. */}
+          <div className={`relative transition-[min-height] duration-300 ease-out ${search.open && !search.closing ? 'lg:min-h-[98px]' : 'lg:min-h-[64px]'}`}>
           {search.open && (
-            <div className={`hidden lg:flex items-center gap-3 py-3 ${search.closing ? 'rtc-search-out' : 'rtc-search-expand'}`}>
+            <div className={`absolute inset-x-0 top-0 z-10 hidden lg:flex items-center gap-3 py-3 ${search.closing ? 'rtc-fila-cerrar pointer-events-none' : 'rtc-fila-abrir'}`}>
               <div className="flex-1 min-w-0 max-w-5xl">
                 <HeroSearch initialSport={sport} initialCity={city} initialDate={dateParam} initialTime={startParam}
                   onSearch={search.hide} />
@@ -429,7 +433,9 @@ export default function EmpresasPageClient() {
             </div>
           )}
 
-          <div ref={filterRef} className={`hidden md:flex items-center gap-2 py-3 ${search.open ? 'lg:hidden' : ''}`}>
+          <div ref={filterRef} className={`hidden md:flex items-center gap-2 py-3 ${
+            search.open && !search.closing ? 'lg:invisible lg:opacity-0' : search.closing ? 'rtc-fila-aparecer' : ''
+          }`}>
             <div className="flex items-center gap-2 flex-1 min-w-0">
               {/* Buscador (PC): resumen de lo que se busca; al tocarlo se abre. */}
               <button type="button" onClick={search.show}
@@ -536,6 +542,8 @@ export default function EmpresasPageClient() {
 
               {viewToggle}
             </div>
+          </div>
+
           </div>
 
           {/* MÓVIL: botón Filtros (abre sheet) + contador */}

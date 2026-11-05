@@ -303,6 +303,26 @@ body.sheet-open .fab-float {
   will-change: transform, opacity;
 }
 
+/* Buscador dentro de la fila de filtros del listado (PC): se despliega desde
+   la píldora (izquierda) y se recoge hacia ella; los filtros vuelven con un
+   fundido corto mientras tanto. */
+@keyframes rtc-filaAbrir {
+  from { opacity: 0; transform: scaleX(.6) scaleY(.92); }
+  60%  { opacity: 1; }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes rtc-filaCerrar {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: scaleX(.7) scaleY(.94); }
+}
+@keyframes rtc-filaAparecer {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: none; }
+}
+.rtc-fila-abrir   { transform-origin: left center; animation: rtc-filaAbrir .42s cubic-bezier(.16,1,.3,1) both; }
+.rtc-fila-cerrar  { transform-origin: left center; animation: rtc-filaCerrar .26s cubic-bezier(.4,0,.2,1) both; }
+.rtc-fila-aparecer { animation: rtc-filaAparecer .26s cubic-bezier(.16,1,.3,1) both; }
+
 /* Velo que atenúa la página bajo el navbar mientras la búsqueda está abierta */
 .rtc-scrim-in  { animation: rtc-fade .34s ease both; }
 .rtc-scrim-out { animation: rtc-fadeOut .24s ease both; }
@@ -310,7 +330,7 @@ body.sheet-open .fab-float {
 @media (prefers-reduced-motion: reduce) {
   .rtc-fade, .rtc-drop, .rtc-item, .rtc-pick,
   .rtc-ready, .rtc-live, .rtc-card,
-  .nav-search-in, .rtc-search-expand, .rtc-search-out,
+  .nav-search-in, .rtc-search-expand, .rtc-search-out, .rtc-fila-abrir, .rtc-fila-cerrar, .rtc-fila-aparecer,
   .rtc-scrim-in, .rtc-scrim-out,
   .mobile-sheet-in, .mobile-sheet-out, .rtc-sheet-up, .mobile-search-stack > * { animation: none !important; transition: none !important; transform: none !important; }
 }
