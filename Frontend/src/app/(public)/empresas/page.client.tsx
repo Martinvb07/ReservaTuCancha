@@ -221,9 +221,10 @@ export default function EmpresasPageClient() {
             view === key ? 'bg-fondo text-gray-900' : 'text-gray-500 hover:text-gray-800'
           }`}>
           <Icon className="h-3.5 w-3.5" />
-          {/* Entre md y lg la barra va justa de ancho: ahí el toggle queda solo
-              con iconos. En móvil y en pantallas anchas sí caben las etiquetas. */}
-          <span className="hidden max-md:inline lg:inline">{label}</span>
+          {/* Entre md y xl la barra va justa (en PC lleva además el buscador):
+              ahí el toggle queda solo con iconos. En móvil y desde xl sí caben
+              las etiquetas. */}
+          <span className="hidden max-md:inline xl:inline">{label}</span>
         </button>
       ))}
     </div>
@@ -370,7 +371,7 @@ export default function EmpresasPageClient() {
           los dropdowns del buscador. Y con el buscador abierto la sección sube
           por encima de la barra de filtros sticky (z-30) para que no los tape.
           z-[35] deja el navbar (z-40) por encima. */}
-      <section className={`relative ${search.open ? 'z-[35]' : ''}`}>
+      <section className="relative">
         <div className="relative max-w-7xl mx-auto px-5 pt-6 pb-2 md:pt-10">
           {city ? (
             /* Con una ciudad elegida (desde "Explora por ciudad" o el
@@ -399,44 +400,9 @@ export default function EmpresasPageClient() {
 
           {/* El id lo lee el navbar: cuando este bloque pasa por encima de la
               barra, el buscador se acopla al navbar (ver useSearchDock). */}
-          <div id={SEARCH_ANCHOR_ID} className="mt-5 md:mt-6">
-            {/* Desktop: píldora resumen → clic para expandir la barra completa.
-                min-h reserva el alto de la barra expandida, así el intercambio
-                píldora ⇄ barra no empuja la página hacia abajo. */}
-            <div className="hidden lg:block min-h-[88px]">
-              {search.open ? (
-                <div className={`max-w-5xl flex items-start gap-3 ${search.closing ? 'rtc-search-out' : 'rtc-search-expand'}`}>
-                  <div className="flex-1 min-w-0">
-                    <HeroSearch initialSport={sport} initialCity={city} initialDate={dateParam} initialTime={startParam}
-                      onSearch={search.hide} />
-                  </div>
-                  <button type="button" onClick={search.hide} aria-label="Cerrar buscador"
-                    className="mt-3 w-10 h-10 rounded-full bg-white text-gray-700 grid place-items-center hover:bg-gray-900 hover:text-white hover:rotate-90 active:scale-90 transition-all duration-200 flex-none">
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <button type="button" onClick={search.show}
-                  className="nav-search-in inline-flex items-center gap-2.5 bg-white rounded-full pl-5 pr-2 py-2 text-sm text-left hover:shadow-xl transition-shadow"
-                  style={{ boxShadow: '0 1px 2px rgba(17,24,39,.04)' }}>
-                  <span className={sport ? 'font-semibold text-gray-900' : 'text-gray-500'}>{sport ? getSport(sport).label : 'Deporte'}</span>
-                  <span className="text-gray-300">·</span>
-                  <span className={city ? 'font-semibold text-gray-900' : 'text-gray-500'}>{city || 'Ciudad'}</span>
-                  <span className="text-gray-300">·</span>
-                  <span className={`capitalize ${dateParam ? 'font-semibold text-gray-900' : 'text-gray-500'}`}>
-                    {dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)
-                      ? format(parse(dateParam, 'yyyy-MM-dd', new Date()), "EEE d 'de' MMM", { locale: es })
-                      : 'Fecha'}
-                  </span>
-                  <span className="text-gray-300">·</span>
-                  <span className={startParam ? 'font-semibold text-gray-900' : 'text-gray-500'}>{startParam ? to12h(startParam) : 'Hora'}</span>
-                  <span className="ml-1.5 w-9 h-9 rounded-full bg-green-600 text-white grid place-items-center flex-none">
-                    <Search className="h-4 w-4" />
-                  </span>
-                </button>
-              )}
-            </div>
-
+          {/* En PC el buscador vive en la fila de filtros (más abajo); aquí
+              queda solo el de celular y tablet. */}
+          <div id={SEARCH_ANCHOR_ID} className="mt-5 md:mt-6 lg:mt-0">
             <div className="lg:hidden">
               <MobileSearchTrigger suave initialSport={sport} initialCity={city} initialDate={dateParam} initialTime={startParam} />
             </div>
@@ -449,8 +415,40 @@ export default function EmpresasPageClient() {
         <div className="max-w-7xl mx-auto px-5">
 
           {/* DESKTOP: píldoras con dropdown anclado */}
-          <div ref={filterRef} className="hidden md:flex items-center gap-2 py-3">
+          {/* PC con el buscador abierto: ocupa la fila hasta buscar o cerrar. */}
+          {search.open && (
+            <div className={`hidden lg:flex items-start gap-3 py-3 ${search.closing ? 'rtc-search-out' : 'rtc-search-expand'}`}>
+              <div className="flex-1 min-w-0 max-w-5xl">
+                <HeroSearch initialSport={sport} initialCity={city} initialDate={dateParam} initialTime={startParam}
+                  onSearch={search.hide} />
+              </div>
+              <button type="button" onClick={search.hide} aria-label="Cerrar buscador"
+                className="mt-3 w-10 h-10 rounded-full bg-white text-gray-700 grid place-items-center hover:bg-gray-900 hover:text-white hover:rotate-90 active:scale-90 transition-all duration-200 flex-none">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
+          <div ref={filterRef} className={`hidden md:flex items-center gap-2 py-3 ${search.open ? 'lg:hidden' : ''}`}>
             <div className="flex items-center gap-2 flex-1 min-w-0">
+              {/* Buscador (PC): resumen de lo que se busca; al tocarlo se abre. */}
+              <button type="button" onClick={search.show}
+                className="hidden lg:inline-flex items-center gap-2 bg-white rounded-full pl-4 pr-1.5 h-10 text-[13px] text-left whitespace-nowrap hover:shadow-md transition-shadow mr-1">
+                <span className={sport ? 'font-semibold text-gray-900' : 'text-gray-500'}>{sport ? getSport(sport).label : 'Deporte'}</span>
+                <span className="text-gray-300">·</span>
+                <span className={city ? 'font-semibold text-gray-900' : 'text-gray-500'}>{city || 'Ciudad'}</span>
+                <span className="text-gray-300">·</span>
+                <span className={`capitalize ${dateParam ? 'font-semibold text-gray-900' : 'text-gray-500'}`}>
+                  {dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)
+                    ? format(parse(dateParam, 'yyyy-MM-dd', new Date()), "EEE d 'de' MMM", { locale: es })
+                    : 'Fecha'}
+                </span>
+                <span className="text-gray-300">·</span>
+                <span className={startParam ? 'font-semibold text-gray-900' : 'text-gray-500'}>{startParam ? to12h(startParam) : 'Hora'}</span>
+                <span className="ml-1 w-7 h-7 rounded-full bg-green-600 text-white grid place-items-center flex-none">
+                  <Search className="h-3.5 w-3.5" />
+                </span>
+              </button>
 
               {/* Amenidades — cuadrícula de tiles */}
               <div className="relative">
@@ -513,7 +511,9 @@ export default function EmpresasPageClient() {
                   {activeFilters} <X className="h-3 w-3" />
                 </button>
               )}
-              <span className="text-gray-500 text-[13px] whitespace-nowrap">
+              {/* Entre lg y xl la fila va justa con el buscador: el contador se
+                  oculta (también lo dice la cabecera). */}
+              <span className="text-gray-500 text-[13px] whitespace-nowrap lg:hidden xl:inline">
                 <span className="font-semibold text-gray-900">{filtered.length}</span> {filtered.length === 1 ? 'cancha' : 'canchas'}
               </span>
 
