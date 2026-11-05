@@ -87,14 +87,14 @@ function MiniCalendar({ value, onPick }: { value: Date | null; onPick: (d: Date)
     <div className="p-4">
       <div className="flex items-center justify-between mb-3">
         <button type="button" onClick={() => setView((v) => ({ y: v.m === 0 ? v.y - 1 : v.y, m: (v.m + 11) % 12 }))}
-          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500">
+          className="p-1.5 rounded-full hover:bg-gray-100 transition-colors text-gray-500">
           <ChevronLeft className="h-4 w-4" />
         </button>
         <span className="font-bold text-gray-800 text-sm capitalize">
           {format(new Date(view.y, view.m, 1), 'MMMM yyyy', { locale: es })}
         </span>
         <button type="button" onClick={() => setView((v) => ({ y: v.m === 11 ? v.y + 1 : v.y, m: (v.m + 1) % 12 }))}
-          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500">
+          className="p-1.5 rounded-full hover:bg-gray-100 transition-colors text-gray-500">
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
@@ -203,9 +203,9 @@ export default function HeroSearch({ initialSport, initialCity, initialDate, ini
         return (
           <button key={o.key || 'all'} type="button"
             onClick={() => { setSport(o.key); setPanel(city ? null : 'ciudad'); }}
-            className={`rtc-item flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-left transition-colors ${active ? 'bg-green-50' : 'hover:bg-gray-50'}`}
+            className={`rtc-item flex items-center gap-3 w-full px-3 py-2.5 rounded-full text-left transition-colors ${active ? 'bg-green-50' : 'hover:bg-gray-50'}`}
             style={{ animationDelay: `${i * 35}ms` }}>
-            <span className="w-10 h-10 rounded-xl grid place-items-center shrink-0"
+            <span className="w-10 h-10 rounded-full grid place-items-center shrink-0"
               style={{ background: meta?.bg ?? '#f0fdf4' }} aria-hidden>
               {SPORT_ICONO[o.key]
                 ? <img src={SPORT_ICONO[o.key]} alt="" width={26} height={26} className="h-[26px] w-[26px]" />
@@ -230,9 +230,9 @@ export default function HeroSearch({ initialSport, initialCity, initialDate, ini
         return (
           <button key={c || 'all'} type="button"
             onClick={() => { setCity(c); setPanel('fecha'); }}
-            className={`rtc-item flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-left transition-colors ${active ? 'bg-green-50' : 'hover:bg-gray-50'}`}
+            className={`rtc-item flex items-center gap-3 w-full px-3 py-2.5 rounded-full text-left transition-colors ${active ? 'bg-green-50' : 'hover:bg-gray-50'}`}
             style={{ animationDelay: `${i * 30}ms` }}>
-            <span className="w-10 h-10 rounded-xl grid place-items-center shrink-0"
+            <span className="w-10 h-10 rounded-full grid place-items-center shrink-0"
               style={{ background: meta?.bg ?? '#fff8e1', color: meta?.color ?? '#16a34a' }}>
               <CityGlyph city={c || 'colombia'} color={meta?.color ?? '#16a34a'} size={26} />
             </span>
@@ -265,9 +265,9 @@ export default function HeroSearch({ initialSport, initialCity, initialDate, ini
     <>
       {/* Cualquier hora (fijado arriba) */}
       <button type="button" onClick={() => { setTime(''); setPanel(null); }}
-        className={`rtc-item flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-left transition-colors ${time === '' ? 'bg-green-50' : 'hover:bg-gray-50'}`}>
+        className={`rtc-item flex items-center justify-between w-full px-3 py-2.5 rounded-full text-left transition-colors ${time === '' ? 'bg-green-50' : 'hover:bg-gray-50'}`}>
         <span className="flex items-center gap-2.5">
-          <span className="w-8 h-8 rounded-lg bg-green-50 text-green-600 grid place-items-center shrink-0">
+          <span className="w-8 h-8 rounded-full bg-green-50 text-green-600 grid place-items-center shrink-0">
             <Clock className="h-4 w-4" />
           </span>
           <span className="text-sm font-semibold text-gray-800">Cualquier hora</span>
@@ -290,7 +290,7 @@ export default function HeroSearch({ initialSport, initialCity, initialDate, ini
               return (
                 <button key={t} type="button"
                   onClick={() => { setTime(t); setPanel(null); }}
-                  className={`rtc-item py-2 rounded-lg text-[13px] font-semibold text-center transition-all border ${
+                  className={`rtc-item py-2 rounded-full text-[13px] font-semibold text-center transition-all border ${
                     active
                       ? 'bg-green-600 border-green-600 text-white rtc-pick'
                       : 'border-gray-200 text-gray-700 hover:border-green-400 hover:bg-green-50 hover:text-green-700'
