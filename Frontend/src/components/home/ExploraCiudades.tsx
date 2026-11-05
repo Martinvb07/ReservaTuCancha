@@ -3,9 +3,41 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { MapPin } from 'lucide-react';
-import FotoRemota from '@/components/ui/FotoRemota';
 import { CITIES, getSport } from '@/lib/constants';
 import { courtsApi } from '@/lib/api/courts.api';
+
+/* Foto representativa de cada ciudad (las eligió el dueño del sitio). Van
+   enlazadas a su página de origen: si alguna deja de cargar, la tarjeta cae
+   sola a la foto de una cancha de esa ciudad. */
+const FOTO_CIUDAD: Record<string, string> = {
+  Villavicencio: 'https://maravillasdelguejar.com/wp-content/uploads/2025/10/Pueblos-cerca-a-Villavicencio-para-visitar.jpg',
+  'Acacías': 'https://www.colombiaturismo.com.co/img/acacias-meta-colombia.jpg',
+  Cali: 'https://www.cali.gov.co/info/caligovco_se/media/pubInt/thumbs/thpubInt_700X400_186322.webp',
+  Bucaramanga: 'https://blog.redbus.co/wp-content/uploads/2018/06/Proyecto-nuevo-2025-02-28T151508.383.jpg',
+  Restrepo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcToPKTyyngReVY6fruHyFUtg1tXyR6Ny3kwa_wU2uuJTTk4uXomXskJrkw&s=10',
+  'Bogotá': 'https://cdn1.matadornetwork.com/blogs/2/2016/02/Bogota-Colombia-cityscape-1200x853.jpeg',
+  'Medellín': 'https://cdn.forbes.co/2020/09/Medell%C3%ADn-foto-ProColombia.jpg',
+  Barranquilla: 'https://www.semana.com/resizer/v2/BATZAH5PDZHTJEX7LDBHQMMQMI.jpg?auth=11b49f69af6153b773529b1cb27e2ec0df3b0f29c251d4a22d9b2aca59ff2679',
+};
+
+/** Foto de la ciudad; si no carga, la de una cancha de ahí. */
+function FotoCiudad({ ciudad, respaldo }: { ciudad: string; respaldo: string }) {
+  const propia = FOTO_CIUDAD[ciudad];
+  const [src, setSrc] = useState(propia || respaldo);
+  if (!src) return null;
+  return (
+    <img
+      src={src}
+      alt={`Canchas en ${ciudad}`}
+      loading="lazy"
+      referrerPolicy="no-referrer"
+      onError={() => {
+        if (src !== respaldo && respaldo) setSrc(respaldo);
+      }}
+      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+    />
+  );
+}
 
 interface Ciudad {
   nombre: string;
@@ -66,14 +98,7 @@ export default function ExploraCiudades() {
                 className="group rounded-[28px] bg-white p-2 transition-shadow hover:shadow-[0_14px_34px_rgba(17,24,39,0.08)] focus:outline-none focus-visible:ring-4 focus-visible:ring-green-500/30"
               >
                 <div className="relative aspect-[4/3] overflow-hidden rounded-[22px] bg-gray-200">
-                  {c.foto && (
-                    <FotoRemota
-                      src={c.foto}
-                      alt={`Canchas en ${c.nombre}`}
-                      sizes="(max-width: 768px) 50vw, 280px"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  )}
+                  <FotoCiudad ciudad={c.nombre} respaldo={c.foto} />
                 </div>
                 <div className="px-2 pb-1.5 pt-3">
                   <p className="flex items-center gap-1 truncate font-bold text-gray-900">
