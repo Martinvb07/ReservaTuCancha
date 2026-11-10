@@ -26,7 +26,7 @@ export const SHEET_EXIT_MS = 180;
  * que lo abre.
  */
 export default function MobileSearchSheet({ closing, onClose, ...defaults }: Props) {
-  /* Bloquea el scroll del body y esconde los FAB (WhatsApp, campana) mientras
+  /* Bloquea el scroll del body y esconde los FAB (asistente, campana) mientras
      el sheet está abierto */
   useEffect(() => {
     const prev = document.body.style.overflow;

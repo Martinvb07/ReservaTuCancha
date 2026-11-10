@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import WhatsAppButton from './WhatsAppButton';
 import SupportChat, { ABRIR_SOPORTE } from './SupportChat';
 
 /* Los flotantes estorban en las pantallas de autenticación (que ocupan
@@ -24,8 +23,6 @@ export default function FloatingActions() {
 
   return (
     <>
-      {/* Con el chat abierto el FAB de WhatsApp queda debajo del panel: se desvanece. */}
-      <WhatsAppButton oculto={chatAbierto} />
       <SupportChat open={chatAbierto} onOpenChange={setChatAbierto} />
     </>
   );

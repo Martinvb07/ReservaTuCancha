@@ -3,13 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import {
-  MessageSquare, Mail, Phone, ArrowRight,
+  MessageSquare, Mail, ArrowRight,
 } from 'lucide-react';
 import { ABRIR_SOPORTE } from '@/components/layout/SupportChat';
 import PillTabs from '@/components/ui/PillTabs';
 import FaqAccordion from '@/components/ui/FaqAccordion';
 
-const WHATSAPP = 'https://wa.me/573124352786';
 const EMAIL    = 'soporte@reservatucancha.site';
 
 /* Esta página es el soporte de quien RESERVA. Lo de administrar canchas,
@@ -23,15 +22,6 @@ const CANALES = [
     desc: 'Te responde al instante las dudas más comunes y te pasa a un humano si hace falta.',
     cta: 'Abrir asistente',
     badge: 'Más rápido',
-    color: 'bg-green-50',
-    iconColor: 'text-green-600',
-  },
-  {
-    icon: Phone,
-    title: 'WhatsApp',
-    desc: 'Si tu caso necesita revisión, escríbenos y te atendemos personalmente.',
-    cta: 'Abrir WhatsApp',
-    href: WHATSAPP,
     color: 'bg-green-50',
     iconColor: 'text-green-600',
   },
@@ -62,7 +52,7 @@ const FAQ = [
       { q: '¿Cómo puedo pagar?', a: 'Con tarjeta de crédito o débito, PSE, Nequi o Daviplata. El pago se procesa con ePayco. Al precio de la cancha se le suma una tarifa de servicio de $2.000 por reserva, que ves desglosada antes de pagar.' },
       { q: '¿Puedo pagar en efectivo en la cancha?', a: 'No. Todas las reservas se pagan en línea al momento de reservar; así el horario te queda apartado de verdad y nadie más lo puede tomar.' },
       { q: '¿A nombre de quién aparece el cobro?', a: 'El pago lo procesa ePayco a través de ReservaTuCancha. En el mismo momento se reparte: el club recibe su parte y nosotros la tarifa de servicio.' },
-      { q: 'Me cobraron pero no me llegó la confirmación', a: 'Espera unos minutos y revisa spam. Si sigue sin llegar, escríbenos por WhatsApp con el número de tu transacción y lo revisamos de inmediato.' },
+      { q: 'Me cobraron pero no me llegó la confirmación', a: 'Espera unos minutos y revisa spam. Si sigue sin llegar, escríbenos por correo con el número de tu transacción y lo revisamos de inmediato.' },
     ],
   },
   {
@@ -71,7 +61,7 @@ const FAQ = [
       { q: '¿Puedo cambiar el horario de mi reserva?', a: 'Sí. En el correo de confirmación tienes el botón "Cambiar mi horario": eliges otro día y hora entre los turnos libres del club, sin costo adicional.' },
       { q: '¿Hasta cuándo puedo cambiarlo?', a: 'Hasta 24 horas antes de tu turno. Después de ese momento el club ya no alcanza a revender el horario, así que el cambio se cierra.' },
       { q: '¿Puedo cancelar y que me devuelvan el dinero?', a: 'No manejamos devoluciones. Si no puedes ir, mueve tu reserva a otro día u hora: el valor que ya pagaste se conserva completo.' },
-      { q: '¿Y si me pasé del plazo?', a: 'Escríbenos por WhatsApp y hablamos con el club para ver qué se puede hacer. No lo prometemos, pero siempre lo intentamos.' },
+      { q: '¿Y si me pasé del plazo?', a: 'Escríbenos por correo y hablamos con el club para ver qué se puede hacer. No lo prometemos, pero siempre lo intentamos.' },
     ],
   },
   {
@@ -80,7 +70,7 @@ const FAQ = [
       { q: '¿Ustedes son dueños de las canchas?', a: 'No. Cada cancha pertenece a un club independiente que la administra y la opera. Nosotros somos la plataforma que te conecta con ellos y maneja la reserva y el pago.' },
       { q: '¿Cómo llego a la cancha?', a: 'En la página de cada cancha hay un mapa con su ubicación y un botón "Cómo llegar" que te abre la ruta en Google Maps.' },
       { q: '¿Puedo dejar una reseña?', a: 'Sí, y solo puede hacerlo quien reservó de verdad. Después de jugar te llega un correo con el enlace para calificar la cancha.' },
-      { q: 'Llegué y la cancha estaba ocupada', a: 'Escríbenos por WhatsApp con tu código de reserva. Hablamos con el club y te ayudamos a resolverlo.' },
+      { q: 'Llegué y la cancha estaba ocupada', a: 'Escríbenos por correo con tu código de reserva. Hablamos con el club y te ayudamos a resolverlo.' },
     ],
   },
 ];
@@ -113,7 +103,7 @@ export default function SoportePage() {
 
       {/* ── CANALES ──────────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-4 py-12 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
           {CANALES.map((c) => {
             const contenido = (
               <>
@@ -174,12 +164,12 @@ export default function SoportePage() {
         <div className="max-w-3xl mx-auto px-4 text-center">
           <h2 className="text-2xl md:text-3xl font-black text-white">¿No encontraste tu respuesta?</h2>
           <p className="text-gray-400 mt-3 text-sm md:text-base">
-            Escríbenos por WhatsApp con tu código de reserva y lo revisamos contigo.
+            Escríbenos por correo con tu código de reserva y lo revisamos contigo.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center mt-7">
-            <a href={WHATSAPP} target="_blank" rel="noopener noreferrer"
+            <a href={`mailto:${EMAIL}`}
               className="inline-flex items-center justify-center gap-2 bg-lime-400 hover:bg-lime-300 text-gray-900 font-black px-7 py-3.5 rounded-full transition-colors">
-              <Phone className="h-5 w-5" /> Escribir por WhatsApp
+              <Mail className="h-5 w-5" /> Escribir por correo
             </a>
             <button type="button" onClick={abrirAsistente}
               className="inline-flex items-center justify-center gap-2 border-2 border-white/30 text-white hover:bg-white/10 font-bold px-7 py-3.5 rounded-full transition-colors">

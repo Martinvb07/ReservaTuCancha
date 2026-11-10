@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { MapPin, Mail, Phone, Instagram, Facebook, Sparkles } from 'lucide-react';
+import { MapPin, Mail, Instagram, Facebook, Sparkles } from 'lucide-react';
 import { LOGO_URL } from '@/lib/logo';
 
 export default function Footer() {
@@ -101,10 +101,6 @@ export default function Footer() {
               <a href="mailto:martinvelasquezdev@gmail.com"
                 className="flex items-center gap-2 text-sm text-gray-400 hover:text-lime-400 transition-colors min-w-0 [overflow-wrap:anywhere]">
                 <Mail className="h-3.5 w-3.5 shrink-0" /> martinvelasquezdev@gmail.com
-              </a>
-              <a href="https://wa.me/573124352786" target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-gray-400 hover:text-lime-400 transition-colors">
-                <Phone className="h-3.5 w-3.5 shrink-0" /> +57 312 435 2786
               </a>
             </div>
           </div>

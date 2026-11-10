@@ -23,7 +23,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         {children}
         {/* A la izquierda: por defecto se planta en la esquina inferior derecha
-            y tapa los flotantes de WhatsApp y del asistente en desarrollo.
+            y tapa el flotante del asistente en desarrollo.
             (En build de producción el componente no se renderiza.) */}
         <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />
       </QueryClientProvider>

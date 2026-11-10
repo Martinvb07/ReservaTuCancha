@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MessageSquare, Mail, Phone, Clock, ChevronRight, CheckCircle, Send, Loader2 } from 'lucide-react';
+import { MessageSquare, Mail, Clock, ChevronRight, CheckCircle, Send, Loader2 } from 'lucide-react';
 import FaqAccordion from '@/components/ui/FaqAccordion';
 
 const FAQ = [
@@ -39,11 +39,10 @@ export default function OwnerSoportePage() {
       </div>
 
       {/* Canales de contacto */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[
           { icon: MessageSquare, title: 'Chat en vivo',      desc: 'Respuesta en menos de 5 min', cta: 'Iniciar chat',   color: 'bg-green-50',  iconColor: 'text-green-600',  badge: 'Más rápido' },
           { icon: Mail,         title: 'Email',              desc: 'Respondemos en 24 horas',      cta: 'Enviar email',  color: 'bg-blue-50',   iconColor: 'text-blue-600',   badge: '' },
-          { icon: Phone,        title: 'WhatsApp',           desc: 'Atención personalizada',       cta: 'Abrir chat',   color: 'bg-green-50',iconColor: 'text-green-600',badge: '' },
         ].map(c => (
           <div key={c.title} className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-shadow relative">
             {c.badge && (

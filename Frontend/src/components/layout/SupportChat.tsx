@@ -13,8 +13,8 @@ import type {
 
 const tree = treeData as SupportBotTree;
 
-const WHATSAPP_URL =
-  'https://wa.me/573124352786?text=Hola%2C%20vengo%20del%20asistente%20de%20ReservaTuCancha%20y%20necesito%20ayuda';
+const CORREO_URL =
+  'mailto:soporte@reservatucancha.site?subject=Vengo%20del%20asistente%20de%20ReservaTuCancha%20y%20necesito%20ayuda';
 
 /* Coreografía de un turno (ms). Cada paso encadena con el anterior para que
    nada aparezca ni desaparezca de golpe. */
@@ -108,8 +108,8 @@ export default function SupportChat({ open, onOpenChange }: Props) {
 
     setMensajes(prev => [...prev, { id: nuevoId(), autor: 'usuario', texto: opcion.texto }]);
 
-    if (opcion.accion === 'whatsapp') {
-      window.open(WHATSAPP_URL, '_blank', 'noopener,noreferrer');
+    if (opcion.accion === 'correo') {
+      window.location.href = CORREO_URL;
       return;
     }
 
@@ -198,7 +198,7 @@ export default function SupportChat({ open, onOpenChange }: Props) {
         }}
         className={`
           fab-float fab-expand
-          fixed bottom-24 right-6 z-50
+          fixed bottom-6 right-6 z-50
           flex items-center overflow-hidden rounded-full
           bg-gray-900 hover:bg-gray-800
           text-lime-400 shadow-xl hover:shadow-2xl
@@ -339,12 +339,10 @@ export default function SupportChat({ open, onOpenChange }: Props) {
             <p className="text-center text-[11px] leading-relaxed text-gray-500">
               ¿Prefieres hablar con una persona?{' '}
               <a
-                href={WHATSAPP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={CORREO_URL}
                 className="font-bold text-green-600 transition-colors hover:text-green-700 hover:underline"
               >
-                Escríbenos por WhatsApp
+                Escríbenos un correo
               </a>
             </p>
           </footer>

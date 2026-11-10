@@ -1,5 +1,5 @@
 /** Acciones especiales que no navegan a otro nodo del árbol. */
-export type SupportBotAccion = 'whatsapp';
+export type SupportBotAccion = 'correo';
 
 export interface SupportBotOpcion {
   texto: string;

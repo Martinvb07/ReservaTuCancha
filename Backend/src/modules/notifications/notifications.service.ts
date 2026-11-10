@@ -364,8 +364,6 @@ function buildChangelogHtml(opts: {
                 <p style="margin: 0 0 16px;">
                   <a href="https://www.instagram.com/reservatucancha.site/" style="color: #6b7280; font-size: 12px; text-decoration: none; padding: 0 9px;">Instagram</a>
                   <span style="color: #d1d5db;">&middot;</span>
-                  <a href="https://wa.me/573124352786" style="color: #6b7280; font-size: 12px; text-decoration: none; padding: 0 9px;">WhatsApp</a>
-                  <span style="color: #d1d5db;">&middot;</span>
                   <a href="${opts.novedadesUrl}" style="color: #6b7280; font-size: 12px; text-decoration: none; padding: 0 9px;">Novedades</a>
                 </p>
                 <p style="margin: 0; color: #b9bfc9; font-size: 11px; line-height: 17px;">
