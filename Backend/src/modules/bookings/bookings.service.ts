@@ -25,6 +25,8 @@ import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { generarCodigoReserva } from '../../common/utils/random.util';
 import { escaparRegex } from '../../common/utils/regex.util';
 import { aObjectId } from '../../common/utils/objectid.util';
+import { precioTurno } from '../courts/precios';
+import { PanelClubService } from './panel-club.service';
 
 /**
  * Cuántas horas antes del turno se puede mover o soltar una reserva.
@@ -54,6 +56,7 @@ export class BookingsService {
     private readonly cobrosService: CobrosService,
     private readonly notificationsGateway: NotificationsGateway,
     private readonly push: PushService,
+    private readonly panelClub: PanelClubService,
   ) {}
 
   // --- MÉTODOS PARA EL WEBHOOK ---
@@ -411,8 +414,13 @@ export class BookingsService {
       throw new NotFoundException('Cancha no encontrada');
     }
 
+    /* El club puede dejar de recibirle reservas en línea a quien le falla. */
+    if (await this.panelClub.estaBloqueado(cancha.ownerId, createBookingDto.guestPhone, createBookingDto.guestEmail)) {
+      throw new ForbiddenException('Este club no está recibiendo tus reservas en línea. Comunícate directamente con el club.');
+    }
+
     const semanas = Math.max(1, Math.min(12, createBookingDto.semanas ?? 1));
-    const { fechas, duracionMins } = await this.validarTurno(
+    const { fechas } = await this.validarTurno(
       courtId,
       createBookingDto.date,
       createBookingDto.startTime,
@@ -424,7 +432,10 @@ export class BookingsService {
        reserva, no por hora, así que se suma después de prorratear el turno.
        En un turno fijo cada fecha lleva su tarifa, y la pasarela, que cobra
        una sola vez, se reparte entre todas (ver CobrosService.desglosarSerie). */
-    const precioCancha = Math.round((cancha.pricePerHour * duracionMins) / 60);
+    /* Con precios por horario el turno vale según el día y la hora. En un
+       turno fijo todas las fechas caen el mismo día de la semana, así que
+       valen igual. */
+    const precioCancha = precioTurno(cancha, fechas[0].getDay(), createBookingDto.startTime, createBookingDto.endTime);
     const desgloses = this.cobrosService.desglosarSerie(fechas.map(() => precioCancha));
     const serieId = semanas > 1 ? uuidv4() : undefined;
 
@@ -510,8 +521,8 @@ export class BookingsService {
     }
 
     const semanas = Math.max(1, Math.min(26, dto.semanas ?? 1));
-    const { fechas, duracionMins } = await this.validarTurno(courtId, dto.date, dto.startTime, dto.endTime, semanas);
-    const precio = dto.precio ?? Math.round((cancha.pricePerHour * duracionMins) / 60);
+    const { fechas } = await this.validarTurno(courtId, dto.date, dto.startTime, dto.endTime, semanas);
+    const precio = dto.precio ?? precioTurno(cancha, fechas[0].getDay(), dto.startTime, dto.endTime);
     const serieId = semanas > 1 ? uuidv4() : undefined;
 
     const creadas = [];
@@ -527,6 +538,7 @@ export class BookingsService {
         endTime: dto.endTime,
         origen: BookingOrigen.MANUAL,
         paymentMethod: 'club',
+        medioPagoClub: dto.medioPago ?? 'efectivo',
         status: BookingStatus.CONFIRMED,
         precioCancha: precio,
         totalPrice: precio,
@@ -658,7 +670,7 @@ export class BookingsService {
       .findOne({ cancelToken: token })
       // `availability` la necesita la pantalla de reprogramar para saber qué
       // días y horas atiende la cancha.
-      .populate('courtId', 'name sport location availability pricePerHour')
+      .populate('courtId', 'name sport location availability pricePerHour priceRules')
       .lean();
     if (!booking) throw new NotFoundException('Token inválido o reserva no encontrada');
     return booking;
@@ -714,6 +726,18 @@ export class BookingsService {
 
     const [anio, mes, dia] = nuevo.date.split('-').map(Number);
     const fechaNueva = new Date(anio, mes - 1, dia);
+
+    /* Con precios por horario no se puede pasar a una franja más cara sin
+       cobrar la diferencia, y mover no toca la plata: solo se permite un
+       horario del mismo precio o más barato. */
+    const cancha = await this.courtModel.findById(booking.courtId).select('pricePerHour priceRules').lean();
+    if (cancha?.priceRules?.length) {
+      const antes = precioTurno(cancha, new Date(booking.date).getDay(), booking.startTime, booking.endTime);
+      const despues = precioTurno(cancha, fechaNueva.getDay(), nuevo.startTime, nuevo.endTime);
+      if (despues > antes) {
+        throw new BadRequestException('Ese horario tiene un precio más alto. Elige uno del mismo precio o más barato.');
+      }
+    }
 
     await this.assertSlotLibre(
       booking.courtId,

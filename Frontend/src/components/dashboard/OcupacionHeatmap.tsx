@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Flame, Grid3x3, Moon } from 'lucide-react';
 import api from '@/lib/api/axios';
+import SelectField from '@/components/ui/SelectField';
 
 interface Celda { dia: number; hora: number; capacidad: number; ocupado: number; pct: number; nombre?: string }
 interface Ocupacion {
@@ -67,16 +68,26 @@ export default function OcupacionHeatmap() {
         </div>
         <div className="flex gap-2">
           {data && data.canchas.length > 1 && (
-            <select value={courtId} onChange={(e) => setCourtId(e.target.value)}
-              className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold text-gray-700">
-              <option value="">Todas las canchas</option>
-              {data.canchas.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
-            </select>
+            <div className="w-44">
+              {/* Radix no admite valor vacío: "todas" hace de "sin filtro". */}
+              <SelectField
+                aria-label="Cancha"
+                value={courtId || 'todas'}
+                onChange={(v) => setCourtId(v === 'todas' ? '' : v)}
+                options={[{ value: 'todas', label: 'Todas las canchas' }, ...data.canchas.map((c) => ({ value: c._id, label: c.name }))]}
+                className="!px-3 !py-2 !text-xs font-semibold"
+              />
+            </div>
           )}
-          <select value={semanas} onChange={(e) => setSemanas(Number(e.target.value))}
-            className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold text-gray-700">
-            {[4, 8, 12, 26].map((n) => <option key={n} value={n}>Últimas {n} semanas</option>)}
-          </select>
+          <div className="w-44">
+            <SelectField
+              aria-label="Periodo"
+              value={String(semanas)}
+              onChange={(v) => setSemanas(Number(v))}
+              options={[4, 8, 12, 26].map((n) => ({ value: String(n), label: `Últimas ${n} semanas` }))}
+              className="!px-3 !py-2 !text-xs font-semibold"
+            />
+          </div>
         </div>
       </div>
 

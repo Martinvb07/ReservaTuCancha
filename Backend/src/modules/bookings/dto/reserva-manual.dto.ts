@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsEmail, IsInt, IsMongoId, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength,
+  IsEmail, IsIn, IsInt, IsMongoId, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength,
 } from 'class-validator';
 
 const HORA = /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -64,4 +64,10 @@ export class ReservaManualDto {
   @Min(0)
   @Max(10_000_000)
   precio?: number;
+
+  /** Cómo pagó en el club. Sale en la caja del día. */
+  @ApiProperty({ required: false, enum: ['efectivo', 'transferencia', 'tarjeta'] })
+  @IsOptional()
+  @IsIn(['efectivo', 'transferencia', 'tarjeta'])
+  medioPago?: 'efectivo' | 'transferencia' | 'tarjeta';
 }

@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { KeyRound, Pause, Play, Trash2, UserPlus, UsersRound, ShieldCheck } from 'lucide-react';
+import { KeyRound, Pause, Play, Trash2, UserPlus, UsersRound, ShieldCheck, ClipboardList, Briefcase } from 'lucide-react';
+import SelectField from '@/components/ui/SelectField';
 import { Skeleton } from '@/components/ui/skeleton';
 import api from '@/lib/api/axios';
 import { useApiAuth } from '@/hooks/useApiAuth';
@@ -12,12 +13,21 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+type Rol = 'encargado' | 'recepcion';
+
+/* Qué ve cada rol: el mismo texto sale al invitar y en la lista. */
+const ROLES: { value: Rol; label: string; icon: typeof Briefcase; detalle: string }[] = [
+  { value: 'recepcion', label: 'Recepción', icon: ClipboardList, detalle: 'Solo el día a día: ve y anota reservas, bloquea horarios y marca quién no llegó. No ve estadísticas ni edita canchas.' },
+  { value: 'encargado', label: 'Encargado', icon: Briefcase,     detalle: 'Además edita canchas, precios, fotos y el perfil del club, y ve las estadísticas. No ve pagos, caja, clientes ni el equipo.' },
+];
+
 interface Persona {
   _id: string;
   name: string;
   email: string;
   phone?: string;
   isActive: boolean;
+  rolEquipo?: Rol;
   lastLoginAt?: string;
   createdAt: string;
 }
@@ -33,7 +43,7 @@ export default function EquipoPage() {
   const session = useApiAuth();
   const esStaff = !!(session as any)?.user?.esStaff;
   const queryClient = useQueryClient();
-  const [nuevo, setNuevo] = useState({ name: '', email: '', phone: '' });
+  const [nuevo, setNuevo] = useState<{ name: string; email: string; phone: string; rol: Rol }>({ name: '', email: '', phone: '', rol: 'recepcion' });
   const [aQuitar, setAQuitar] = useState<Persona | null>(null);
 
   const { data: equipo = [], isLoading } = useQuery<Persona[]>({
@@ -45,14 +55,20 @@ export default function EquipoPage() {
 
   const invitar = useMutation({
     mutationFn: async () => (await api.post('/equipo', {
-      name: nuevo.name.trim(), email: nuevo.email.trim(), phone: nuevo.phone.trim() || undefined,
+      name: nuevo.name.trim(), email: nuevo.email.trim(), phone: nuevo.phone.trim() || undefined, rol: nuevo.rol,
     })).data,
     onSuccess: () => {
       toast.success('Listo: le enviamos el acceso por correo');
-      setNuevo({ name: '', email: '', phone: '' });
+      setNuevo({ name: '', email: '', phone: '', rol: 'recepcion' });
       refrescar();
     },
     onError: (e) => toast.error(errorDe(e, 'No se pudo dar el acceso')),
+  });
+
+  const cambiarRol = useMutation({
+    mutationFn: ({ id, rol }: { id: string; rol: Rol }) => api.patch(`/equipo/${id}/rol`, { rol }),
+    onSuccess: () => { toast.success('Rol actualizado: tendrá que volver a entrar'); refrescar(); },
+    onError: (e) => toast.error(errorDe(e, 'No se pudo cambiar el rol')),
   });
 
   const acceso = useMutation({
@@ -90,9 +106,9 @@ export default function EquipoPage() {
         </p>
         <h1 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase">Equipo</h1>
         <p className="text-gray-500 text-xs sm:text-sm mt-1 max-w-2xl">
-          Dale acceso al panel a quien te ayuda en el club. Cada persona entra con su correo y puede ver y anotar
-          reservas, bloquear horarios y escanear los QR. No puede ver tus pagos, cambiar tu cuenta de ePayco, borrar
-          canchas ni tocar el equipo.
+          Dale acceso al panel a quien te ayuda en el club y elige qué puede ver. Cada persona entra con su correo.
+          Nadie del equipo ve tus pagos, la caja, tus clientes ni puede cambiar tu cuenta de ePayco, borrar canchas
+          o tocar el equipo.
         </p>
       </div>
 
@@ -107,6 +123,25 @@ export default function EquipoPage() {
           <input className={inp} placeholder="Nombre" value={nuevo.name} onChange={(e) => setNuevo({ ...nuevo, name: e.target.value })} />
           <input className={inp} type="email" placeholder="Correo" value={nuevo.email} onChange={(e) => setNuevo({ ...nuevo, email: e.target.value })} />
           <input className={inp} type="tel" placeholder="Celular (opcional)" value={nuevo.phone} onChange={(e) => setNuevo({ ...nuevo, phone: e.target.value })} />
+        </div>
+        <div className="grid sm:grid-cols-2 gap-2">
+          {ROLES.map((r) => {
+            const activo = nuevo.rol === r.value;
+            return (
+              <button key={r.value} type="button" aria-pressed={activo} onClick={() => setNuevo({ ...nuevo, rol: r.value })}
+                className={`flex items-start gap-3 rounded-2xl border-2 p-3.5 text-left transition-colors duration-200 ${
+                  activo ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white hover:border-green-300'
+                }`}>
+                <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl transition-colors duration-200 ${activo ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                  <r.icon className="h-4 w-4" />
+                </span>
+                <span className="min-w-0">
+                  <span className={`block text-sm font-black ${activo ? 'text-green-800' : 'text-gray-900'}`}>{r.label}</span>
+                  <span className="block text-[11px] leading-relaxed text-gray-500">{r.detalle}</span>
+                </span>
+              </button>
+            );
+          })}
         </div>
         <button type="submit" disabled={invitar.isPending}
           className="bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-colors">
@@ -138,7 +173,16 @@ export default function EquipoPage() {
                   {p.lastLoginAt ? `Último ingreso: ${new Date(p.lastLoginAt).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })}` : 'Aún no ha entrado'}
                 </p>
               </div>
-              <div className="flex gap-2 shrink-0">
+              <div className="flex flex-wrap gap-2 shrink-0 sm:items-center">
+                <div className="w-36">
+                  <SelectField
+                    aria-label={`Rol de ${p.name}`}
+                    value={p.rolEquipo ?? 'encargado'}
+                    onChange={(v) => cambiarRol.mutate({ id: p._id, rol: v as Rol })}
+                    options={ROLES.map((r) => ({ value: r.value, label: r.label }))}
+                    className="!px-3 !py-2 !text-xs font-bold"
+                  />
+                </div>
                 <button onClick={() => acceso.mutate({ id: p._id, activo: !p.isActive })} title={p.isActive ? 'Pausar acceso' : 'Reactivar'}
                   className="flex items-center gap-1.5 border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold px-3 py-2 rounded-xl">
                   {p.isActive ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}

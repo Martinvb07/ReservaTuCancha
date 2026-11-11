@@ -19,6 +19,7 @@ describe('BookingsService', () => {
   let push: Record<string, jest.Mock>;
   let epayco: any;
   let cancha: any;
+  let panelClub: Record<string, jest.Mock>;
 
   beforeEach(() => {
     cancha = { _id: new Types.ObjectId(), name: 'Cancha 1', ownerId, pricePerHour: 60_000, isActive: true };
@@ -45,6 +46,7 @@ describe('BookingsService', () => {
     const userModel = modeloEnMemoria();
     userModel.docs.push({ _id: ownerId, email: 'dueno@club.com' });
 
+    panelClub = { estaBloqueado: jest.fn(async () => false) };
     service = new BookingsService(
       bookingModel,
       clubModel,
@@ -56,6 +58,7 @@ describe('BookingsService', () => {
       new CobrosService(configCon()),
       { notifyNewBooking: jest.fn() } as any,
       push as any,
+      panelClub as any,
     );
   });
 
@@ -70,6 +73,21 @@ describe('BookingsService', () => {
       endTime: '20:00',
       ...extra,
     } as any);
+
+  describe('precios por horario y clientes bloqueados', () => {
+    it('cobra la franja que corresponde al día y la hora', async () => {
+      cancha.priceRules = [{ days: [1, 2, 3, 4, 5], from: '18:00', to: '00:00', pricePerHour: 90_000 }];
+      const noche = await reservar();
+      expect(noche.precioCancha).toBe(90_000);
+      const dia = await reservar({ startTime: '10:00', endTime: '11:00' });
+      expect(dia.precioCancha).toBe(60_000);
+    });
+
+    it('rechaza la reserva en línea de un cliente que el club bloqueó', async () => {
+      panelClub.estaBloqueado.mockResolvedValueOnce(true);
+      await expect(reservar()).rejects.toBeInstanceOf(ForbiddenException);
+    });
+  });
 
   describe('reserva suelta', () => {
     it('nace pendiente con el precio de la cancha y sin tokens en la respuesta', async () => {

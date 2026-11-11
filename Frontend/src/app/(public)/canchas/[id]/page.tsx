@@ -4,6 +4,7 @@ import { MapPin, Star, ArrowLeft, Clock, Users, ShieldCheck } from 'lucide-react
 import FotoRemota from '@/components/ui/FotoRemota';
 import VolverListado from '@/components/courts/VolverListado';
 import BookingForm from '@/components/bookings/BookingForm';
+import { rangoPrecios } from '@/lib/precios';
 import ReviewCard from '@/components/reviews/ReviewCard';
 import SportIcon from '@/components/ui/SportIcon';
 import CourtLocationMap from '@/components/map/CourtLocationMap';
@@ -174,6 +175,7 @@ export default async function CourtDetailPage({
                   courtId={court._id}
                   courtName={court.name}
                   pricePerHour={court.pricePerHour}
+                  priceRules={court.priceRules}
                   availability={court.availability}
                   initialDate={searchParams?.date}
                   initialStart={searchParams?.start}
@@ -242,9 +244,9 @@ export default async function CourtDetailPage({
         style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs text-gray-500">Precio</p>
+            <p className="text-xs text-gray-500">{rangoPrecios(court).varia ? 'Desde' : 'Precio'}</p>
             <p className="text-gray-900">
-              <span className="text-xl font-extrabold">${court.pricePerHour.toLocaleString('es-CO')}</span>
+              <span className="text-xl font-extrabold">${rangoPrecios(court).min.toLocaleString('es-CO')}</span>
               <span className="text-xs text-gray-500"> /hora</span>
             </p>
           </div>

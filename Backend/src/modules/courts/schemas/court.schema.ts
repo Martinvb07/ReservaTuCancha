@@ -39,6 +39,25 @@ export class AvailabilitySlot {
   slotDurationMinutes: number;
 }
 
+/** Precio distinto en ciertos días y horas (ver precios.ts). */
+@Schema({ _id: false })
+export class PriceRule {
+  @Prop({ type: [Number], required: true })
+  days: number[]; // 0=Domingo, 6=Sábado
+
+  @Prop({ required: true })
+  from: string; // "18:00"
+
+  @Prop({ required: true })
+  to: string; // "00:00" = medianoche
+
+  @Prop({ required: true, min: 0 })
+  pricePerHour: number;
+
+  @Prop({ trim: true })
+  label?: string;
+}
+
 @Schema({ timestamps: true })
 export class Court {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
@@ -58,6 +77,10 @@ export class Court {
 
   @Prop({ required: true, min: 0 })
   pricePerHour: number;
+
+  /** Franjas con otro precio. Sin reglas, vale `pricePerHour` todo el día. */
+  @Prop({ type: [PriceRule], default: [] })
+  priceRules: PriceRule[];
 
   @Prop({ default: 'COP' })
   currency: string;

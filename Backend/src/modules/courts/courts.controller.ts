@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Request, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Request, Res, BadRequestException, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CourtsService, CourtFilters } from './courts.service';
 import { CreateCourtDto } from './dto/create-court.dto';
@@ -6,11 +7,13 @@ import { UpdateCourtDto } from './dto/update-court.dto';
 import { PhotoDto } from './dto/photo.dto';
 import { BlockSlotDto } from './dto/block-slot.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { SinRecepcionGuard } from '../../common/guards/sin-recepcion.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { SoloTitularGuard } from '../../common/guards/solo-titular.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../users/schemas/user.schema';
 import { SportType } from './schemas/court.schema';
+import { mapaDe } from './mapa-estatico';
 
 @ApiTags('Canchas')
 @Controller('courts')
@@ -62,6 +65,26 @@ export class CourtsController {
     return this.courtsService.getPagosConfig(courtId);
   }
 
+  /* Imagen del mapa con el pin de la cancha, para el correo de confirmación
+     (un correo no puede cargar un mapa interactivo). */
+  @Get(':id/mapa.png')
+  @ApiOperation({ summary: 'Mapa fijo de la ubicación de la cancha (PNG)' })
+  async mapa(@Param('id') id: string, @Res() res: Response) {
+    const court = await this.courtsService.findById(id);
+    const [lng, lat] = court.location?.coordinates ?? [];
+    if (typeof lat !== 'number' || typeof lng !== 'number') {
+      throw new NotFoundException('Esta cancha no tiene ubicación en el mapa');
+    }
+    let img: Buffer;
+    try {
+      img = await mapaDe(lat, lng);
+    } catch {
+      throw new ServiceUnavailableException('El mapa no está disponible en este momento');
+    }
+    res.set({ 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=604800' });
+    res.send(img);
+  }
+
   // ─── OWNER ────────────────────────────────────────────────────────────
   @Get('owner/my-courts')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -73,7 +96,7 @@ export class CourtsController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, SinRecepcionGuard)
   @Roles(UserRole.OWNER)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Crear cancha (propietario)' })
@@ -82,7 +105,7 @@ export class CourtsController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, SinRecepcionGuard)
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Editar cancha' })
@@ -102,7 +125,7 @@ export class CourtsController {
   // ─── FOTOS ────────────────────────────────────────────────────────────
 
   @Post(':id/photos')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, SinRecepcionGuard)
   @Roles(UserRole.OWNER)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Agregar foto a cancha (owner)' })
@@ -111,7 +134,7 @@ export class CourtsController {
   }
 
   @Delete(':id/photos')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, SinRecepcionGuard)
   @Roles(UserRole.OWNER)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Eliminar foto de cancha (owner)' })

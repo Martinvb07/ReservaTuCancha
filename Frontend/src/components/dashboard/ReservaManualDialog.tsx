@@ -6,12 +6,21 @@ import { toast } from 'sonner';
 import { PhoneCall, Repeat } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import api from '@/lib/api/axios';
+import SelectField from '@/components/ui/SelectField';
+import { precioTurno, type ReglaPrecio } from '@/lib/precios';
 
 interface Cancha {
   _id: string;
   name: string;
   pricePerHour: number;
+  priceRules?: ReglaPrecio[];
 }
+
+const MEDIOS = [
+  { value: 'efectivo',      label: 'Efectivo' },
+  { value: 'transferencia', label: 'Transferencia' },
+  { value: 'tarjeta',       label: 'Tarjeta' },
+];
 
 const inp = 'w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/40';
 const lbl = 'block text-xs font-semibold text-gray-500 mb-1';
@@ -36,7 +45,7 @@ export default function ReservaManualDialog({ open, onOpenChange }: { open: bool
 
   const [f, setF] = useState({
     courtId: '', date: hoy(), startTime: '19:00', endTime: '20:00',
-    guestName: '', guestPhone: '', guestEmail: '', notes: '', semanas: 1, precio: '',
+    guestName: '', guestPhone: '', guestEmail: '', notes: '', semanas: 1, precio: '', medioPago: 'efectivo',
   });
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setF((prev) => ({ ...prev, [k]: k === 'semanas' ? Number(e.target.value) : e.target.value }));
@@ -47,7 +56,9 @@ export default function ReservaManualDialog({ open, onOpenChange }: { open: bool
 
   const cancha = canchas.find((c) => c._id === f.courtId);
   const minutos = aMin(f.endTime) - aMin(f.startTime);
-  const precioLista = cancha && minutos > 0 ? Math.round((cancha.pricePerHour * minutos) / 60) : 0;
+  /* Con precios por horario el de lista depende del día y la hora. */
+  const diaSemana = (() => { const [y, m, d] = f.date.split('-').map(Number); return new Date(y, (m || 1) - 1, d || 1).getDay(); })();
+  const precioLista = cancha && minutos > 0 ? precioTurno(cancha, diaSemana, f.startTime, f.endTime) : 0;
 
   const crear = useMutation({
     mutationFn: async () => (await api.post('/bookings/manual', {
@@ -61,10 +72,13 @@ export default function ReservaManualDialog({ open, onOpenChange }: { open: bool
       notes: f.notes.trim() || undefined,
       semanas: f.semanas,
       precio: f.precio === '' ? undefined : Number(f.precio),
+      medioPago: f.medioPago,
     })).data as { creadas: number },
     onSuccess: (r) => {
       toast.success(r.creadas > 1 ? `Turno fijo anotado: ${r.creadas} semanas` : 'Reserva anotada');
       queryClient.invalidateQueries({ queryKey: ['owner-bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['owner-caja'] });
+      queryClient.invalidateQueries({ queryKey: ['owner-clientes'] });
       onOpenChange(false);
       setF((p) => ({ ...p, guestName: '', guestPhone: '', guestEmail: '', notes: '', semanas: 1, precio: '' }));
     },
@@ -91,9 +105,13 @@ export default function ReservaManualDialog({ open, onOpenChange }: { open: bool
         <form className="space-y-3 pt-1" onSubmit={(e) => { e.preventDefault(); if (listo) crear.mutate(); }}>
           <div>
             <label className={lbl}>Cancha</label>
-            <select className={inp} value={f.courtId} onChange={set('courtId')}>
-              {canchas.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
-            </select>
+            <SelectField
+              aria-label="Cancha"
+              value={f.courtId || undefined}
+              onChange={(v) => setF((p) => ({ ...p, courtId: v }))}
+              options={canchas.map((c) => ({ value: c._id, label: c.name }))}
+              className="!px-3.5 !py-2.5"
+            />
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div className="col-span-3 sm:col-span-1">
@@ -126,16 +144,36 @@ export default function ReservaManualDialog({ open, onOpenChange }: { open: bool
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className={`${lbl} flex items-center gap-1`}><Repeat className="h-3 w-3" /> Repetir</label>
-              <select className={inp} value={f.semanas} onChange={set('semanas')}>
-                <option value={1}>Solo esta fecha</option>
-                {[4, 8, 12, 26].map((n) => <option key={n} value={n}>Cada semana, {n} semanas</option>)}
-              </select>
+              <SelectField
+                aria-label="Repetir"
+                value={String(f.semanas)}
+                onChange={(v) => setF((p) => ({ ...p, semanas: Number(v) }))}
+                options={[{ value: '1', label: 'Solo esta fecha' }, ...[4, 8, 12, 26].map((n) => ({ value: String(n), label: `Cada semana, ${n} semanas` }))]}
+                className="!px-3.5 !py-2.5"
+              />
             </div>
             <div>
               <label className={lbl}>Cobras <span className="font-normal text-gray-500">(por fecha)</span></label>
               <input type="number" min={0} step={1000} className={inp}
                 placeholder={precioLista ? `$${precioLista.toLocaleString('es-CO')}` : 'Precio de lista'}
                 value={f.precio} onChange={set('precio')} />
+            </div>
+          </div>
+          <div>
+            <label className={lbl}>Te paga con</label>
+            <div className="grid grid-cols-3 gap-2">
+              {MEDIOS.map((m) => {
+                const activo = f.medioPago === m.value;
+                return (
+                  <button key={m.value} type="button" aria-pressed={activo}
+                    onClick={() => setF((p) => ({ ...p, medioPago: m.value }))}
+                    className={`rounded-xl border-2 py-2 text-xs font-bold transition-colors duration-200 ${
+                      activo ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 bg-white text-gray-500 hover:border-green-300'
+                    }`}>
+                    {m.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
           <div>

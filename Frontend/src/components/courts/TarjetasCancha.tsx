@@ -4,6 +4,7 @@ import type { Court } from '@/types';
 import { getSport } from '@/lib/constants';
 import SportIcon from '@/components/ui/SportIcon';
 import FotoRemota from '@/components/ui/FotoRemota';
+import { rangoPrecios } from '@/lib/precios';
 
 /* Las tarjetas del inicio de la app móvil, para la web. */
 
@@ -69,7 +70,8 @@ export function TarjetaGrande({ court, distancia }: { court: Court; distancia?: 
         <Vidrio className="w-full justify-between px-5 py-3.5 text-sm transition-colors group-hover:bg-white/30">
           <span className="font-semibold">Reservar</span>
           <span>
-            <span className="font-bold">{precio(court.pricePerHour)}</span> /h
+            {rangoPrecios(court).varia && 'Desde '}
+            <span className="font-bold">{precio(rangoPrecios(court).min)}</span> /h
           </span>
         </Vidrio>
       </div>
@@ -101,7 +103,8 @@ export function FilaCancha({ court }: { court: Court }) {
             </span>
           )}
           <span className="text-gray-500">
-            <span className="font-bold text-green-700">{precio(court.pricePerHour)}</span> /hora
+            {rangoPrecios(court).varia && 'Desde '}
+            <span className="font-bold text-green-700">{precio(rangoPrecios(court).min)}</span> /hora
           </span>
         </p>
       </div>

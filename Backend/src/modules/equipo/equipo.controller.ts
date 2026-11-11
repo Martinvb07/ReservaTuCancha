@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Request, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { IsBoolean, IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { SoloTitularGuard } from '../../common/guards/solo-titular.guard';
@@ -21,6 +21,16 @@ class InvitarDto {
   @IsString()
   @MaxLength(20)
   phone?: string;
+
+  /** encargado: casi todo. recepcion: solo reservas y bloqueos. */
+  @IsOptional()
+  @IsIn(['encargado', 'recepcion'])
+  rol?: 'encargado' | 'recepcion';
+}
+
+class RolDto {
+  @IsIn(['encargado', 'recepcion'])
+  rol: 'encargado' | 'recepcion';
 }
 
 class AccesoDto {
@@ -52,6 +62,12 @@ export class EquipoController {
   @ApiOperation({ summary: 'Pausar o reactivar el acceso de un empleado' })
   acceso(@Request() req, @Param('id') id: string, @Body() dto: AccesoDto) {
     return this.equipo.cambiarAcceso(req.user.userId, id, dto.activo);
+  }
+
+  @Patch(':id/rol')
+  @ApiOperation({ summary: 'Cambiar el rol de un empleado (encargado o recepción)' })
+  rol(@Request() req, @Param('id') id: string, @Body() dto: RolDto) {
+    return this.equipo.cambiarRol(req.user.userId, id, dto.rol);
   }
 
   @Post(':id/clave')

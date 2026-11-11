@@ -452,3 +452,13 @@ body.sheet-open .fab-float {
 @media (max-width: 1023px) {
   body:has(.barra-reserva) .fab-float { margin-bottom: 76px; }
 }
+
+/* Línea que barre el recuadro del escáner de QR del panel */
+@keyframes rtc-escaner {
+  0%, 100% { transform: translateY(0); opacity: .9; }
+  50%      { transform: translateY(calc(var(--rtc-escaner-alto, 11rem))); opacity: 1; }
+}
+.rtc-escaner-linea { animation: rtc-escaner 2.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .rtc-escaner-linea { animation: none; }
+}

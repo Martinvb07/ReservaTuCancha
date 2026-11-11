@@ -4,6 +4,8 @@ import { BookingsController } from './bookings.controller';
 import { BookingsService } from './bookings.service';
 import { ListaEsperaService } from './lista-espera.service';
 import { ListaEspera, ListaEsperaSchema } from './schemas/lista-espera.schema';
+import { PanelClubService } from './panel-club.service';
+import { ClienteBloqueado, ClienteBloqueadoSchema } from './schemas/cliente-bloqueado.schema';
 import { Booking, BookingSchema } from './schemas/booking.schema';
 import { Club, ClubSchema } from '../clubs/schemas/club.schema';
 import { Court, CourtSchema } from '../courts/schemas/court.schema';
@@ -21,12 +23,13 @@ import { EpaycoModule } from '../epayco/epayco.module';
       { name: BlockedSlot.name, schema: BlockedSlotSchema },
       { name: User.name, schema: UserSchema },
       { name: ListaEspera.name, schema: ListaEsperaSchema },
+      { name: ClienteBloqueado.name, schema: ClienteBloqueadoSchema },
     ]),
     NotificationsModule,
     EpaycoModule,
   ],
   controllers: [BookingsController],
-  providers: [BookingsService, ListaEsperaService],
+  providers: [BookingsService, ListaEsperaService, PanelClubService],
   exports: [BookingsService],
 })
 export class BookingsModule {}

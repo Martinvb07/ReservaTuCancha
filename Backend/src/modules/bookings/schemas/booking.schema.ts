@@ -159,6 +159,14 @@ export class Booking {
   @Prop({ default: false })
   reminderSent: boolean;
 
+  /** El club marcó que el cliente no llegó a su turno. */
+  @Prop({ default: false })
+  noShow: boolean;
+
+  /** En las reservas que anota el club: cómo le pagaron en la caja. */
+  @Prop({ enum: ['efectivo', 'transferencia', 'tarjeta'] })
+  medioPagoClub?: string;
+
   /** Cuántas veces el jugador movió el horario de esta reserva */
   @Prop({ default: 0 })
   reprogramaciones: number;

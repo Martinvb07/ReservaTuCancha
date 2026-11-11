@@ -50,6 +50,7 @@ function usuarioDeSesion(data: any) {
     email: data.user.email,
     role: data.user.role,
     esStaff: !!data.user.esStaff,
+    rolEquipo: data.user.rolEquipo,
     debeCambiarClave: !!data.user.debeCambiarClave,
     avatarUrl: data.user.avatarUrl,
     accessToken: data.accessToken,
@@ -102,6 +103,7 @@ export const authOptions: NextAuthOptions = {
             role: data.user.role,
             /* Empleado del club: usa el panel del dueño sin pagos ni equipo. */
             esStaff: !!data.user.esStaff,
+    rolEquipo: data.user.rolEquipo,
             debeCambiarClave: !!data.user.debeCambiarClave,
             avatarUrl: data.user.avatarUrl,
             accessToken: data.accessToken,
@@ -142,6 +144,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = user.role;
         token.esStaff = !!user.esStaff;
+        token.rolEquipo = user.rolEquipo;
         token.debeCambiarClave = !!user.debeCambiarClave;
         token.avatarUrl = user.avatarUrl;
         token.accessToken = user.accessToken;
@@ -163,6 +166,8 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id;
         session.user.role = token.role;
         session.user.esStaff = !!token.esStaff;
+        /* 'recepcion': solo el día a día (reservas y bloqueos). */
+        session.user.rolEquipo = token.rolEquipo;
         session.user.debeCambiarClave = !!token.debeCambiarClave;
         session.user.avatarUrl = token.avatarUrl;
       }

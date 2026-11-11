@@ -10,8 +10,11 @@ import { ReprogramarBookingDto } from './dto/reprogramar-booking.dto';
 import { ReservaManualDto } from './dto/reserva-manual.dto';
 import { ListaEsperaDto } from './dto/lista-espera.dto';
 import { ListaEsperaService } from './lista-espera.service';
+import { PanelClubService } from './panel-club.service';
+import { BloquearClienteDto, NoShowDto } from './dto/panel-club.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { SoloTitularGuard } from '../../common/guards/solo-titular.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../users/schemas/user.schema';
 
@@ -21,6 +24,7 @@ export class BookingsController {
   constructor(
     private readonly bookingsService: BookingsService,
     private readonly listaEspera: ListaEsperaService,
+    private readonly panelClub: PanelClubService,
   ) {}
 
   @Get('public')
@@ -107,6 +111,48 @@ export class BookingsController {
     return this.bookingsService.findByCourtAndDate(courtId, date);
   }
 
+  // ─── Panel del club: clientes, no llegó y caja ───────────────────────
+
+  @Get('owner/clientes')
+  /* Con plata de por medio: solo el dueño, no su equipo. */
+  @UseGuards(JwtAuthGuard, RolesGuard, SoloTitularGuard)
+  @Roles(UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Clientes del club: frecuencia, gasto y faltas' })
+  clientes(@Request() req) {
+    return this.panelClub.clientes(req.user.userId);
+  }
+
+  @Post('owner/clientes/bloqueos')
+  /* Con plata de por medio: solo el dueño, no su equipo. */
+  @UseGuards(JwtAuthGuard, RolesGuard, SoloTitularGuard)
+  @Roles(UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Dejar de recibirle reservas en línea a un cliente' })
+  bloquearCliente(@Body() dto: BloquearClienteDto, @Request() req) {
+    return this.panelClub.bloquear(req.user.userId, dto);
+  }
+
+  @Delete('owner/clientes/bloqueos/:id')
+  /* Con plata de por medio: solo el dueño, no su equipo. */
+  @UseGuards(JwtAuthGuard, RolesGuard, SoloTitularGuard)
+  @Roles(UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Quitar el bloqueo de un cliente' })
+  desbloquearCliente(@Param('id') id: string, @Request() req) {
+    return this.panelClub.desbloquear(req.user.userId, id);
+  }
+
+  @Get('owner/caja')
+  /* Con plata de por medio: solo el dueño, no su equipo. */
+  @UseGuards(JwtAuthGuard, RolesGuard, SoloTitularGuard)
+  @Roles(UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Caja del club entre dos fechas (YYYY-MM-DD)' })
+  caja(@Query('desde') desde: string, @Query('hasta') hasta: string, @Request() req) {
+    return this.panelClub.caja(req.user.userId, String(desde ?? ''), String(hasta ?? desde ?? ''));
+  }
+
   @Get('owner')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.OWNER)
@@ -132,6 +178,15 @@ export class BookingsController {
   @ApiOperation({ summary: 'Detalle de una reserva por ID' })
   findOne(@Param('id') id: string) {
     return this.bookingsService.findById(id);
+  }
+
+  @Patch(':id/no-show')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Marcar o desmarcar que el cliente no llegó' })
+  marcarNoShow(@Param('id') id: string, @Body() dto: NoShowDto, @Request() req) {
+    return this.panelClub.marcarNoShow(req.user.userId, id, dto.noShow);
   }
 
   @Patch(':id/status')

@@ -10,7 +10,9 @@ import { generarPasswordTemporal } from '../../common/utils/random.util';
 /** Cuántos empleados puede tener un club. */
 const MAX_EQUIPO = 10;
 
-const CAMPOS = 'name email phone isActive lastLoginAt createdAt';
+const CAMPOS = 'name email phone isActive lastLoginAt createdAt rolEquipo';
+
+export type RolEquipo = 'encargado' | 'recepcion';
 
 /**
  * Empleados del club: entran al panel con su propia cuenta y actúan sobre el
@@ -38,7 +40,7 @@ export class EquipoService {
     return this.userModel.find(this.filtroDelClub(ownerId)).select(CAMPOS).sort({ createdAt: 1 }).lean();
   }
 
-  async invitar(ownerId: string, datos: { name: string; email: string; phone?: string }) {
+  async invitar(ownerId: string, datos: { name: string; email: string; phone?: string; rol?: RolEquipo }) {
     const email = datos.email.toLowerCase().trim();
     if (await this.userModel.exists({ email })) {
       throw new ConflictException('Ya existe una cuenta con ese correo');
@@ -53,6 +55,7 @@ export class EquipoService {
       email,
       phone: datos.phone?.trim(),
       role: UserRole.STAFF,
+      rolEquipo: datos.rol ?? 'encargado',
       clubOwnerId: new Types.ObjectId(ownerId),
       passwordHash: await bcrypt.hash(clave, 10),
       isActive: true,
@@ -77,6 +80,15 @@ export class EquipoService {
     const persona = await this.buscar(ownerId, id);
     persona.isActive = activo;
     if (!activo) persona.refreshToken = undefined;
+    await persona.save();
+    return this.userModel.findById(persona._id).select(CAMPOS).lean();
+  }
+
+  /** Cambia el rol. Se corta la sesión para que el permiso nuevo rija de una. */
+  async cambiarRol(ownerId: string, id: string, rol: RolEquipo) {
+    const persona = await this.buscar(ownerId, id);
+    (persona as any).rolEquipo = rol;
+    persona.refreshToken = undefined;
     await persona.save();
     return this.userModel.findById(persona._id).select(CAMPOS).lean();
   }

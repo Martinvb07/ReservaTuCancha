@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { precioTurno, rangoPrecios, type ReglaPrecio } from '@/lib/precios';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -84,6 +85,8 @@ interface BookingFormProps {
   courtId: string;
   courtName: string;
   pricePerHour: number;
+  /** Franjas con otro precio (noche, fin de semana). */
+  priceRules?: ReglaPrecio[];
   availability: AvailabilitySlot[];
   /** preselección desde el buscador (yyyy-MM-dd) */
   initialDate?: string;
@@ -95,7 +98,7 @@ const inp = 'w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm
 const lbl = 'flex items-center gap-1.5 text-xs font-semibold text-gray-500 mb-1.5';
 
 export default function BookingForm({
-  courtId, courtName, pricePerHour, availability, initialDate, initialStart,
+  courtId, courtName, pricePerHour, priceRules, availability, initialDate, initialStart,
 }: BookingFormProps) {
   const [step, setStep]                 = useState<'when' | 'checkout'>('when');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -140,7 +143,20 @@ export default function BookingForm({
 
   /* La cancha se cobra por hora; la tarifa de servicio es una sola por
      reserva, no una por hora. Mismo criterio que usa el backend. */
-  const precioCancha = Math.round(pricePerHour * slotDurationH * (selectedSlots.length || 1));
+  /* Con precios por horario cada turno vale según el día y la hora: la misma
+     cuenta que hace el servidor al cobrar (lib/precios.ts). */
+  const cancha = useMemo(() => ({ pricePerHour, priceRules }), [pricePerHour, priceRules]);
+  const rango = rangoPrecios(cancha);
+  const diaSemana = selectedDate ? getDay(selectedDate) : 0;
+  const precioDe = (slot: string) => {
+    try {
+      const fin = format(addMinutes(parse(slot, 'HH:mm', new Date()), slotDuration), 'HH:mm');
+      return precioTurno(cancha, diaSemana, slot, fin);
+    } catch { return Math.round(pricePerHour * slotDurationH); }
+  };
+  const precioCancha = selectedSlots.length > 0 && endTime
+    ? precioTurno(cancha, diaSemana, selectedSlots[0], endTime)
+    : Math.round(pricePerHour * slotDurationH);
   const totalPrice   = precioCancha + tarifaServicio;
 
   const { data: bookedSlots = [] } = useQuery<{ startTime: string; endTime: string }[]>({
@@ -326,7 +342,8 @@ export default function BookingForm({
       <div className="px-6 py-5 border-b border-gray-100">
         <div className="flex items-baseline justify-between">
           <div>
-            <span className="text-2xl font-bold text-gray-900">${pricePerHour.toLocaleString('es-CO')}</span>
+            {rango.varia && <span className="text-sm text-gray-500">Desde </span>}
+            <span className="text-2xl font-bold text-gray-900">${rango.min.toLocaleString('es-CO')}</span>
             <span className="text-gray-500 text-sm whitespace-nowrap"> COP / hora</span>
           </div>
           <span className="text-xs font-medium text-gray-500">
@@ -409,6 +426,12 @@ export default function BookingForm({
                                   : 'border-gray-200 text-gray-700 hover:border-green-400 hover:bg-green-50'
                             }`}>
                             {slot12h}
+                            {/* Solo cuando el precio cambia según la hora. */}
+                            {rango.varia && !unavailable && (
+                              <span className={`mt-0.5 block text-[10px] font-medium ${selected ? 'text-white/80' : 'text-gray-500'}`}>
+                                ${precioDe(slot).toLocaleString('es-CO')}
+                              </span>
+                            )}
                           </button>
                         );
                       })}

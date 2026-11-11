@@ -29,6 +29,14 @@ export class User {
   @Prop({ trim: true })
   phone?: string;
 
+  /**
+   * Solo en empleados: qué tanto ven del panel.
+   * - encargado: todo salvo pagos, caja, clientes y equipo.
+   * - recepcion: solo el día a día (reservas y bloqueos).
+   */
+  @Prop({ enum: ['encargado', 'recepcion'], default: 'encargado' })
+  rolEquipo?: string;
+
   /** Solo en empleados: el dueño del club para el que trabajan. */
   @Prop({ type: Types.ObjectId, ref: 'User', index: true })
   clubOwnerId?: Types.ObjectId;

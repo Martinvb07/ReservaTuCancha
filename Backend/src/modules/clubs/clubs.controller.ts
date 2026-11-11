@@ -16,6 +16,7 @@ import { EpaycoReceptorDto } from './dto/epayco-receptor.dto';
 import { UpdateClubProfileDto } from './dto/update-club-profile.dto';
 import { PhotoDto } from '../courts/dto/photo.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { SinRecepcionGuard } from '../../common/guards/sin-recepcion.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { SoloTitularGuard } from '../../common/guards/solo-titular.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -55,21 +56,21 @@ export class ClubsController {
   }
 
   @Patch('my-club/profile')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, SinRecepcionGuard)
   @Roles(UserRole.OWNER)
   async updateProfile(@Request() req, @Body() body: UpdateClubProfileDto) {
     return this.clubsService.updateProfile(req.user.userId, body);
   }
 
   @Post('my-club/photos')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, SinRecepcionGuard)
   @Roles(UserRole.OWNER)
   async addClubPhoto(@Request() req, @Body() dto: PhotoDto) {
     return this.clubsService.addClubPhoto(req.user.userId, dto.url);
   }
 
   @Delete('my-club/photos')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, SinRecepcionGuard)
   @Roles(UserRole.OWNER)
   async removeClubPhoto(@Request() req, @Body() dto: PhotoDto) {
     return this.clubsService.removeClubPhoto(req.user.userId, dto.url);

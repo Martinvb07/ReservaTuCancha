@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { MessageSquare, Mail, Clock, ChevronRight, CheckCircle, Send, Loader2 } from 'lucide-react';
 import FaqAccordion from '@/components/ui/FaqAccordion';
+import SelectField from '@/components/ui/SelectField';
+import { toast } from 'sonner';
 
 const FAQ = [
   { q: '¿Cómo activo o desactivo una cancha?', a: 'Ve a Mis Canchas → selecciona la cancha → usa el interruptor de "Estado" para activarla o desactivarla. Los clientes no podrán reservar canchas inactivas.' },
@@ -22,6 +24,7 @@ export default function OwnerSoportePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.asunto) { toast.error('Elige un asunto'); return; }
     setLoading(true);
     setTimeout(() => { setLoading(false); setSent(true); }, 1200);
   };
@@ -100,19 +103,19 @@ export default function OwnerSoportePage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className={lbl}>Asunto</label>
-              <select
-                value={form.asunto}
-                onChange={e => setForm({ ...form, asunto: e.target.value })}
-                required
-                className={inp}
-              >
-                <option value="">Selecciona un asunto</option>
-                <option value="reservas">Problema con reservas</option>
-                <option value="pagos">Pagos y retiros</option>
-                <option value="canchas">Gestión de canchas</option>
-                <option value="tecnico">Problema técnico</option>
-                <option value="otro">Otro</option>
-              </select>
+              <SelectField
+                aria-label="Asunto"
+                value={form.asunto || undefined}
+                onChange={v => setForm({ ...form, asunto: v })}
+                placeholder="Selecciona un asunto"
+                options={[
+                  { value: 'reservas', label: 'Problema con reservas' },
+                  { value: 'pagos',    label: 'Pagos y retiros' },
+                  { value: 'canchas',  label: 'Gestión de canchas' },
+                  { value: 'tecnico',  label: 'Problema técnico' },
+                  { value: 'otro',     label: 'Otro' },
+                ]}
+              />
             </div>
             <div>
               <label className={lbl}>Mensaje</label>

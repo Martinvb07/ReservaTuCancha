@@ -10,14 +10,14 @@ import {
   LayoutDashboard, CalendarDays, Building2, BarChart3,
   Users, LogOut, Home, FileText, PenLine,
   CreditCard, Image as ImageIcon, MessageSquare, Zap, Ban,
-  ChevronLeft, ChevronRight, UsersRound, KeyRound,
+  ChevronLeft, ChevronRight, UsersRound, KeyRound, Contact, Wallet,
 } from 'lucide-react';
 import api from '@/lib/api/axios';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import { LOGO_URL } from '@/lib/logo';
 
 /** `soloTitular`: lo ve el dueño, no sus empleados. */
-type NavItem = { href: string; label: string; icon: any; soloTitular?: boolean };
+type NavItem = { href: string; label: string; icon: any; soloTitular?: boolean; /** No lo ve el empleado de recepción. */ sinRecepcion?: boolean };
 type NavSection = { label: string | null; items: NavItem[] };
 
 const ADMIN_SECTIONS: NavSection[] = [
@@ -38,17 +38,19 @@ const ADMIN_SECTIONS: NavSection[] = [
 const OWNER_SECTIONS: NavSection[] = [
   { label: null, items: [
     { href: '/dashboard',                     label: 'Inicio',      icon: LayoutDashboard },
-    { href: '/dashboard/propetario/canchas',  label: 'Mis canchas', icon: Building2       },
+    { href: '/dashboard/propetario/canchas',  label: 'Mis canchas', icon: Building2, sinRecepcion: true },
     { href: '/dashboard/propetario/reservas', label: 'Reservas',    icon: CalendarDays    },
   ]},
   { label: 'Operación', items: [
-    { href: '/dashboard/propetario/analytics', label: 'Analytics', icon: BarChart3  },
+    { href: '/dashboard/propetario/analytics', label: 'Analytics', icon: BarChart3, sinRecepcion: true },
+    { href: '/dashboard/propetario/clientes',  label: 'Clientes',  icon: Contact, soloTitular: true },
+    { href: '/dashboard/propetario/caja',      label: 'Caja',      icon: Wallet, soloTitular: true },
     { href: '/dashboard/propetario/pagos',     label: 'Pagos',     icon: CreditCard, soloTitular: true },
     { href: '/dashboard/propetario/bloqueos',  label: 'Bloqueos',  icon: Ban        },
-    { href: '/dashboard/propetario/fotos',     label: 'Fotos',     icon: ImageIcon  },
+    { href: '/dashboard/propetario/fotos',     label: 'Fotos',     icon: ImageIcon, sinRecepcion: true },
   ]},
   { label: 'Cuenta', items: [
-    { href: '/dashboard/propetario/mi-club',     label: 'Mi Club', icon: Building2     },
+    { href: '/dashboard/propetario/mi-club',     label: 'Mi Club', icon: Building2, sinRecepcion: true },
     { href: '/dashboard/propetario/equipo',      label: 'Equipo',  icon: UsersRound, soloTitular: true },
     { href: '/dashboard/propetario/soporte',     label: 'Soporte', icon: MessageSquare },
     { href: '/dashboard/cuenta',                 label: 'Mi cuenta', icon: KeyRound },
@@ -111,10 +113,13 @@ export default function DashboardSidebar({ role, userName, variant = 'desktop' }
   const pathname = usePathname() || '';
   const session  = useApiAuth();
   const esStaff  = !!(session as any)?.user?.esStaff;
-  const sections = (role === 'admin' ? ADMIN_SECTIONS : OWNER_SECTIONS).map((sec) => ({
-    ...sec,
-    items: sec.items.filter((it) => !(esStaff && it.soloTitular)),
-  }));
+  const esRecepcion = esStaff && (session as any)?.user?.rolEquipo === 'recepcion';
+  const sections = (role === 'admin' ? ADMIN_SECTIONS : OWNER_SECTIONS)
+    .map((sec) => ({
+      ...sec,
+      items: sec.items.filter((it) => !(esStaff && it.soloTitular) && !(esRecepcion && it.sinRecepcion)),
+    }))
+    .filter((sec) => sec.items.length > 0);
   const token    = (session as any)?.accessToken;
   const uid      = useId();
 

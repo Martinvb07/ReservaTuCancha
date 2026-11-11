@@ -35,6 +35,8 @@ export interface Booking {
   paymentMethod?: 'epayco' | 'wompi' | 'club';
   /** Turno fijo: las fechas de una misma serie comparten este id. */
   serieId?: string;
+  /** El club marcó que el cliente no llegó a su turno. */
+  noShow?: boolean;
   serieOrden?: number;
   createdAt: string;
 }

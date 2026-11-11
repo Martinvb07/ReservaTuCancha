@@ -84,6 +84,8 @@ interface EmailTemplateOptions {
   ctaText?: string; ctaUrl?: string; ctaBg?: string; ctaNote?: string;
   alertBox?: { bg: string; color: string; text: string };
   secondaryCta?: { text: string; url: string };
+  /** HTML ya armado que va después de las filas (p. ej. el mapa). */
+  extraHtml?: string;
 }
 
 function buildEmailHtml(opts: EmailTemplateOptions): string {
@@ -145,6 +147,7 @@ function buildEmailHtml(opts: EmailTemplateOptions): string {
             <table width="100%" border="0" cellpadding="0" cellspacing="0">
               ${rowsHtml}
             </table>
+            ${opts.extraHtml ?? ''}
             ${alertHtml}
             ${ctaHtml}
             ${secondaryHtml}
@@ -489,6 +492,48 @@ export class NotificationsService implements OnModuleInit {
   }
 
 
+  /**
+   * "Cómo llegar": la imagen del mapa con el pin de la cancha (la arma el
+   * backend con teselas de OpenStreetMap, ver courts/mapa-estatico.ts) y un
+   * botón que abre la ruta en el mapa del teléfono.
+   *
+   * Sin coordenadas no hay imagen, pero el botón igual busca la dirección.
+   */
+  private bloqueUbicacion(court: any, club: any): string {
+    const [lng, lat] = court?.location?.coordinates ?? [];
+    const conPunto = typeof lat === 'number' && typeof lng === 'number';
+    const direccion = [court?.location?.address || club?.address, court?.location?.city || club?.city]
+      .filter(Boolean)
+      .join(', ');
+    if (!conPunto && !direccion) return '';
+
+    const ruta = conPunto
+      ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccion)}`;
+    const backend = (process.env.BACKEND_URL ?? 'https://reservatucancha.site/api').replace(/\/+$/, '');
+    const mapa = conPunto && court?._id ? `${backend}/courts/${court._id}/mapa.png` : '';
+
+    return `
+                <div style="margin-top: 28px; border: 1px solid #e5e7eb; border-radius: 20px; overflow: hidden;">
+                  ${mapa ? `
+                  <a href="${ruta}" style="display: block; line-height: 0; text-decoration: none;">
+                    <img src="${mapa}" width="560" alt="Mapa de la ubicación de la cancha" style="display: block; width: 100%; max-width: 100%; height: auto; border: 0;">
+                  </a>` : ''}
+                  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #f9fafb;">
+                    <tr>
+                      <td style="padding: 16px 18px;">
+                        <span style="color: #9ca3af; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 3px;">Ubicación</span>
+                        <span style="color: #111827; font-size: 14px; font-weight: 700; line-height: 20px;">${escapeHtml(direccion || 'Ver en el mapa')}</span>
+                      </td>
+                      <td align="right" style="padding: 16px 18px; white-space: nowrap;">
+                        <a href="${ruta}" style="background-color: #111827; color: #ffffff; padding: 12px 20px; border-radius: 999px; text-decoration: none; font-weight: 700; font-size: 13px; display: inline-block;">Cómo llegar &rarr;</a>
+                      </td>
+                    </tr>
+                  </table>
+                  ${mapa ? `<p style="margin: 0; padding: 0 18px 10px; background-color: #f9fafb; color: #b9bfc9; font-size: 10px;">Mapa &copy; colaboradores de OpenStreetMap</p>` : ''}
+                </div>`;
+  }
+
   private async getCourtAndClub(booking: Booking & { _id: any }) {
     const courtIdStr = (booking.courtId as any)?._id?.toString() ?? booking.courtId.toString();
     const court = await this.courtsService.findById(courtIdStr);
@@ -573,6 +618,7 @@ export class NotificationsService implements OnModuleInit {
     const startAmPm = toAmPm(booking.startTime);
     const endAmPm = toAmPm(booking.endTime);
     const sportLabel = formatSport(court?.sport);
+    const ubicacion = this.bloqueUbicacion(court, club);
     await this.send({
       to: booking.guestEmail,
       from: this.fromEmail,
@@ -648,6 +694,7 @@ export class NotificationsService implements OnModuleInit {
                     <td align="right" style="color: #059669; font-size: 18px; font-weight: 800; border-top: 1px solid #f3f4f6;">$${booking.totalPrice?.toLocaleString('es-CO')} COP</td>
                   </tr>` : ''}
                 </table>
+                ${ubicacion}
                 <div style="margin-top: 32px; text-align: center;">
                   <a href="${cambiarUrl}" style="background-color: #16a34a; color: #ffffff; padding: 16px 32px; border-radius: 16px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
                     Cambiar mi horario
@@ -1041,6 +1088,7 @@ export class NotificationsService implements OnModuleInit {
           { label: 'Horario', value: `${toAmPm(booking.startTime)} – ${toAmPm(booking.endTime)}` },
           { label: 'Pago', value: manual ? 'En el club' : 'Pagado online', highlight: true },
         ],
+        extraHtml: this.bloqueUbicacion(court, club),
         /* Las que anota el club se mueven hablando con el club. */
         ...(manual ? {} : {
           ctaText: '¿No puedes ir? Cambia tu horario', ctaUrl: cambiarUrl, ctaBg: '#16a34a',

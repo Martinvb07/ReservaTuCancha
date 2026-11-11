@@ -27,6 +27,8 @@ export interface Court {
   sport: SportType;
   location: GeoLocation;
   pricePerHour: number;
+  /** Franjas con otro precio (noche, fin de semana). */
+  priceRules?: { days: number[]; from: string; to: string; pricePerHour: number; label?: string }[];
   currency: string;
   photos: string[];
   availability: AvailabilitySlot[];

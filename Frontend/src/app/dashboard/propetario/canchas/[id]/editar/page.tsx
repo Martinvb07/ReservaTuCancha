@@ -14,6 +14,8 @@ import { AMENITIES } from '@/lib/constants';
 import { getSportIcon } from '@/components/ui/SportIcons';
 import SettingsTabs, { type SettingsSection } from '@/components/ui/SettingsTabs';
 import AvailabilityEditor, { type AvailabilitySlot } from '@/components/dashboard/AvailabilityEditor';
+import PriceRulesEditor from '@/components/dashboard/PriceRulesEditor';
+import type { ReglaPrecio } from '@/lib/precios';
 import Link from 'next/link';
 import api from '@/lib/api/axios';
 import type { ResolvedAddress } from '@/components/map/LocationPicker';
@@ -66,6 +68,9 @@ export default function EditarCanchaPage() {
   const [amenities, setAmenities]       = useState<string[]>([]);
   const [extras, setExtras]             = useState<string[]>([]);
   const [amenitiesDirty, setAmenitiesDirty] = useState(false);
+  /* Franjas con otro precio (noche, fin de semana). */
+  const [priceRules, setPriceRules]     = useState<ReglaPrecio[]>([]);
+  const [rulesDirty, setRulesDirty]     = useState(false);
 
   const toggleAmenity = (a: string) => {
     setAmenitiesDirty(true);
@@ -84,6 +89,7 @@ export default function EditarCanchaPage() {
   });
 
   const city = watch('city');
+  const precioBase = Number(watch('pricePerHour')) || 0;
 
   // Pre-llenar el form cuando lleguen los datos
   useEffect(() => {
@@ -103,6 +109,8 @@ export default function EditarCanchaPage() {
       setAmenities(guardadas.filter(a => AMENITIES.includes(a)));
       setExtras(guardadas.filter(a => !AMENITIES.includes(a)));
       setAmenitiesDirty(false);
+      setPriceRules(Array.isArray(court.priceRules) ? court.priceRules : []);
+      setRulesDirty(false);
       // El backend las guarda [lng, lat]; el mapa las quiere al revés.
       const c = court.location?.coordinates;
       if (Array.isArray(c) && c.length === 2 && Number.isFinite(c[0]) && Number.isFinite(c[1])) {
@@ -123,6 +131,11 @@ export default function EditarCanchaPage() {
         ...(pin ? { coordinates: [pin.lng, pin.lat] } : {}),
       },
       pricePerHour: values.pricePerHour,
+      priceRules: priceRules.map(r => ({
+        days: r.days, from: r.from, to: r.to,
+        pricePerHour: Number(r.pricePerHour) || 0,
+        ...(r.label?.trim() ? { label: r.label.trim() } : {}),
+      })),
       availability,
       // Los extras van primero, igual que al crear: la modalidad encabeza la lista.
       amenities: [...extras, ...amenities],
@@ -152,7 +165,7 @@ export default function EditarCanchaPage() {
   const SECTIONS: SettingsSection[] = [
     { id: 'info',           title: 'Información',    hint: 'Nombre y descripción de la cancha',   icon: Building2,   alert: SECTION_FIELDS.info.some(f => errors[f]) },
     { id: 'ubicacion',      title: 'Ubicación',      hint: 'Dónde queda la cancha',               icon: MapPin,      alert: SECTION_FIELDS.ubicacion.some(f => errors[f]) },
-    { id: 'precio',         title: 'Precio',         hint: 'Tarifa por hora de juego',            icon: DollarSign,  alert: SECTION_FIELDS.precio.some(f => errors[f]) },
+    { id: 'precio',         title: 'Precio',         hint: 'Tarifa por hora y por horario',            icon: DollarSign,  alert: SECTION_FIELDS.precio.some(f => errors[f]) },
     { id: 'disponibilidad', title: 'Disponibilidad', hint: 'Días y horarios en los que atiendes', icon: Clock },
     { id: 'comodidades',    title: 'Comodidades',    hint: 'Qué ofrece tu cancha',                icon: Sparkles },
   ];
@@ -259,14 +272,23 @@ export default function EditarCanchaPage() {
           )}
 
           {section === 'precio' && (
-            <div className="max-w-xs">
-              <label className={lbl}>Precio por hora (COP) <span className="text-red-500">*</span></label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold">$</span>
-                <input type="number" min={1000} step={1000}
-                  className={inp + ' pl-8'} placeholder="80000" {...register('pricePerHour')} />
+            <div className="space-y-6">
+              <div className="max-w-xs">
+                <label className={lbl}>Precio base por hora (COP) <span className="text-red-500">*</span></label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold">$</span>
+                  <input type="number" min={1000} step={1000}
+                    className={inp + ' pl-8'} placeholder="80000" {...register('pricePerHour')} />
+                </div>
+                {errors.pricePerHour && <p className="text-xs text-red-500 mt-1">{errors.pricePerHour.message}</p>}
               </div>
-              {errors.pricePerHour && <p className="text-xs text-red-500 mt-1">{errors.pricePerHour.message}</p>}
+              <div className="border-t border-gray-200 pt-5">
+                <PriceRulesEditor
+                  precioBase={precioBase}
+                  value={priceRules}
+                  onChange={(r) => { setPriceRules(r); setRulesDirty(true); }}
+                />
+              </div>
             </div>
           )}
 
@@ -318,7 +340,7 @@ export default function EditarCanchaPage() {
                 : <><Save className="h-5 w-5" /> Guardar cambios</>}
             </button>
           </div>
-          {(isDirty || pinDirty || amenitiesDirty) && (
+          {(isDirty || pinDirty || amenitiesDirty || rulesDirty) && (
             <p className="text-xs text-gray-500 text-center mt-2">Tienes cambios sin guardar</p>
           )}
         </div>

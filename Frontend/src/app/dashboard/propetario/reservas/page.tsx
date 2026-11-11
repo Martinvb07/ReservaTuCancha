@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { CalendarDays, Clock, User, Phone, Mail, Eye, Search, List, ChevronLeft, ChevronRight, LayoutGrid, Trophy, StickyNote, Plus, Store, Repeat, Trash2 } from 'lucide-react';
+import { CalendarDays, Clock, User, Phone, Mail, Eye, Search, List, ChevronLeft, ChevronRight, LayoutGrid, Trophy, StickyNote, Plus, Store, Repeat, Trash2, UserX, UserCheck } from 'lucide-react';
 import api from '@/lib/api/axios';
 import { toast } from 'sonner';
 import { esManual, type Booking } from '@/types/booking.types';
@@ -56,6 +56,20 @@ export default function ReservasOwnerPage() {
       setSelected(null);
     },
     onError: () => toast.error('Error al cambiar el estado'),
+  });
+
+  /* "No llegó": queda en la ficha del cliente (Clientes) para saber quién falla. */
+  const marcarNoShow = useMutation({
+    mutationFn: ({ id, noShow }: { id: string; noShow: boolean }) =>
+      api.patch(`/bookings/${id}/no-show`, { noShow }),
+    onSuccess: (_, v) => {
+      toast.success(v.noShow ? 'Marcada: el cliente no llegó' : 'Falta quitada');
+      queryClient.invalidateQueries({ queryKey: ['owner-bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['owner-clientes'] });
+      queryClient.invalidateQueries({ queryKey: ['owner-caja'] });
+      setSelected((s) => (s && s._id === v.id ? { ...s, noShow: v.noShow } : s));
+    },
+    onError: () => toast.error('No se pudo guardar'),
   });
 
   const anular = useMutation({
@@ -362,6 +376,11 @@ export default function ReservasOwnerPage() {
                 <span className={`w-1.5 h-1.5 rounded-full ${STATUS_STYLES[selected.status]?.dot}`} />
                 {STATUS_LABELS[selected.status]}
               </div>
+              {selected.noShow && (
+                <span className="ml-2 inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-red-100 text-red-600">
+                  <UserX className="h-3 w-3" /> No llegó
+                </span>
+              )}
               <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm">
                 <div className="flex items-center gap-2 text-gray-600"><CalendarDays className="h-4 w-4 text-green-600" />{format(new Date(selected.date), 'PPP', { locale: es })}</div>
                 <div className="flex items-center gap-2 text-gray-600"><Clock className="h-4 w-4 text-green-600" />{formatTime12h(selected.startTime)} – {formatTime12h(selected.endTime)}</div>
@@ -393,6 +412,21 @@ export default function ReservasOwnerPage() {
                     </button>
                   )}
                 </div>
+              )}
+              {selected.status !== 'pending' && (
+                <button
+                  onClick={() => marcarNoShow.mutate({ id: selected._id, noShow: !selected.noShow })}
+                  disabled={marcarNoShow.isPending}
+                  className={`w-full flex items-center justify-center gap-2 font-bold text-sm py-2.5 rounded-xl border transition-colors duration-200 disabled:opacity-50 ${
+                    selected.noShow
+                      ? 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                      : 'border-red-200 text-red-600 hover:bg-red-50'
+                  }`}
+                >
+                  {selected.noShow
+                    ? <><UserCheck className="h-4 w-4" /> Sí llegó (quitar la falta)</>
+                    : <><UserX className="h-4 w-4" /> No llegó</>}
+                </button>
               )}
               {selected.status === 'pending' && (
                 <p className="text-xs text-amber-700 bg-amber-50 rounded-xl px-4 py-3">

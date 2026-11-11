@@ -285,7 +285,7 @@ export class AnalyticsService {
     const featuredCourts = await this.courtModel.find({ isActive: true })
       .sort({ averageRating: -1, totalReviews: -1 })
       .limit(8)
-      .select('name sport location pricePerHour photos averageRating totalReviews')
+      .select('name sport location pricePerHour priceRules photos averageRating totalReviews')
       .lean();
 
     // Testimonios: últimas reseñas 5 estrellas (hacemos un aggregate en bookings + reviews no está aquí, así que usamos courts con mejor rating)

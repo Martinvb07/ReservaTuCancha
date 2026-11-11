@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsNumber, IsOptional, IsArray, Min, ValidateNested, Matches } from 'class-validator';
+import { IsString, IsEnum, IsNumber, IsOptional, IsArray, Min, Max, MaxLength, ArrayMaxSize, ArrayMinSize, IsInt, ValidateNested, Matches } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { SportType } from '../schemas/court.schema';
@@ -28,6 +28,26 @@ class AvailabilitySlotDto {
   @IsOptional() @IsNumber() slotDurationMinutes?: number;
 }
 
+class PriceRuleDto {
+  @IsArray() @ArrayMinSize(1) @ArrayMaxSize(7)
+  @IsInt({ each: true }) @Min(0, { each: true }) @Max(6, { each: true })
+  days: number[];
+
+  @IsString()
+  @Matches(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, { message: 'from debe estar en formato HH:mm (24h)' })
+  from: string;
+
+  @IsString()
+  @Matches(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, { message: 'to debe estar en formato HH:mm (24h). Use 00:00 para medianoche' })
+  to: string;
+
+  @IsNumber() @Min(0)
+  pricePerHour: number;
+
+  @IsOptional() @IsString() @MaxLength(40)
+  label?: string;
+}
+
 export class CreateCourtDto {
   @ApiProperty({ example: 'Cancha El Estadio' })
   @IsString()
@@ -51,6 +71,14 @@ export class CreateCourtDto {
   @IsNumber()
   @Min(0)
   pricePerHour: number;
+
+  @ApiProperty({ type: [PriceRuleDto], required: false, description: 'Precio distinto por días y horas' })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(12)
+  @ValidateNested({ each: true })
+  @Type(() => PriceRuleDto)
+  priceRules?: PriceRuleDto[];
 
   @ApiProperty({ example: 'COP', required: false })
   @IsOptional()

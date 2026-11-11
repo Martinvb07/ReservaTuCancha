@@ -2,6 +2,7 @@ import { Controller, Get, UseGuards, Request, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AnalyticsService } from './analytics.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { SinRecepcionGuard } from '../../common/guards/sin-recepcion.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../users/schemas/user.schema';
@@ -18,7 +19,7 @@ export class AnalyticsController {
   }
 
   @Get('owner')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, SinRecepcionGuard)
   @ApiBearerAuth()
   @Roles(UserRole.OWNER)
   @ApiOperation({ summary: 'Stats del propietario' })
@@ -27,7 +28,7 @@ export class AnalyticsController {
   }
 
   @Get('owner/monthly')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, SinRecepcionGuard)
   @ApiBearerAuth()
   @Roles(UserRole.OWNER)
   @ApiOperation({ summary: 'Ingresos mensuales del propietario' })
@@ -36,7 +37,7 @@ export class AnalyticsController {
   }
 
   @Get('owner/ocupacion')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, SinRecepcionGuard)
   @ApiBearerAuth()
   @Roles(UserRole.OWNER)
   @ApiOperation({ summary: 'Ocupación por día y hora (?semanas=8&courtId=)' })

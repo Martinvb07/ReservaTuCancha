@@ -60,6 +60,7 @@ export class AuthService {
            "owner" con `esStaff`, y las pantallas sensibles se esconden. */
         role: user.role === UserRole.STAFF ? UserRole.OWNER : user.role,
         esStaff: user.role === UserRole.STAFF,
+        ...(user.role === UserRole.STAFF ? { rolEquipo: (user as any).rolEquipo ?? 'encargado' } : {}),
         /* Entró con la clave temporal del correo: la web y la app lo llevan
            a ponerse una propia antes de usar el panel. */
         debeCambiarClave: !!user.debeCambiarClave,
@@ -132,7 +133,7 @@ export class AuthService {
          él salvo lo que bloquea SoloTitularGuard (cuenta de pagos, equipo). */
       role: esStaff ? UserRole.OWNER : user.role,
       name: user.name,
-      ...(esStaff ? { staff: true, ownerId: user.clubOwnerId?.toString() } : {}),
+      ...(esStaff ? { staff: true, ownerId: user.clubOwnerId?.toString(), rolEquipo: user.rolEquipo ?? 'encargado' } : {}),
     };
 
     const accessToken = this.jwtService.sign(

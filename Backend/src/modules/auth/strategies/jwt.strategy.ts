@@ -29,6 +29,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       userId: esStaff ? payload.ownerId : payload.sub,
       cuentaId: payload.sub,
       esStaff,
+      /* Los tokens de antes de los roles no lo traen: valen como encargado. */
+      ...(esStaff ? { rolEquipo: payload.rolEquipo === 'recepcion' ? 'recepcion' : 'encargado' } : {}),
       email: payload.email,
       role: payload.role,
       name: payload.name,

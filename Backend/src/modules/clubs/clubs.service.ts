@@ -348,6 +348,7 @@ export class ClubsService {
         name: c.name,
         sport: c.sport,
         pricePerHour: c.pricePerHour,
+        priceRules: (c as any).priceRules ?? [],
         photos: c.photos,
         averageRating: c.averageRating,
         totalReviews: c.totalReviews,
