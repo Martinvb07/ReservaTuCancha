@@ -54,7 +54,7 @@ export default function MisReservasPage() {
           <p className="text-lime-400 font-semibold text-sm uppercase tracking-widest flex items-center justify-center gap-2">
             Sin necesidad de cuenta
           </p>
-          <h1 className="text-4xl font-black text-white uppercase">Mis reservas</h1>
+          <h1 className="text-4xl font-black text-white">Mis reservas</h1>
           <p className="text-gray-400">Ingresa tu email o el código de reserva para verla</p>
 
           {/* Buscador */}

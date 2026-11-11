@@ -163,7 +163,7 @@ export default function NovedadesPageClient() {
           <p className="text-lime-400 font-semibold text-xs md:text-sm uppercase tracking-widest flex items-center gap-2 mb-3">
             Novedades
           </p>
-          <h1 className="text-3xl md:text-5xl font-black text-white uppercase leading-[1.05]">
+          <h1 className="text-3xl md:text-5xl font-black text-white leading-[1.05]">
             Lo nuevo en <span className="text-lime-400">ReservaTuCancha</span>
           </h1>
           <p className="text-gray-300 mt-4 text-sm md:text-base max-w-2xl leading-relaxed">

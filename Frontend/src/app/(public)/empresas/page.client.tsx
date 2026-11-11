@@ -12,7 +12,7 @@ import MobileSearchTrigger from '@/components/home/MobileSearchTrigger';
 import FotoCiudad from '@/components/ui/FotoCiudad';
 import { AMENITIES, getSport } from '@/lib/constants';
 import { AMEN_ICONS } from '@/lib/amenityIcons';
-import { SlidersHorizontal, X, CalendarDays, Search, ChevronDown, Check, Sparkles, Banknote, ArrowUpDown, Map as MapIcon, LayoutGrid, Columns2 } from 'lucide-react';
+import { SlidersHorizontal, X, CalendarDays, Search, ChevronDown, Check, Sparkles, Banknote, ArrowUpDown, Map as MapIcon, LayoutGrid, Columns2, WifiOff, RefreshCw } from 'lucide-react';
 import { useAnimatedDisclosure } from '@/hooks/useAnimatedDisclosure';
 import { SEARCH_ANCHOR_ID } from '@/hooks/useSearchDock';
 import { leerParaVolver, consumirVolver, guardarListado, marcarSalidaACancha } from '@/lib/listadoGuardado';
@@ -173,7 +173,7 @@ export default function EmpresasPageClient() {
     return () => document.removeEventListener('click', alAbrir, true);
   }, []);
 
-  const { data, isLoading, isError } = useCourts({ sport, city, minPrice: '', maxPrice: '', page: 1, limit: 48 });
+  const { data, isLoading, isError, refetch, isFetching } = useCourts({ sport, city, minPrice: '', maxPrice: '', page: 1, limit: 48 });
 
   /* Al volver, una vez que las canchas están pintadas, se baja hasta donde se estaba. */
   const scrollPendiente = useRef(guardado?.scroll ?? 0);
@@ -675,8 +675,16 @@ export default function EmpresasPageClient() {
 
         {/* Error */}
         {isError && (
-          <div className="text-center py-20">
-            <p className="text-gray-500 font-medium">Error cargando canchas. Intenta de nuevo.</p>
+          <div className="rtc-fade mx-auto flex max-w-md flex-col items-center rounded-[28px] bg-white px-6 py-12 text-center">
+            <span className="grid h-14 w-14 place-items-center rounded-full bg-red-50">
+              <WifiOff className="h-6 w-6 text-red-500" />
+            </span>
+            <p className="mt-4 font-bold text-gray-900">No pudimos cargar las canchas</p>
+            <p className="mt-1 text-sm text-gray-500">Revisa tu conexión e inténtalo otra vez.</p>
+            <button type="button" onClick={() => refetch()} disabled={isFetching}
+              className="mt-5 inline-flex items-center gap-2 rounded-full bg-gray-900 px-5 py-2.5 text-sm font-bold text-white transition-transform duration-200 hover:scale-[1.03] active:scale-95 disabled:opacity-60">
+              <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} /> Reintentar
+            </button>
           </div>
         )}
 

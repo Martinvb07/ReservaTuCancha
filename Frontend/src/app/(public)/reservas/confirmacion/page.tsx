@@ -58,7 +58,7 @@ function ConfirmacionContent() {
           <p className={`font-semibold text-xs uppercase tracking-widest ${isEfectivo ? 'text-amber-400' : 'text-lime-400'}`}>
             {isEfectivo ? 'Reserva registrada' : 'Pago procesado'}
           </p>
-          <h1 className="text-3xl font-black text-white uppercase">¡Todo listo!</h1>
+          <h1 className="text-3xl font-black text-white">¡Todo listo!</h1>
           <p className="text-gray-400 text-sm leading-relaxed">
             {isEfectivo
               ? 'Tu reserva fue registrada. Preséntate con tu código de reserva y realiza el pago en efectivo al llegar.'

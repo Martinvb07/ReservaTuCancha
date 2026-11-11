@@ -16,7 +16,7 @@ export default function TerminosPage() {
         </Link>
         <div>
           <p className="text-lime-600 font-semibold text-sm uppercase tracking-widest mb-2">✦ ReservaTuCancha</p>
-          <h1 className="text-4xl font-black text-gray-900 uppercase">Términos de uso</h1>
+          <h1 className="text-4xl font-black text-gray-900">Términos de uso</h1>
           <p className="text-gray-500 text-sm mt-2">Última actualización: Marzo 2026</p>
         </div>
         <div className="space-y-6 text-gray-600 text-sm leading-relaxed">

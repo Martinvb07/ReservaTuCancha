@@ -197,7 +197,7 @@ export default function SolicitarAccesoPage() {
           <p className="text-lime-400 font-semibold text-sm uppercase tracking-widest flex items-center justify-center gap-2">
             Para propietarios de canchas
           </p>
-          <h1 className="text-4xl md:text-5xl font-black uppercase leading-tight">
+          <h1 className="text-4xl md:text-5xl font-black leading-tight">
             Publica tu cancha y empieza a
             <span className="block text-lime-400">recibir reservas hoy</span>
           </h1>

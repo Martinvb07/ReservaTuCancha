@@ -54,7 +54,7 @@ function PagarContent() {
 
         <div className="space-y-2">
           <p className="font-semibold text-xs uppercase tracking-widest text-lime-400">Pago seguro con ePayco</p>
-          <h1 className="text-3xl font-black uppercase text-white">
+          <h1 className="text-3xl font-black text-white">
             {error ? 'No se pudo abrir' : 'Abriendo el pago'}
           </h1>
           <p className="text-gray-400 text-sm">

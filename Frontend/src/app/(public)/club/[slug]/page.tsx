@@ -88,7 +88,7 @@ export default async function ClubPublicPage({ params }: { params: { slug: strin
 
           <div className="flex-1 text-center md:text-left">
             <p className="text-lime-400 text-xs font-bold uppercase tracking-widest mb-2">Club deportivo</p>
-            <h1 className="text-4xl font-black uppercase tracking-tight mb-2">{club.name}</h1>
+            <h1 className="text-4xl font-black tracking-tight mb-2">{club.name}</h1>
             {club.slogan && (
               <p className="text-lime-300/80 text-sm font-medium italic mb-3">"{club.slogan}"</p>
             )}

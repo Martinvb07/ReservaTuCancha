@@ -216,7 +216,7 @@ export default function LoginPage() {
           <div className="w-full max-w-md space-y-7">
 
             <motion.div className="space-y-1" {...fade(0.05)}>
-              <h1 className="text-3xl font-black text-gray-900 uppercase">Iniciar sesión</h1>
+              <h1 className="text-3xl font-black text-gray-900">Iniciar sesión</h1>
               <p className="text-gray-500 text-sm">
                 Accede a tu dashboard para gestionar tus canchas deportivas.
               </p>

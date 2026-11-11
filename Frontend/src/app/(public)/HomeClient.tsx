@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Loader2, SearchX } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Loader2, SearchX } from 'lucide-react';
 import { toast } from 'sonner';
 import FaqAccordion from '@/components/ui/FaqAccordion';
+import FadeIn from '@/components/ui/FadeIn';
 import HeroSearch from '@/components/home/HeroSearch';
 import MobileSearchTrigger from '@/components/home/MobileSearchTrigger';
 import ExploraCiudades from '@/components/home/ExploraCiudades';
@@ -136,6 +137,15 @@ export default function HomeClient({ stats }: { stats: PublicStats }) {
             escritorio, al revés (como Airbnb). El ancla envuelve los dos
             buscadores: la lee el navbar para acoplar la píldora al bajar. */}
         <div className="mx-auto flex max-w-6xl flex-col px-5 pb-6 pt-4 md:pb-8 md:pt-6">
+          {/* Titular: dice qué es la página antes del buscador. */}
+          <div className="rtc-fade mb-4 text-center md:mb-6">
+            <h1 className="text-[26px] font-black leading-tight tracking-tight text-gray-900 md:text-[40px]">
+              Reserva tu cancha <span className="text-green-600">en segundos</span>
+            </h1>
+            <p className="mx-auto mt-1.5 max-w-xl text-sm text-gray-500 md:mt-2 md:text-base">
+              Fútbol, pádel y vóley playa. Elige el horario, paga en línea y a jugar.
+            </p>
+          </div>
           <div id={SEARCH_ANCHOR_ID} className="order-1 lg:order-2">
             <MobileSearchTrigger pildora initialSport={deporteBuscador} />
             <div className="mx-auto mt-5 hidden max-w-[880px] lg:block">
@@ -204,10 +214,27 @@ export default function HomeClient({ stats }: { stats: PublicStats }) {
         </Carrusel>
         {!cargando && visibles.length === 0 && (
           <div className="mx-auto max-w-6xl px-5">
-            <div className="mt-3 flex flex-col items-center rounded-[28px] bg-white px-6 py-10 text-center">
-              <SearchX className="h-9 w-9 text-gray-300" />
-              <p className="mt-3 font-bold text-gray-900">Aún no hay canchas de este deporte</p>
-              <p className="mt-1 text-sm text-gray-500">Prueba con otro o mira todas las canchas.</p>
+            <div className="rtc-fade mt-3 flex flex-col items-center rounded-[28px] bg-white px-6 py-10 text-center">
+              <span className="grid h-14 w-14 place-items-center rounded-full bg-green-50">
+                <SearchX className="h-6 w-6 text-green-600" />
+              </span>
+              <p className="mt-4 font-bold text-gray-900">
+                {pestana ? 'Aún no hay canchas de este deporte' : 'Pronto verás canchas aquí'}
+              </p>
+              <p className="mt-1 max-w-xs text-sm text-gray-500">
+                {pestana ? 'Prueba con otro deporte o mira todas las canchas.' : 'Estamos sumando los primeros clubes. Vuelve en unos días.'}
+              </p>
+              {pestana ? (
+                <button type="button" onClick={() => setPestana('')}
+                  className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-gray-900 px-5 py-2.5 text-sm font-bold text-white transition-transform duration-200 hover:scale-[1.03] active:scale-95">
+                  Ver todas <ArrowRight className="h-4 w-4" />
+                </button>
+              ) : (
+                <Link href="/para-clubes"
+                  className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-gray-900 px-5 py-2.5 text-sm font-bold text-white transition-transform duration-200 hover:scale-[1.03] active:scale-95">
+                  Publica tu cancha <ArrowRight className="h-4 w-4" />
+                </Link>
+              )}
             </div>
           </div>
         )}
@@ -227,20 +254,20 @@ export default function HomeClient({ stats }: { stats: PublicStats }) {
         <ExploraCiudades />
 
         {/* ── Para clubes ──────────────────────────────────────────── */}
-        <div className="mt-6 px-5 md:mt-10">
-          <Link href="/para-clubes" className="group flex items-center gap-4 rounded-[28px] bg-gray-900 p-5 md:p-7">
+        <FadeIn className="mt-6 px-5 md:mt-10">
+          <Link href="/para-clubes" className="group flex items-center gap-4 rounded-[28px] bg-gray-900 p-5 transition-shadow duration-300 hover:shadow-[0_18px_40px_rgba(17,24,39,.28)] md:p-7">
             <div className="min-w-0 flex-1">
               <p className="font-bold text-white md:text-lg">¿Tienes una cancha?</p>
               <p className="mt-1 text-xs text-gray-400 md:text-sm">Recibe reservas pagadas en línea, sin mensualidad.</p>
             </div>
-            <span className="shrink-0 rounded-full bg-lime-400 px-4 py-2.5 text-sm font-bold text-gray-900 transition-transform group-hover:scale-105">
+            <span className="shrink-0 rounded-full bg-lime-400 px-4 py-2.5 text-sm font-bold text-gray-900 transition-transform duration-300 group-hover:scale-105">
               Publicar
             </span>
           </Link>
-        </div>
+        </FadeIn>
 
         {/* ── Preguntas frecuentes ─────────────────────────────────── */}
-        <section className="mt-12 px-5 md:mt-16">
+        <FadeIn as="section" className="mt-12 px-5 md:mt-16">
           <h2 className="text-lg font-bold text-gray-900 md:text-2xl">Preguntas frecuentes</h2>
           <FaqAccordion
             items={FAQ}
@@ -249,7 +276,7 @@ export default function HomeClient({ stats }: { stats: PublicStats }) {
             openItemClassName="border-green-300"
             questionClassName="font-semibold text-gray-900"
           />
-        </section>
+        </FadeIn>
         </div>
       </div>
     </div>

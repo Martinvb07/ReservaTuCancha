@@ -19,7 +19,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed">
-              La forma más fácil de reservar canchas deportivas en Colombia. Fútbol, Pádel y Voley Playa.
+              La forma más fácil de reservar canchas deportivas en Colombia. Fútbol, pádel y vóley playa.
             </p>
             <div className="flex items-center gap-1.5 text-xs text-gray-500">
               <MapPin className="h-3.5 w-3.5 text-lime-400 shrink-0" />
@@ -47,7 +47,7 @@ export default function Footer() {
               {[
                 { href: '/empresas?sport=futbol',      label: 'Fútbol'      },
                 { href: '/empresas?sport=padel',       label: 'Pádel'       },
-                { href: '/empresas?sport=voley_playa', label: 'Voley Playa' },
+                { href: '/empresas?sport=voley_playa', label: 'Vóley playa' },
                 { href: '/empresas',                   label: 'Ver todas'   },
               ].map(l => (
                 <li key={l.href}>

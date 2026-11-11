@@ -221,7 +221,7 @@ function ReprogramarContenido() {
 
         <div className="p-6 md:p-8 space-y-1 border-b border-gray-700">
           <p className="text-green-400 font-semibold text-xs uppercase tracking-widest">Reserva #{reserva.bookingCode}</p>
-          <h1 className="text-2xl font-black text-white uppercase">Cambia tu horario</h1>
+          <h1 className="text-2xl font-black text-white">Cambia tu horario</h1>
           <p className="text-gray-400 text-sm">
             Elige otro día y hora para el mismo turno. No se cobra nada extra ni se devuelve dinero.
           </p>

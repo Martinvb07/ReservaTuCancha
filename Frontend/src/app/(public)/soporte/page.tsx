@@ -87,12 +87,10 @@ export default function SoportePage() {
 
       {/* ── HERO ─────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-lime-400 rounded-full translate-x-1/3 -translate-y-1/3" />
-        </div>
+        <div aria-hidden className="pointer-events-none absolute -top-40 left-1/2 h-80 w-[640px] max-w-full -translate-x-1/2 rounded-full bg-lime-400/15 blur-3xl" />
         <div className="relative max-w-4xl mx-auto px-4 py-14 md:py-20 text-center">
           <p className="text-lime-400 font-semibold text-xs md:text-sm uppercase tracking-widest mb-3">Soporte</p>
-          <h1 className="text-3xl md:text-5xl font-black text-white uppercase leading-tight">
+          <h1 className="text-3xl md:text-5xl font-black text-white leading-tight">
             ¿En qué te ayudamos?
           </h1>
           <p className="text-gray-300 mt-4 text-sm md:text-base max-w-xl mx-auto">

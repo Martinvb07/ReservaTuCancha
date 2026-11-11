@@ -112,7 +112,7 @@ export default function QueOfrecemosPage() {
           <p className="text-lime-400 font-semibold text-sm uppercase tracking-widest flex items-center justify-center gap-2">
             Lo que ofrecemos
           </p>
-          <h1 className="text-5xl md:text-7xl font-black uppercase leading-tight">
+          <h1 className="text-5xl md:text-7xl font-black leading-tight">
             Todo lo que necesitas para
             <span className="block text-lime-400">gestionar tu cancha</span>
           </h1>

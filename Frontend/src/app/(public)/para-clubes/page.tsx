@@ -56,6 +56,14 @@ async function getPublicStats() {
 
 export default async function ParaClubesPage() {
   const stats = await getPublicStats();
+  /* Solo cifras reales: un "+0" o una calificación sin reservas restan
+     confianza. La franja se muestra cuando hay al menos dos datos. */
+  const cifras = [
+    stats.totalCourts > 0 && { n: `+${stats.totalCourts}`, label: 'Canchas registradas' },
+    stats.totalBookings > 0 && { n: `+${stats.totalBookings.toLocaleString('es-CO')}`, label: 'Reservas realizadas' },
+    stats.totalCities > 0 && { n: `+${stats.totalCities}`, label: 'Ciudades de Colombia' },
+    stats.totalBookings > 0 && stats.avgRating > 0 && { n: `${stats.avgRating}`, label: 'Calificación promedio' },
+  ].filter(Boolean) as { n: string; label: string }[];
   return (
     <main className="min-h-screen bg-white">
       {/* ── HERO ─────────────────────────────────────────────── */}
@@ -81,7 +89,7 @@ export default async function ParaClubesPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
             <Link
               href="/solicitar-acceso"
-              className="inline-flex items-center gap-2 bg-lime-400 hover:bg-lime-300 text-gray-900 font-bold px-7 py-3 rounded-full transition-colors"
+              className="inline-flex items-center gap-2 bg-lime-400 hover:bg-lime-300 text-gray-900 font-bold px-7 py-3 rounded-full transition-all duration-200 hover:scale-[1.03] active:scale-95"
             >
               Solicitar acceso <ChevronRight className="h-5 w-5" />
             </Link>
@@ -103,8 +111,8 @@ export default async function ParaClubesPage() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {BENEFITS.map((b, i) => (
-            <FadeIn key={b.title} delay={i * 70} className="bg-white border border-gray-100 rounded-2xl p-6 hover:shadow-lg transition-shadow">
-              <div className="w-12 h-12 rounded-xl bg-green-50 text-green-600 grid place-items-center mb-4">
+            <FadeIn key={b.title} delay={i * 70} className="bg-white border border-gray-100 rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+              <div className="w-12 h-12 rounded-2xl bg-green-50 text-green-600 grid place-items-center mb-4">
                 <b.icon className="h-6 w-6" />
               </div>
               <h3 className="font-bold text-gray-900">{b.title}</h3>
@@ -115,23 +123,20 @@ export default async function ParaClubesPage() {
       </section>
 
       {/* ── STATS ────────────────────────────────────────────── */}
-      <section className="bg-gray-900 py-12 md:py-16">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 text-center">
-            {[
-              { n: `+${stats.totalCourts}`, label: 'Canchas registradas' },
-              { n: `+${stats.totalBookings.toLocaleString('es-CO')}`, label: 'Reservas realizadas' },
-              { n: `+${stats.totalCities}`, label: 'Ciudades de Colombia' },
-              { n: `${stats.avgRating}`, label: 'Calificación promedio' },
-            ].map((stat: { n: string; label: string }) => (
-              <div key={stat.label}>
-                <div className="text-2xl md:text-4xl font-black text-lime-400">{stat.n}</div>
-                <div className="text-xs md:text-sm text-white/60 mt-2">{stat.label}</div>
-              </div>
-            ))}
+      {cifras.length >= 2 && (
+        <section className="bg-gray-900 py-12 md:py-16">
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="flex flex-wrap justify-center gap-x-16 gap-y-8 text-center">
+              {cifras.map((stat, i) => (
+                <FadeIn key={stat.label} delay={i * 80} className="min-w-[130px]">
+                  <div className="text-2xl md:text-4xl font-black text-lime-400">{stat.n}</div>
+                  <div className="text-xs md:text-sm text-white/60 mt-2">{stat.label}</div>
+                </FadeIn>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── CÓMO FUNCIONA ────────────────────────────────────── */}
       <section id="como-funciona" className="scroll-mt-20 bg-gray-50 py-14 md:py-20">
@@ -142,9 +147,9 @@ export default async function ParaClubesPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {STEPS.map((s, i) => (
-              <FadeIn key={s.n} delay={i * 70} className="relative bg-white border border-gray-100 rounded-2xl p-6">
+              <FadeIn key={s.n} delay={i * 70} className="relative bg-white border border-gray-100 rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                 <span className="absolute top-5 right-5 text-4xl font-black text-gray-100">{s.n}</span>
-                <div className="w-12 h-12 rounded-xl bg-green-50 text-green-600 grid place-items-center mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-green-50 text-green-600 grid place-items-center mb-4">
                   <s.icon className="h-6 w-6" />
                 </div>
                 <h3 className="font-bold text-gray-900">{s.title}</h3>
@@ -157,8 +162,8 @@ export default async function ParaClubesPage() {
 
       {/* ── TESTIMONIO ───────────────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-4 py-14 md:py-20">
-        <div className="bg-white border border-gray-100 rounded-3xl p-8 md:p-10 relative shadow-sm">
-          <Quote className="h-10 w-10 text-lime-400/40 absolute top-6 right-8" />
+        <FadeIn className="bg-white border border-gray-100 rounded-3xl p-8 md:p-10 shadow-sm">
+          <Quote className="h-9 w-9 text-lime-500/50 mb-4" />
           <p className="text-lg md:text-xl text-gray-700 leading-relaxed italic">
             “Desde que usamos ReservaTuCancha mis canchas están llenas. Las reservas online me ahorraron una secretaria
             y dejé de perder clientes por no contestar el teléfono.”
@@ -172,7 +177,7 @@ export default async function ParaClubesPage() {
               <p className="text-sm text-gray-500">Propietaria de club — Villavicencio</p>
             </div>
           </div>
-        </div>
+        </FadeIn>
       </section>
 
       {/* ── FAQ ──────────────────────────────────────────────── */}
@@ -183,13 +188,13 @@ export default async function ParaClubesPage() {
             <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mt-1">Lo que los clubes preguntan</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {FAQ.map((item) => (
-              <div key={item.q} className="bg-white border border-gray-100 rounded-2xl p-5">
+            {FAQ.map((item, i) => (
+              <FadeIn key={item.q} delay={i * 60} className="bg-white border border-gray-100 rounded-3xl p-5">
                 <p className="font-semibold text-gray-900 flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-green-600 shrink-0 mt-0.5" /> {item.q}
                 </p>
                 <p className="text-gray-500 text-sm leading-relaxed mt-2 pl-7">{item.a}</p>
-              </div>
+              </FadeIn>
             ))}
           </div>
         </div>

@@ -35,7 +35,7 @@ export default function FadeIn({ children, className = '', delay = 0, as = 'div'
   return (
     <Tag
       ref={ref}
-      className={`transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'} ${className}`}
+      className={`transition-[opacity,transform] duration-700 ease-[cubic-bezier(.16,1,.3,1)] motion-reduce:transition-none motion-reduce:opacity-100 motion-reduce:translate-y-0 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'} ${className}`}
       style={{ transitionDelay: `${delay}ms` }}
     >
       {children}
