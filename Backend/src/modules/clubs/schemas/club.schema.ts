@@ -100,6 +100,14 @@ export class Club {
   @Prop({ trim: true })
   slogan?: string;
 
+  /** Foto grande de arriba de la página pública del club. */
+  @Prop({ trim: true })
+  coverPhoto?: string;
+
+  /** Aviso corto destacado en la página pública (promo, torneo). */
+  @Prop({ trim: true, maxlength: 140 })
+  anuncio?: string;
+
   @Prop({ trim: true })
   schedule?: string;
 

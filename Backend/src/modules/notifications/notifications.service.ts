@@ -1190,6 +1190,78 @@ export class NotificationsService implements OnModuleInit {
     });
   }
 
+  /**
+   * El cierre de caja, para el dueño: quién abrió y cerró, cuánto debía haber
+   * en el cajón, cuánto había, y la tabla de lo que se movió en el turno.
+   */
+  async sendCierreCaja(datos: { email: string; club: string; turno: any }) {
+    const t = datos.turno;
+    const c = t.cierre ?? {};
+    const cop = (n: number) => `$${Math.round(n ?? 0).toLocaleString('es-CO')}`;
+    const fechaHora = (f: Date) =>
+      new Date(f).toLocaleString('es-CO', {
+        timeZone: 'America/Bogota', weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true,
+      });
+    const diferencia = Number(c.diferencia ?? 0);
+    const colorDif = diferencia === 0 ? '#059669' : diferencia > 0 ? '#2563eb' : '#dc2626';
+    const textoDif = diferencia === 0 ? 'Cuadró exacto' : diferencia > 0 ? `Sobran ${cop(diferencia)}` : `Faltan ${cop(-diferencia)}`;
+    const MEDIO: Record<string, string> = { 'en línea': 'En línea', efectivo: 'Efectivo', transferencia: 'Transferencia', tarjeta: 'Tarjeta' };
+
+    const celda = 'padding: 9px 8px; font-size: 12px; border-bottom: 1px solid #f3f4f6;';
+    const filasReservas = (c.reservas ?? []).map((r: any) => `
+      <tr>
+        <td style="${celda} color: #111827; white-space: nowrap;">${toAmPm(r.inicio)}</td>
+        <td style="${celda} color: #111827;">${escapeHtml(r.cliente || '-')}${r.noShow ? ' <span style="color:#dc2626;">(no llegó)</span>' : ''}<br><span style="color:#9ca3af;">${escapeHtml(r.cancha || '')}</span></td>
+        <td style="${celda} color: #6b7280;">${MEDIO[r.medio] ?? escapeHtml(r.medio)}</td>
+        <td align="right" style="${celda} color: #111827; font-weight: 700; white-space: nowrap;">${cop(r.valor)}</td>
+      </tr>`).join('');
+    const filasMovs = (t.movimientos ?? []).map((m: any) => `
+      <tr>
+        <td style="${celda} color: #111827; white-space: nowrap;">${new Date(m.fecha).toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: 'numeric', minute: '2-digit', hour12: true })}</td>
+        <td style="${celda} color: #111827;" colspan="2">${escapeHtml(m.concepto)}<br><span style="color:#9ca3af;">${m.tipo === 'gasto' ? 'Gasto' : 'Ingreso'}${m.por ? ` · ${escapeHtml(m.por)}` : ''}</span></td>
+        <td align="right" style="${celda} font-weight: 700; white-space: nowrap; color: ${m.tipo === 'gasto' ? '#dc2626' : '#111827'};">${m.tipo === 'gasto' ? '−' : ''}${cop(m.valor)}</td>
+      </tr>`).join('');
+    const cabecera = (texto: string) =>
+      `<tr><td colspan="4" style="padding: 18px 8px 6px; font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px;">${texto}</td></tr>`;
+
+    const tabla = `
+      <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-top: 8px; border-collapse: collapse;">
+        ${filasReservas ? cabecera('Reservas del turno') + filasReservas : cabecera('Reservas del turno') + `<tr><td colspan="4" style="${celda} color:#9ca3af;">Sin reservas en este turno</td></tr>`}
+        ${filasMovs ? cabecera('Otros movimientos') + filasMovs : ''}
+      </table>`;
+
+    await this.send({
+      to: datos.email,
+      from: this.fromEmail,
+      subject: `Cierre de caja — ${datos.club} · ${textoDif}`,
+      html: buildEmailHtml({
+        iconBg: '#a3e635', iconContent: '$', iconColor: '#111827',
+        title: 'CIERRE DE CAJA',
+        subtitle: `<strong>${escapeHtml(datos.club)}</strong> · cerrada por <strong>${escapeHtml(t.cerradaPor || 'el equipo')}</strong>`,
+        rows: [
+          { label: 'Abierta', value: `${fechaHora(t.abiertaEn)}${t.abiertaPor ? ` · ${escapeHtml(t.abiertaPor)}` : ''}` },
+          { label: 'Cerrada', value: fechaHora(t.cerradaEn) },
+          { label: 'Base inicial', value: cop(c.base) },
+          { label: 'Reservas en efectivo', value: cop(c.efectivoReservas) },
+          ...(c.ingresos ? [{ label: 'Otros ingresos', value: cop(c.ingresos) }] : []),
+          ...(c.gastos ? [{ label: 'Gastos', value: `−${cop(c.gastos)}` }] : []),
+          { label: 'Efectivo esperado', value: cop(c.efectivoEsperado) },
+          { label: 'Efectivo contado', value: cop(t.efectivoContado) },
+          { label: 'Transferencia y tarjeta', value: cop(c.otrosMedios) },
+          { label: 'Pagado en línea', value: cop(c.enLinea) },
+          { label: 'Total del turno', value: cop(c.totalTurno), highlight: true },
+        ],
+        alertBox: {
+          bg: diferencia === 0 ? '#ecfdf5' : diferencia > 0 ? '#eff6ff' : '#fef2f2',
+          color: colorDif,
+          text: `${textoDif}${t.notas ? ` — Nota: ${escapeHtml(t.notas)}` : ''}`,
+        },
+        extraHtml: tabla,
+        ctaText: 'Ver la caja en el panel', ctaUrl: `${this.frontendUrl}/dashboard/propetario/caja`, ctaBg: '#16a34a',
+      }),
+    });
+  }
+
   async sendOwnerNewBookingNotification(
     booking: Booking & { _id: any },
     ownerEmail: string,

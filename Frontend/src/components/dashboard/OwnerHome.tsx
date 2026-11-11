@@ -110,7 +110,7 @@ export default function OwnerHome({ nombre }: { nombre: string }) {
     { label: 'Anotar reserva', detalle: 'Teléfono o mostrador', icon: PhoneCall,    color: 'bg-lime-400 text-gray-900', onClick: () => setAnotar(true) },
     { label: 'Escanear QR',    detalle: 'Recibe al jugador',    icon: ScanLine,     color: 'bg-gray-900 text-lime-400', onClick: () => setEscanear(true) },
     { label: 'Reservas',       detalle: 'Agenda y calendario',  icon: CalendarDays, color: 'bg-blue-50 text-blue-600',   href: '/dashboard/propetario/reservas' },
-    { label: 'Caja',           detalle: 'Cierre y Excel',       icon: Wallet,       color: 'bg-green-50 text-green-600', href: '/dashboard/propetario/caja', oculto: esStaff },
+    { label: 'Caja',           detalle: 'Abrir y cerrar turno', icon: Wallet,       color: 'bg-green-50 text-green-600', href: '/dashboard/propetario/caja' },
     { label: 'Clientes',       detalle: 'Frecuentes y faltas',  icon: Contact,      color: 'bg-amber-50 text-amber-600', href: '/dashboard/propetario/clientes', oculto: esStaff },
     { label: 'Bloquear horario', detalle: 'Mantenimiento, torneos', icon: Ban,      color: 'bg-orange-50 text-orange-600', href: '/dashboard/propetario/bloqueos' },
     { label: 'Canchas y precios', detalle: 'Precios por horario', icon: Building2,  color: 'bg-purple-50 text-purple-600', href: '/dashboard/propetario/canchas', oculto: esRecepcion },

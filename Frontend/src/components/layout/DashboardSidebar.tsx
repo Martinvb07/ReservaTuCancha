@@ -44,7 +44,7 @@ const OWNER_SECTIONS: NavSection[] = [
   { label: 'Operación', items: [
     { href: '/dashboard/propetario/analytics', label: 'Analytics', icon: BarChart3, sinRecepcion: true },
     { href: '/dashboard/propetario/clientes',  label: 'Clientes',  icon: Contact, soloTitular: true },
-    { href: '/dashboard/propetario/caja',      label: 'Caja',      icon: Wallet, soloTitular: true },
+    { href: '/dashboard/propetario/caja',      label: 'Caja',      icon: Wallet },
     { href: '/dashboard/propetario/pagos',     label: 'Pagos',     icon: CreditCard, soloTitular: true },
     { href: '/dashboard/propetario/bloqueos',  label: 'Bloqueos',  icon: Ban        },
     { href: '/dashboard/propetario/fotos',     label: 'Fotos',     icon: ImageIcon, sinRecepcion: true },

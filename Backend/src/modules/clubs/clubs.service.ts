@@ -154,6 +154,7 @@ export class ClubsService {
       'name', 'description', 'address', 'city',
       'contactPhone', 'contactEmail', 'logo',
       'slogan', 'schedule', 'socialLinks',
+      'coverPhoto', 'anuncio',
     ];
 
     for (const key of allowed) {
@@ -343,10 +344,13 @@ export class ClubsService {
       schedule: (club as any).schedule,
       socialLinks: (club as any).socialLinks || {},
       photos: (club as any).photos || [],
+      coverPhoto: (club as any).coverPhoto,
+      anuncio: (club as any).anuncio,
       courts: courts.map(c => ({
         _id: c._id,
         name: c.name,
         sport: c.sport,
+        location: c.location,
         pricePerHour: c.pricePerHour,
         priceRules: (c as any).priceRules ?? [],
         photos: c.photos,

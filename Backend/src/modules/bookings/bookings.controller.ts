@@ -12,6 +12,8 @@ import { ListaEsperaDto } from './dto/lista-espera.dto';
 import { ListaEsperaService } from './lista-espera.service';
 import { PanelClubService } from './panel-club.service';
 import { BloquearClienteDto, NoShowDto } from './dto/panel-club.dto';
+import { CajaTurnoService } from './caja-turno.service';
+import { AbrirCajaDto, CerrarCajaDto, MovimientoCajaDto } from './dto/caja-turno.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { SoloTitularGuard } from '../../common/guards/solo-titular.guard';
@@ -25,6 +27,7 @@ export class BookingsController {
     private readonly bookingsService: BookingsService,
     private readonly listaEspera: ListaEsperaService,
     private readonly panelClub: PanelClubService,
+    private readonly cajaTurno: CajaTurnoService,
   ) {}
 
   @Get('public')
@@ -151,6 +154,63 @@ export class BookingsController {
   @ApiOperation({ summary: 'Caja del club entre dos fechas (YYYY-MM-DD)' })
   caja(@Query('desde') desde: string, @Query('hasta') hasta: string, @Request() req) {
     return this.panelClub.caja(req.user.userId, String(desde ?? ''), String(hasta ?? desde ?? ''));
+  }
+
+  // ─── Turno de caja: lo abre y lo cierra quien atiende, recepción incluida ──
+
+  @Get('owner/caja/turno')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'La caja abierta con su resumen en vivo (o null)' })
+  async cajaActual(@Request() req) {
+    return (await this.cajaTurno.actual(req.user.userId)) ?? { turno: null, resumen: null };
+  }
+
+  @Post('owner/caja/turno/abrir')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Abrir la caja con una base en efectivo' })
+  abrirCaja(@Body() dto: AbrirCajaDto, @Request() req) {
+    return this.cajaTurno.abrir(req.user.userId, dto.base, req.user.name ?? 'Equipo');
+  }
+
+  @Post('owner/caja/turno/movimientos')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Registrar un ingreso o un gasto en la caja abierta' })
+  movimientoCaja(@Body() dto: MovimientoCajaDto, @Request() req) {
+    return this.cajaTurno.movimiento(req.user.userId, dto, req.user.name ?? 'Equipo');
+  }
+
+  @Delete('owner/caja/turno/movimientos/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Quitar un movimiento de la caja abierta' })
+  quitarMovimientoCaja(@Param('id') id: string, @Request() req) {
+    return this.cajaTurno.quitarMovimiento(req.user.userId, id);
+  }
+
+  @Post('owner/caja/turno/cerrar')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cerrar la caja: cuenta el efectivo y le llega el cierre al dueño' })
+  cerrarCaja(@Body() dto: CerrarCajaDto, @Request() req) {
+    return this.cajaTurno.cerrar(req.user.userId, dto, req.user.name ?? 'Equipo');
+  }
+
+  @Get('owner/caja/cierres')
+  /* El historial de cierres es del dueño; el equipo solo ve la caja abierta. */
+  @UseGuards(JwtAuthGuard, RolesGuard, SoloTitularGuard)
+  @Roles(UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Historial de cierres de caja' })
+  cierresCaja(@Request() req) {
+    return this.cajaTurno.historial(req.user.userId);
   }
 
   @Get('owner')

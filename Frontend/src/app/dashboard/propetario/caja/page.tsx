@@ -11,6 +11,7 @@ import ReservaManualDialog from '@/components/dashboard/ReservaManualDialog';
 import api from '@/lib/api/axios';
 import { useApiAuth } from '@/hooks/useApiAuth';
 import { exportarCaja, nombreMedio, type Caja } from '@/lib/exportarCaja';
+import TurnoCaja from '@/components/dashboard/TurnoCaja';
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const cop = (n: number) => `$${Math.round(n).toLocaleString('es-CO')}`;
@@ -22,6 +23,74 @@ const hora12 = (t: string) => {
 };
 
 const TABS = ['Día', 'Mes'];
+
+interface Cierre {
+  _id: string; abiertaEn: string; cerradaEn: string; abiertaPor?: string; cerradaPor?: string;
+  efectivoContado: number; notas?: string;
+  cierre?: { efectivoEsperado: number; diferencia: number; totalTurno: number; reservas: unknown[] };
+}
+const fechaHoraCol = (iso: string) =>
+  new Date(iso)
+    .toLocaleString('es-CO', { timeZone: 'America/Bogota', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true })
+    .replace(/\s*a\.\s*m\./i, ' AM')
+    .replace(/\s*p\.\s*m\./i, ' PM');
+
+/** Los últimos cierres de caja: quién cerró, cuánto contó y si cuadró. */
+function CierresAnteriores() {
+  const session = useApiAuth();
+  const [todos, setTodos] = useState(false);
+  const { data: cierres = [] } = useQuery<Cierre[]>({
+    queryKey: ['caja-cierres'],
+    queryFn: async () => (await api.get('/bookings/owner/caja/cierres')).data,
+    enabled: !!(session as any)?.accessToken,
+  });
+  if (cierres.length === 0) return null;
+  const visibles = todos ? cierres : cierres.slice(0, 5);
+  return (
+    <section>
+      <h2 className="text-sm font-black text-gray-900">Cierres anteriores</h2>
+      <p className="text-xs text-gray-500">Cada cierre también te llega al correo.</p>
+      <div className="mt-3 overflow-x-auto rounded-2xl border border-gray-100 bg-white">
+        <table className="w-full min-w-[640px] text-sm">
+          <thead>
+            <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-gray-500">
+              <th className="px-4 py-3">Cerrada</th>
+              <th className="px-4 py-3">Por</th>
+              <th className="px-4 py-3 text-right">Esperado</th>
+              <th className="px-4 py-3 text-right">Contado</th>
+              <th className="px-4 py-3 text-right">Diferencia</th>
+              <th className="px-4 py-3 text-right">Total del turno</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {visibles.map((c) => {
+              const dif = c.cierre?.diferencia ?? 0;
+              return (
+                <tr key={c._id} className="transition-colors duration-200 hover:bg-gray-50">
+                  <td className="px-4 py-3 font-bold text-gray-900 whitespace-nowrap">{fechaHoraCol(c.cerradaEn)}</td>
+                  <td className="px-4 py-3 text-gray-600">{c.cerradaPor || '—'}{c.notas ? <span className="block max-w-[14rem] truncate text-[11px] text-gray-500" title={c.notas}>{c.notas}</span> : null}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-gray-600">{cop(c.cierre?.efectivoEsperado ?? 0)}</td>
+                  <td className="px-4 py-3 text-right font-bold tabular-nums text-gray-900">{cop(c.efectivoContado)}</td>
+                  <td className="px-4 py-3 text-right">
+                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold tabular-nums ${dif === 0 ? 'bg-green-100 text-green-700' : dif > 0 ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-600'}`}>
+                      {dif === 0 ? 'Cuadró' : dif > 0 ? `+${cop(dif)}` : `−${cop(-dif)}`}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right font-black tabular-nums text-green-700">{cop(c.cierre?.totalTurno ?? 0)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      {cierres.length > 5 && (
+        <button onClick={() => setTodos(!todos)} className="mt-2 text-xs font-bold text-green-700 transition-colors hover:text-green-800">
+          {todos ? 'Ver menos' : `Ver los ${cierres.length}`}
+        </button>
+      )}
+    </section>
+  );
+}
 
 export default function CajaPage() {
   const session = useApiAuth();
@@ -85,11 +154,18 @@ export default function CajaPage() {
     return Array.from(grupos.entries());
   }, [caja]);
 
+  /* El equipo abre y cierra la caja del turno; los reportes por día y por
+     mes y el historial de cierres son del dueño. */
   if (esStaff) {
     return (
-      <div className="max-w-xl mx-auto text-center py-20">
-        <Wallet className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-        <p className="font-black text-gray-500 text-sm">Solo el dueño del club ve la caja</p>
+      <div className="max-w-5xl mx-auto space-y-6 pb-12">
+        <div>
+          <p className="text-lime-600 font-semibold text-xs sm:text-sm uppercase tracking-widest mb-1">Equipo del club</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase">Caja</h1>
+          <p className="text-gray-500 text-xs sm:text-sm mt-1 max-w-xl">Abre la caja al empezar tu turno y ciérrala al terminar. El cierre le llega al dueño.</p>
+        </div>
+        <TurnoCaja />
+        <ReservaManualDialog open={anotar} onOpenChange={setAnotar} />
       </div>
     );
   }
@@ -110,7 +186,7 @@ export default function CajaPage() {
           <p className="text-lime-600 font-semibold text-xs sm:text-sm uppercase tracking-widest mb-1">Panel Propietario</p>
           <h1 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase">Caja</h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-1 max-w-xl">
-            Lo que te entró: lo pagado en línea, ya con los costos descontados, y lo que cobraste en el club.
+            Abre la caja al empezar el turno y ciérrala al terminar. Abajo tienes los cierres y el reporte por día o por mes.
           </p>
         </div>
         <div className="flex gap-2">
@@ -123,6 +199,15 @@ export default function CajaPage() {
             {bajando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Excel
           </button>
         </div>
+      </div>
+
+      <TurnoCaja />
+
+      <CierresAnteriores />
+
+      <div className="pt-2">
+        <h2 className="text-sm font-black text-gray-900">Reporte por día o por mes</h2>
+        <p className="text-xs text-gray-500">Todo lo que entró en el periodo, tenga o no turno de caja.</p>
       </div>
 
       {/* Periodo */}

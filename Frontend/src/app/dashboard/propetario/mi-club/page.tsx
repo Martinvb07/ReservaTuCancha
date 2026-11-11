@@ -9,7 +9,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Building2, MapPin, Phone, Share2, Image as ImageIcon,
   Upload, Trash2, Save, Loader2, Camera, Link2,
-  Instagram, Facebook, Music2, MessageCircle,
+  Instagram, Facebook, Music2, MessageCircle, ExternalLink, Megaphone, Star, Copy,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import SettingsTabs, { type SettingsSection } from '@/components/ui/SettingsTabs';
@@ -38,6 +38,7 @@ const schema = z.object({
   name:         z.string().trim().min(3, 'Mínimo 3 caracteres'),
   slogan:       z.string().trim().max(120, 'Máximo 120 caracteres'),
   description:  z.string().trim().max(600, 'Máximo 600 caracteres'),
+  anuncio:      z.string().trim().max(140, 'Máximo 140 caracteres'),
   address:      z.string().trim(),
   city:         z.string().trim(),
   contactPhone: z.string().trim(),
@@ -54,7 +55,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 const EMPTY: FormValues = {
-  name: '', slogan: '', description: '', address: '', city: '',
+  name: '', slogan: '', description: '', anuncio: '', address: '', city: '',
   contactPhone: '', contactEmail: '', schedule: '',
   instagram: '', facebook: '', tiktok: '', whatsapp: '',
 };
@@ -67,7 +68,7 @@ const lblIcon = 'flex items-center gap-1.5 text-xs font-black text-gray-500 uppe
 /* Qué campos vive en cada sección: sirve para marcar errores y para saltar
    a la sección correcta cuando falla el guardado. */
 const SECTION_FIELDS: Record<string, (keyof FormValues)[]> = {
-  info:      ['name', 'slogan', 'description'],
+  info:      ['name', 'slogan', 'description', 'anuncio'],
   ubicacion: ['address', 'city'],
   contacto:  ['contactPhone', 'contactEmail', 'schedule'],
   logo:      [],
@@ -93,6 +94,9 @@ export default function MiClubPage() {
   const [section, setSection]   = useState('info');
   const [logoUrl, setLogoUrl]   = useState('');
   const [savedLogo, setSavedLogo] = useState('');
+  /* Portada: la foto grande de arriba de la página pública. */
+  const [coverUrl, setCoverUrl]   = useState('');
+  const [savedCover, setSavedCover] = useState('');
   const [uploadingLogo, setUploadingLogo]     = useState(false);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
 
@@ -116,6 +120,7 @@ export default function MiClubPage() {
       name:         club.name || '',
       slogan:       club.slogan || '',
       description:  club.description || '',
+      anuncio:      club.anuncio || '',
       address:      club.address || '',
       city:         club.city || '',
       contactPhone: club.contactPhone || '',
@@ -128,6 +133,8 @@ export default function MiClubPage() {
     });
     setLogoUrl(club.logo || '');
     setSavedLogo(club.logo || '');
+    setCoverUrl(club.coverPhoto || '');
+    setSavedCover(club.coverPhoto || '');
   }, [club, reset]);
 
   const saveMutation = useMutation({
@@ -136,6 +143,7 @@ export default function MiClubPage() {
       await api.patch('/clubs/my-club/profile', {
         ...rest,
         logo: logoUrl,
+        coverPhoto: coverUrl,
         socialLinks: { instagram, facebook, tiktok, whatsapp: normalizeWhatsapp(whatsapp) },
       });
     },
@@ -143,6 +151,7 @@ export default function MiClubPage() {
       toast.success('Perfil actualizado');
       reset({ ...values, whatsapp: normalizeWhatsapp(values.whatsapp) });
       setSavedLogo(logoUrl);
+      setSavedCover(coverUrl);
       queryClient.invalidateQueries({ queryKey: ['my-club-profile'] });
       queryClient.invalidateQueries({ queryKey: ['club-info'] });
     },
@@ -200,6 +209,7 @@ export default function MiClubPage() {
     if (club) {
       reset();
       setLogoUrl(savedLogo);
+      setCoverUrl(savedCover);
     }
   }
 
@@ -234,7 +244,7 @@ export default function MiClubPage() {
 
   const clubPhotos: string[] = club.photos || [];
   const logoDirty = logoUrl !== savedLogo;
-  const hasChanges = isDirty || logoDirty;
+  const hasChanges = isDirty || logoDirty || coverUrl !== savedCover;
 
   return (
     <div className="max-w-5xl mx-auto space-y-5 pb-12">
@@ -250,16 +260,25 @@ export default function MiClubPage() {
 
       {/* Link público */}
       {club.slug && (
-        <div className="bg-gray-900 rounded-2xl p-4 flex items-center gap-3">
-          <Link2 className="h-5 w-5 text-lime-400 shrink-0" />
-          <p className="text-sm text-gray-300 flex-1 truncate">reservatucancha.site/club/{club.slug}</p>
-          <button
-            type="button"
-            onClick={() => { navigator.clipboard.writeText(`https://reservatucancha.site/club/${club.slug}`); toast.success('Link copiado'); }}
-            className="text-xs font-bold bg-lime-400 text-gray-900 px-3 py-1.5 rounded-full shrink-0"
-          >
-            Copiar
-          </button>
+        <div className="bg-gray-900 rounded-2xl p-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-lime-400"><Link2 className="h-5 w-5 text-gray-900" /></span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-black text-white">Tu página pública</p>
+            <p className="truncate text-xs text-gray-400">reservatucancha.site/club/{club.slug}</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => { navigator.clipboard.writeText(`https://reservatucancha.site/club/${club.slug}`); toast.success('Link copiado'); }}
+              className="flex items-center gap-1.5 text-xs font-bold bg-lime-400 hover:bg-lime-300 text-gray-900 px-3.5 py-2 rounded-full transition-colors"
+            >
+              <Copy className="h-3.5 w-3.5" /> Copiar
+            </button>
+            <a href={`/club/${club.slug}`} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-xs font-bold text-gray-200 border border-gray-600 hover:border-gray-400 px-3.5 py-2 rounded-full transition-colors">
+              <ExternalLink className="h-3.5 w-3.5" /> Ver cómo se ve
+            </a>
+          </div>
         </div>
       )}
 
@@ -284,6 +303,12 @@ export default function MiClubPage() {
                   placeholder="Describe tu club, qué ofreces, qué lo hace especial..."
                   {...register('description')} />
                 {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description.message}</p>}
+              </div>
+              <div>
+                <label className={lblIcon}><Megaphone className="h-3.5 w-3.5" /> Aviso destacado <span className="text-gray-500 font-normal normal-case">(opcional)</span></label>
+                <input className={inp} maxLength={140} placeholder="Ej: Martes y jueves, 2 horas por el precio de 1" {...register('anuncio')} />
+                <p className="text-xs text-gray-500 mt-1.5">Sale resaltado arriba de tu página: úsalo para una promo o un torneo. Bórralo cuando ya no aplique.</p>
+                {errors.anuncio && <p className="text-xs text-red-500 mt-1">{errors.anuncio.message}</p>}
               </div>
             </div>
           )}
@@ -403,7 +428,7 @@ export default function MiClubPage() {
           {section === 'fotos' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-500">Parqueadero, vestidores, cafetería, áreas comunes</p>
+                <p className="text-sm text-gray-500">Parqueadero, vestidores, cafetería, áreas comunes. Marca con la estrella la que va de portada.</p>
                 <p className="text-xs font-bold text-gray-500 shrink-0">
                   {clubPhotos.length} foto{clubPhotos.length !== 1 ? 's' : ''}
                 </p>
@@ -427,9 +452,23 @@ export default function MiClubPage() {
               {clubPhotos.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {clubPhotos.map((url: string) => (
-                    <div key={url} className="relative group rounded-xl overflow-hidden border border-gray-100">
+                    <div key={url} className={`relative group rounded-xl overflow-hidden border-2 transition-colors duration-200 ${coverUrl === url ? 'border-lime-400' : 'border-gray-100'}`}>
                       <img src={url} alt="Instalación" className="w-full h-32 object-cover" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex items-center justify-center">
+                      {coverUrl === url && (
+                        <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-lime-400 px-2 py-0.5 text-[11px] font-bold text-gray-900">
+                          <Star className="h-3 w-3 fill-gray-900" /> Portada
+                        </span>
+                      )}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          title={coverUrl === url ? 'Quitar de portada' : 'Usar de portada'}
+                          aria-label={coverUrl === url ? 'Quitar de portada' : 'Usar de portada'}
+                          onClick={() => { setCoverUrl(coverUrl === url ? '' : url); toast.success(coverUrl === url ? 'Portada quitada — recuerda guardar' : 'Portada elegida — recuerda guardar'); }}
+                          className="w-9 h-9 rounded-lg bg-lime-400 hover:bg-lime-300 text-gray-900 flex items-center justify-center"
+                        >
+                          <Star className={`h-4 w-4 ${coverUrl === url ? 'fill-gray-900' : ''}`} />
+                        </button>
                         <button
                           type="button"
                           onClick={() => removePhotoMutation.mutate(url)}
