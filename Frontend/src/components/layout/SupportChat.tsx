@@ -47,6 +47,26 @@ export default function SupportChat({ open, onOpenChange }: Props) {
   /** Último menú visitado: a él vuelve "Ver otro tema". */
   const menuActualRef = useRef<string>(tree.meta.nodoInicial);
 
+  /* En celular el botón tapa lo que se está leyendo: se esconde al bajar y
+     vuelve al subir o al quedarse arriba. En escritorio no se mueve. */
+  const [escondido, setEscondido] = useState(false);
+  useEffect(() => {
+    let ultimo = window.scrollY;
+    const alScroll = () => {
+      const y = window.scrollY;
+      if (window.innerWidth >= 768) {
+        ultimo = y;
+        setEscondido(false);
+        return;
+      }
+      if (Math.abs(y - ultimo) < 12) return;
+      setEscondido(y > ultimo && y > 120);
+      ultimo = y;
+    };
+    window.addEventListener('scroll', alScroll, { passive: true });
+    return () => window.removeEventListener('scroll', alScroll);
+  }, []);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const timers    = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -189,8 +209,8 @@ export default function SupportChat({ open, onOpenChange }: Props) {
       <button
         type="button"
         onClick={() => onOpenChange(true)}
-        tabIndex={open ? -1 : 0}
-        aria-hidden={open}
+        tabIndex={open || escondido ? -1 : 0}
+        aria-hidden={open || escondido}
         style={{
           transition:
             'width .5s cubic-bezier(.16,1,.3,1), background-color .3s ease, ' +
@@ -205,7 +225,9 @@ export default function SupportChat({ open, onOpenChange }: Props) {
           group h-14 w-14
           ${open
             ? 'pointer-events-none scale-50 opacity-0'
-            : 'scale-100 opacity-100 active:scale-95'}
+            : escondido
+              ? 'pointer-events-none translate-y-6 scale-90 opacity-0'
+              : 'scale-100 opacity-100 active:scale-95'}
         `}
         aria-label="Abrir asistente de soporte"
       >

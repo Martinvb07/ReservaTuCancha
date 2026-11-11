@@ -36,7 +36,7 @@ const STEPS = [
 ];
 
 const FAQ = [
-  { q: '¿Cuánto cuesta?', a: 'No hay mensualidad ni contrato. Al jugador se le suma una tarifa de servicio de $2.000 sobre el precio de tu cancha, y de lo recaudado salen la pasarela y nuestra parte: frente a tu precio de lista eso es cerca de un 5%, y menos cuando la cancha es más cara. Si nadie reserva, no pagas nada.' },
+  { q: '¿Cuánto cuesta?', a: 'No hay mensualidad ni contrato. Al jugador se le suma una tarifa de servicio de $2.000 sobre el precio de tu cancha, y de lo recaudado salen la pasarela y nuestra parte: frente a tu precio de lista eso es entre un 4% y un 5% en la mayoría de canchas, y menos cuando la cancha es más cara. Si nadie reserva, no pagas nada.' },
   { q: '¿Cómo recibo los pagos?', a: 'Tus clientes pagan con Nequi, Daviplata, PSE o tarjeta, y ePayco divide el cobro en el momento: tu parte te llega directo a tu cuenta, ya con los costos descontados. No retenemos tu dinero. Solo necesitas conectar tu propia cuenta de ePayco una vez desde el panel.' },
   { q: '¿Puedo bloquear horarios?', a: 'Sí. Bloqueas horarios por mantenimiento, torneos o eventos privados cuando quieras, desde el panel.' },
   { q: '¿Mis clientes necesitan registrarse?', a: 'No. Reservan con su nombre, email y teléfono. Menos fricción, más reservas para ti.' },

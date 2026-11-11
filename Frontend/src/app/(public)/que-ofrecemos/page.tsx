@@ -10,12 +10,12 @@ import FaqAccordion from '@/components/ui/FaqAccordion';
 /* Modelo de cobro: el jugador paga una tarifa fija de servicio sobre el precio
    de la cancha, y de ahí salen la pasarela y nuestra parte. Al club no se le
    cobra una tarifa nominal: lo que deja de recibir frente a su precio de lista
-   ronda el 5%, y baja mientras más cara sea la cancha, porque la tarifa del
+   queda entre el 4% y el 5%, y baja mientras más cara sea la cancha, porque la tarifa del
    jugador cubre casi todo el costo de ePayco.
 
    Antes era un 9% plano sobre lo cobrado. */
 const COMISION = {
-  porcentaje: '~5%',
+  porcentaje: '4–5%',
   desc: 'Es lo que, en la práctica, deja de llegarte frente a tu precio de lista. Baja mientras más cara sea la cancha. Sin mensualidad, sin contrato y sin costo de instalación.',
   incluye: [
     'Reservas y pagos online 24/7',
@@ -91,7 +91,7 @@ const STATS = [
 
 const FAQ_QO = [
   { q: '¿Cuánto tiempo tarda el proceso de aprobación?', a: 'Una vez enviada tu solicitud, nuestro equipo la revisa en máximo 24–48 horas hábiles. Recibirás un email con tus credenciales de acceso.' },
-  { q: '¿Cobran comisión por reserva?', a: 'No cobramos una tarifa fija al club. Al jugador se le suma $2.000 de servicio sobre el precio de tu cancha, y de lo recaudado salen el costo de la pasarela y nuestra parte. En la práctica, frente a tu precio de lista deja de llegarte cerca de un 5%, y menos cuando la cancha es más cara. No hay mensualidad, contrato ni costo de instalación: si un mes no recibes reservas, no pagas nada.' },
+  { q: '¿Cobran comisión por reserva?', a: 'No cobramos una tarifa fija al club. Al jugador se le suma $2.000 de servicio sobre el precio de tu cancha, y de lo recaudado salen el costo de la pasarela y nuestra parte. En la práctica, frente a tu precio de lista deja de llegarte entre un 4% y un 5% en la mayoría de canchas, y menos cuando la cancha es más cara. No hay mensualidad, contrato ni costo de instalación: si un mes no recibes reservas, no pagas nada.' },
   { q: '¿Cuándo recibo mi dinero?', a: 'En el momento del pago. ePayco divide cada reserva y te consigna tu parte directo a tu cuenta, ya con los costos descontados. No retenemos tu dinero. Para esto necesitas tu propia cuenta de ePayco, que conectas una sola vez desde el panel.' },
   { q: '¿A nombre de quién se cobra la reserva?', a: 'El pago se procesa a través de ePayco con pagos divididos: en el mismo momento, tu parte va a tu cuenta y la nuestra a la de ReservaTuCancha. Solo necesitas abrir una cuenta de ePayco, validarla y conectarla una vez desde el panel. Te recomendamos registrar una cuenta Davivienda o DaviPlata: tiene la tarifa más baja y retiros gratis.' },
   { q: '¿Necesito conocimientos técnicos?', a: 'Para nada. El panel es 100% intuitivo. Te guiamos paso a paso desde la configuración de tu primera cancha hasta recibir tu primer pago.' },
